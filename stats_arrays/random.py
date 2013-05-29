@@ -29,9 +29,9 @@ class RandomNumberGenerator(object):
         # Needed even if seed=None because of celery & multiprocessing issues
         self.random = random.RandomState(seed)
         self.verify_uncertainty_type()
+        self.verify_params()
         if convert_lognormal:
             self.convert_lognormal_values()
-        self.verify_params()
 
     def verify_params(self, params=None, uncertainty_type=None):
         """Verify that parameters are within bounds. Mean is not restricted to bounds, unless the distribution requires it (e.g. triangular)."""
@@ -48,10 +48,10 @@ class RandomNumberGenerator(object):
             raise UnknownUncertaintyType
 
     def convert_lognormal_values(self, params=None):
-        if params == None:
+        if params is None:
             params = self.params
         if self.uncertainty_type == LognormalUncertainty:
-            LognormalUncertainty.transform_negative(params)
+            LognormalUncertainty.set_negative_flag(params)
 
     def generate_random_numbers(self, uncertainty_type=None, params=None,
             size=None):
@@ -84,8 +84,8 @@ The generation of numbers for individual distributions is to left to the distrib
         self.maximum_iterations = maximum_iterations
         self.choices = UncertaintyChoices()
         self.random = random.RandomState(seed)
-        self.params = self.convert_lognormal_values(self.params)
         self.verify_params()
+        self.convert_lognormal_values(self.params)
 
         self.sorted = not sort
         if not self.sorted:
@@ -113,7 +113,7 @@ The generation of numbers for individual distributions is to left to the distrib
             params = self.params
         lognormal_mask = params['uncertainty_type'] == \
             LognormalUncertainty.id
-        params[lognormal_mask] = LognormalUncertainty.transform_negative(
+        LognormalUncertainty.set_negative_flag(
             params[lognormal_mask])
         return params
 
