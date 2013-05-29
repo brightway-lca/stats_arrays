@@ -3,7 +3,7 @@ from ..errors import InvalidParamsError,\
     ImproperBoundsError, UnreasonableBoundsError, \
     MaximumIterationsError
 from ..utils import one_row_params_array, construct_params_array
-from numpy import isnan, array
+import numpy as np
 
 
 class UncertaintyBase(object):
@@ -42,7 +42,7 @@ class UncertaintyBase(object):
 
 * params : A :ref:`params-array`."""
         # No mean value
-        if isnan(params['loc']).sum():
+        if np.isnan(params['loc']).sum():
             raise InvalidParamsError("Mean values must always be defined.")
         # Minimum <= Maximum
         if (params['minimum'] >= params['maximum']).sum():
@@ -56,7 +56,7 @@ class UncertaintyBase(object):
     def check_2d_inputs(cls, params, vector):
         if len(vector.shape) == 1:
             # Slices from structured arrays can't always be resized
-            vector = array(vector)
+            vector = np.array(vector)
             # Transform to 2-dimensional
             vector.resize(vector.shape[0], 1)
         if params.shape[0] != vector.shape[0]:
@@ -204,13 +204,29 @@ An array of cumulative densities, bounded on (0,1), with `params` rows and `vect
 A tuple of a vactor x values and a vector of y values. Y values are a one-dimensional array of probability densities, bounded on (0,1), with length `xs`, if provided, or `cls.default_number_points_in_pdf`."""
         raise NotImplementedError
 
+    @classmethod
+    def set_negative_flag(cls, params):
+        """
+        Set the ``negative`` flag for distributions where negative ``loc`` values are not allowed.
+
+        .. rubric:: Inputs
+
+        * params : :ref:`params-array`.
+
+        Operates in place.
+
+        """
+        params['negative'] = params['loc'] < 0
+        params['loc'] = np.abs(params['loc'])
+
+
 
 class BoundedUncertaintyBase(UncertaintyBase):
     """An uncertainty distribution where minimum and maximum bounds are required. No bounds checking is required for these distributions, as bounds are integral inputs into the sample space generator."""
     @classmethod
     def validate(cls, params):
         super(BoundedUncertaintyBase, cls).validate(params)
-        if isnan(params['minimum']).sum() or isnan(params['maximum']).sum():
+        if np.isnan(params['minimum']).sum() or np.isnan(params['maximum']).sum():
             raise ImproperBoundsError("This distribution require minimum and maximum values.")
 
     @classmethod
