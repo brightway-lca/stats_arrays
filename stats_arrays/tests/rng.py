@@ -53,7 +53,7 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
         params_array = self.make_params_array()
         params_array[0] = (0, 0, 1, False, 0.2, np.NaN, np.NaN)
         data = RandomNumberGenerator(LognormalUncertainty,
-            params_array, size=100).go()
+            params_array, size=100).next()
         self.assertTrue(0.8 < median(data) < 1.2)
 
     def test_negative_lognormal(self):
@@ -65,7 +65,7 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
             size=100,
             convert_lognormal=True
         )
-        data = R.go()
+        data = R.next()
         self.assertTrue(-0.8 > median(data) > -1.2)
 
         params_array[0] = (0, 0, -1, True, 0.2, np.NaN, np.NaN)
@@ -75,7 +75,7 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
             size=100,
             convert_lognormal=True
         )
-        data = R.go()
+        data = R.next()
         self.assertTrue(-0.8 > median(data) > -1.2)
 
         params_array[0] = (0, 0, 1, True, 0.2, np.NaN, np.NaN)
@@ -84,7 +84,7 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
             params_array,
             size=100
         )
-        data = R.go()
+        data = R.next()
         self.assertTrue(-0.8 > median(data) > -1.2)
 
     def test_bounded_lognormal(self):
@@ -94,7 +94,7 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
             LognormalUncertainty,
             params_array,
             size=100
-        ).go()
+        ).next()
         self.assertTrue(0.8 < np.median(data) < 1.2)
         self.assertTrue(data.min() >= 0.8)
 
@@ -103,7 +103,7 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
             LognormalUncertainty,
             params_array,
             size=100
-        ).go()
+        ).next()
         self.assertTrue(0.8 < median(data) < 1.2)
         self.assertTrue(data.max() <= 1.2)
 
@@ -112,7 +112,7 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
             LognormalUncertainty,
             params_array,
             size=100
-        ).go()
+        ).next()
         self.assertTrue(0.8 < median(data) < 1)
         self.assertTrue(data.min() >= 0.8)
         self.assertTrue(data.max() <= 1)
@@ -123,7 +123,7 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
             params_array,
             size=100,
             convert_lognormal=True
-        ).go()
+        ).next()
         self.assertTrue(-1.1 < median(data) < -0.5)
         self.assertTrue(data.min() >= -1.1)
         self.assertTrue(data.max() <= -0.5)
@@ -136,7 +136,7 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
             LognormalUncertainty,
             params_array,
             size=100
-        ).go()
+        ).next()
         self.assertTrue(0.8 < median(data) < 1)
         self.assertTrue(data.min() >= 0.8)
         self.assertTrue(data.max() <= 1)
@@ -147,10 +147,10 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
         params_array[0] = (0,0,1, False, np.NaN, np.NaN, np.NaN)
         params_array[1] = (0,0,1, False, np.NaN, np.NaN, np.NaN)
         data = RandomNumberGenerator(NoUncertainty, params_array,
-            size=10).go()
+            size=10).next()
         self.assertTrue(allclose(data, ones((2,10))))
         data = RandomNumberGenerator(UndefinedUncertainty,
-            params_array, size=10).go()
+            params_array, size=10).next()
         self.assertTrue(allclose(data, ones((2,10))))
 
     def test_data_size(self):
@@ -158,18 +158,18 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
         params_array[0] = (0,0,1, True, 0.5, 0, 2)
         params_array[1] = (0,0,1, True, 0.5, 0, 2)
         data = RandomNumberGenerator(NoUncertainty, params_array,
-            size=10).go()
+            size=10).next()
         self.assertEqual(data.shape, (2, 10))
         data = RandomNumberGenerator(NormalUncertainty, params_array,
-            size=10, convert_lognormal=True).go()
+            size=10, convert_lognormal=True).next()
         self.assertEqual(data.shape, (2, 10))
         params_array = self.make_params_array()
         params_array[0] = (0,0,1, False, 0.2, 0.8, np.NaN)
         data = RandomNumberGenerator(NoUncertainty, params_array,
-            size=10).go()
+            size=10).next()
         self.assertEqual(data.shape, (1, 10))
         data = RandomNumberGenerator(NormalUncertainty, params_array,
-            size=10).go()
+            size=10).next()
         self.assertEqual(data.shape, (1, 10))
 
     def test_bernoulli(self):
@@ -177,7 +177,7 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
         params_array[0] = (0, 0, 0.2, True, np.NaN, 0, 1)
         params_array[1] = (0, 0, 0.8, True, np.NaN, 0, 1)
         data = RandomNumberGenerator(BernoulliUncertainty,
-            params_array, size=500).go()
+            params_array, size=500).next()
         self.assertTrue(0.45 < average(data) < 0.55)
         self.assertTrue(0.15 < average(data[1, :]) < 0.25)
         self.assertTrue(0.75 < average(data[0, :]) < 0.85)
@@ -187,5 +187,5 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
         params_array[0] = (0,0,1, False, 0.2, 0.8, np.NaN)
         R = RandomNumberGenerator(LognormalUncertainty, params_array.copy(),
             size=1, convert_lognormal=True, seed=111)
-        self.assertTrue(allclose(array([ 1.07989503]), R.go()[0]))
+        self.assertTrue(allclose(array([ 1.07989503]), R.next()[0]))
 
