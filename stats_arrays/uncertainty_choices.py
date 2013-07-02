@@ -1,6 +1,7 @@
 from .distributions import *
+import warnings
 
-DEFAULT_DISTRIBUTIONS = (
+DISTRIBUTIONS = (
     UndefinedUncertainty,
     NoUncertainty,
     LognormalUncertainty,
@@ -11,12 +12,10 @@ DEFAULT_DISTRIBUTIONS = (
     BetaUncertainty,
     DiscreteUniform
 )
-CUSTOM_DISTRIBUTIONS = ()
-DISTRIBUTIONS = DEFAULT_DISTRIBUTIONS + CUSTOM_DISTRIBUTIONS
 
 
 class UncertaintyChoices(object):
-    """An iterable for uncertainty choices"""
+    """An container for uncertainty distributions."""
     def __init__(self):
         # Sorted by id
         self.choices = sorted(DISTRIBUTIONS, key=lambda x: x.id)
@@ -39,9 +38,13 @@ class UncertaintyChoices(object):
     def __len__(self):
         return len(self.id_dict)
 
-    @property
-    def choices_tuple(self):
-        """Formatted for Django ChoiceField"""
-        return [(obj.id, obj.description) for obj in self.choices]
+    def add(self, distribution):
+        if not hasattr(distribution, "id") and isinstance(distributions.id, int):
+            raise ValueError("Uncertainty distributions must have integer `id` attribute.")
+        if distribution.id in self.id_dict:
+            warnings.warn("This distribution (id %s) is already present" % distribution.id)
+            return
+        self.choices.append(distribution)
+        self.id_dict[distribution.id] = distribution
 
 uncertainty_choices = UncertaintyChoices()

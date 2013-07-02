@@ -2,36 +2,62 @@
 from __future__ import division
 from .errors import UnknownUncertaintyType
 from .uncertainty_choices import *
-from numpy import array, zeros, random, hstack, arange, isnan, tile, argsort
+import numpy as np
 
 
 class RandomNumberGenerator(object):
     def __init__(self, uncertainty_type, params, size=1,
-            convert_lognormal=False, maximum_iterations=100, seed=None,
-            **kwargs):
-        """params is a structured array, with three different datatypes. The columns, columns labels, and datatypes are:
-            input: Input id. Unsigned int.
-            output: Output id. Unsigned int.
-            mean: Mean, mode for triangular, can be geometric mean for lognormal is convert_lognormal is True. Float.
-            negative: Mean is negative. Needed for neagtive lognormals. Boolean.
-            scale: Sigma. Default is NaN. Float.
-            minimum: Miniumum. Default is NaN. Float.
-            maximum: Maximum. Default is NaN. Float.
+                 maximum_iterations=100, seed=None,
+                 **kwargs):
+        """
+Create a random number generator from a :ref:`params-array` and an uncertainty distribution.
 
-        The call is create params is:
-            params = zeros((size,), dtype=[('mean', 'f4'), ('negative', 'b1'), ('scale', 'f4'), ('minimum', 'f4'), ('maximum', 'f4')])
-            params['maximum'] = params['minimum'] = params['scale'] = NaN"""
+Upon instantiation, the class checks that:
+
+* The ``minimum`` and ``maximum`` bounds, if any, are reasonable
+* The given uncertainty type can be used
+
+``uncertainty_type`` is not required to be a subclass of :ref:`UncertaintyBase`, but needs to have the method ``bounded_random_variables``.
+
+The returned class instance can be called directly::
+
+    >>> from stats_arrays import RandomNumberGenerator, TriangularUncertainty
+    >>> params = TriangularUncertainty.from_dicts(
+    ...     {'loc': 5, 'minimum': 3, 'maximum': 10},
+    ...     {'loc': 1, 'minimum': 0.7, 'maximum': 4.4}
+    ...     )
+    >>> rng = RandomNumberGenerator(TriangularUncertainty, params)
+    >>> rng.generate_random_numbers()
+    array([[ 8.00843856],
+       [ 1.54968237]])
+
+but can also be used as an iterator::
+
+    >>> zip(range(2), rng)
+    [(0, array([[ 5.34298156],
+       [ 1.02447677]])),
+     (1, array([[ 5.45360508],
+       [ 1.99372889]]))]
+
+Args:
+    * **uncertainty_type** (object): An uncertainty type class (subclass of ``stats_arrays.distributions.UncertaintyBase``)
+    * **params** (array): The :ref:`params-array`
+    * *size* (int, optional): The number of samples to draw from each parameter. Default is ``1``.
+    * *maximum_iterations* (int, optional): The number of times to draw samples that fit within the given bounds, if any, before raising ``stats_arrays.MaximumIterationsError``. Default is ``100``.
+    * *seed* (int, optional): Seed value for the random number generator. Default is ``None``.
+
+Returns:
+    A class instance
+
+        """
         self.params = params
         self.length = self.params.shape[0]
         self.size = size
         self.uncertainty_type = uncertainty_type
         self.maximum_iterations = maximum_iterations
-        # Needed even if seed=None because of celery & multiprocessing issues
-        self.random = random.RandomState(seed)
+        self.random = np.random.RandomState(seed)
         self.verify_uncertainty_type()
         self.verify_params()
-        if convert_lognormal:
-            self.convert_lognormal_values()
 
     def verify_params(self, params=None, uncertainty_type=None):
         """Verify that parameters are within bounds. Mean is not restricted to bounds, unless the distribution requires it (e.g. triangular)."""
@@ -42,84 +68,101 @@ class RandomNumberGenerator(object):
         uncertainty_type.validate(params)
 
     def verify_uncertainty_type(self, uncertainty_type=None):
+        """Make sure the given uncertainty type provides the method ``bounded_random_variables``."""
         if not uncertainty_type:
             uncertainty_type = self.uncertainty_type
-        if uncertainty_type not in UncertaintyChoices():
-            raise UnknownUncertaintyType
-
-    def convert_lognormal_values(self, params=None):
-        if params is None:
-            params = self.params
-        if self.uncertainty_type == LognormalUncertainty:
-            LognormalUncertainty.set_negative_flag(params)
+        if not hasattr(uncertainty_type, "bounded_random_variables"):
+            raise UnknownUncertaintyType(
+                "The provided uncertainty type must have the "
+                "`bounded_random_variables` method."
+            )
 
     def generate_random_numbers(self, uncertainty_type=None, params=None,
-            size=None):
+                                size=None):
         if not uncertainty_type:
             uncertainty_type = self.uncertainty_type
-        if params == None:  # Can't convert array to boolean
+        if params is None:  # Can't convert array to boolean
             params = self.params
         if not size:
             size = self.size
-        return uncertainty_type.bounded_random_variables(params, size,
-            self.random, self.maximum_iterations)
+        return uncertainty_type.bounded_random_variables(
+            params,
+            size,
+            self.random,
+            self.maximum_iterations
+        )
 
-    def go(self):
-        # Shortcut
+    def next(self):
         return self.generate_random_numbers()
 
+    def __iter__(self):
+        return self
 
-class MCRandomNumberGenerator(RandomNumberGenerator):
-    """
-A random number generator that understands the exchange array produced by the LCA class.
 
-The generation of numbers for individual distributions is to left to the distributions themselves. This class expects a structured array with the standard uncertainty columns (loc, scale, etc.) and a integer column of uncertainty_type ids.
+class MCRandomNumberGenerator(object):
     """
-    def __init__(self, params, maximum_iterations=50, seed=None, sort=True,
-            **kwargs):
+A Monte Carlo random number generator that operates on a :ref:`hpa`.
+
+Upon instantiation, the class checks that:
+
+* Each unique ``uncertainty_type`` is a valid choice in ``uncertainty_choices``
+* That the parameter array for each uncertainty type validates
+
+The returned class instance can be called directly with ``next``, or can be used as an iterator::
+
+    >>> from stats_arrays import MCRandomNumberGenerator, UncertaintyBase
+    >>> params = UncertaintyBase.from_dicts(
+    ...     {'loc': 5, 'minimum': 3, 'maximum': 10, 'uncertainty_type': 5},
+    ...     {'loc': 1, 'scale': 0.7, 'uncertainty_type': 3}
+    ...     )
+    >>> mcrng = MCRandomNumberGenerator(params)
+    >>> zip(range(2), mcrng)
+    [(0, array([ 1.35034874,  5.2705415 ])),
+     (1, array([ 5.2705415 ,  1.35034874]))]
+
+Args:
+    * **params** (array): The :ref:`hpa`
+    * *maximum_iterations* (int, optional): The number of times to draw samples that fit within the given bounds, if any, before raising ``stats_arrays.MaximumIterationsError``. Default is ``100``.
+    * *seed* (int, optional): Seed value for the random number generator. Default is ``None``.
+
+Returns:
+    A class instance
+
+    """
+    def __init__(self, params, maximum_iterations=50, seed=None, **kwargs):
         self.params = params.copy()
         self.length = self.params.shape[0]
-        # Only one value form each distribution instance
-        self.size = 1
         self.maximum_iterations = maximum_iterations
-        self.choices = UncertaintyChoices()
-        self.random = random.RandomState(seed)
+        self.choices = uncertainty_choices
+        self.random = np.random.RandomState(seed)
         self.verify_params()
-        self.convert_lognormal_values(self.params)
-
-        self.sorted = not sort
-        if not self.sorted:
-            self.ordering = argsort(self.params["uncertainty_type"])
-            self.params = self.params[self.ordering]
-
+        self.ordering = np.argsort(self.params["uncertainty_type"])
+        self.params = self.params[self.ordering]
         self.positions = self.get_positions()
 
     def get_positions(self):
-        """Construct dictionary of where each distribution stops/starts"""
-        d = {}
-        for choice in self.choices:
-            d[choice] = (self.params['uncertainty_type'] == choice.id).sum()
-        return d
+        """Construct dictionary of where each distribution starts and stops in the sorted parameter array"""
+        return dict([(choice, (self.params['uncertainty_type'] == choice.id).sum()
+                      ) for choice in self.choices])
 
     def verify_params(self):
-        """Verify parameters using distribution class methods"""
+        """Verify that all uncertainty types are allowed, and parameter validate using distribution class methods"""
+        ids = set(np.unique(self.params['uncertainty_type']))
+        extra_ids = ids.difference(set([x.id for x in self.choices]))
+        if extra_ids:
+            raise ValueError(
+                "Uncertainty type id(s) %s are not valid" % extra_ids
+            )
+
         for uncertainty_type in self.choices:
             mask = self.params['uncertainty_type'] == uncertainty_type.id
             if mask.sum():
                 uncertainty_type.validate(self.params[mask])
 
-    def convert_lognormal_values(self, params=None):
-        if params is None:
-            params = self.params
-        lognormal_mask = params['uncertainty_type'] == \
-            LognormalUncertainty.id
-        LognormalUncertainty.set_negative_flag(
-            params[lognormal_mask])
-        return params
-
     def next(self):
+        """Generate a new vector of random numbers"""
         if not hasattr(self, "random_data"):
-            self.random_data = zeros(self.length)
+            self.random_data = np.zeros(self.length)
 
         offset = 0
         for uncertainty_type in self.choices:
@@ -127,17 +170,21 @@ The generation of numbers for individual distributions is to left to the distrib
             if not size:
                 continue
             random_data = uncertainty_type.bounded_random_variables(
-                self.params[offset:size + offset], self.size, self.random,
-                self.maximum_iterations)
+                self.params[offset:size + offset],
+                1,
+                self.random,
+                self.maximum_iterations
+            )
             if len(random_data.shape) == 2:
                 random_data = random_data[:, 0]  # Restore to 1-d
             self.random_data[offset:size + offset] = random_data
             offset += size
 
-        if not self.sorted:
-            self.random_data = self.random_data[argsort(self.ordering)]
-
+        self.random_data = self.random_data[np.argsort(self.ordering)]
         return self.random_data
+
+    def __iter__(self):
+        return self
 
 
 class LatinHypercubeRNG(MCRandomNumberGenerator):
@@ -153,19 +200,12 @@ A random number generator that pre-calculates a sample space to draw from.
     def __init__(self, params, seed=None, samples=10, **kwargs):
         self.params = params
         self.length = self.params.shape[0]
-        self.row_index = arange(self.length)
+        self.row_index = np.arange(self.length)
         self.size = 1
         self.samples = samples
-        self.choices = UncertaintyChoices()
-
-        if seed:
-            self.random = random.RandomState(seed)
-        else:
-            self.random = random
-
+        self.choices = uncertainty_choices
+        self.random = np.random.RandomState(seed)
         self.uncertainty_type = None
-        self.convert_lognormal = False
-        self.convert_lognormal_values()
 
         self.verify_params()
         self.build_hypercube()
@@ -191,13 +231,13 @@ self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
             subarray = self.params[mask]
             # Adjust inputs when bounds are present. Easiest to do in three
             # discrete steps. First, when only a lower bound is present.
-            only_min_mask = ~isnan(subarray['minimum']) * \
+            only_min_mask = ~np.isnan(subarray['minimum']) * \
                 isnan(subarray['maximum'])
             if only_min_mask.sum():
                 mins = uncertainty_type.cdf(subarray[only_min_mask],
                     subarray[only_min_mask]['minimum'])
                 steps = (1 - mins) / (self.samples + 1)
-                inputs[mask, :][only_min_mask] = hstack((mins + steps,
+                inputs[mask, :][only_min_mask] = np.hstack((mins + steps,
                     steps))
             # Next, if only a max bound is present
             only_max_mask = isnan(subarray['minimum']) * \

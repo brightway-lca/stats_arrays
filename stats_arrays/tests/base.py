@@ -38,24 +38,12 @@ class UncertaintyTestCase(unittest.TestCase):
         """UncertaintyBase: Mean exists, and bounds are ok if present."""
         params = self.make_params_array(1)
         params['maximum'] = 2
-        params['loc'] = 1.6
-        # Minimum too big
-        params['minimum'] = 1.8
-        self.assertRaises(ImproperBoundsError, UncertaintyBase.validate,
-            params)
-        # Mean above max
-        params['minimum'] = 1
-        params['loc'] = 2.5
-        self.assertRaises(ImproperBoundsError, UncertaintyBase.validate,
-            params)
-        # Mean below min
-        params['loc'] = 0.5
-        self.assertRaises(ImproperBoundsError, UncertaintyBase.validate,
-            params)
-        # No mean
-        params['loc'] = NaN
-        self.assertRaises(InvalidParamsError, UncertaintyBase.validate,
-            params)
+        params['minimum'] = 2.1
+        self.assertRaises(
+            ImproperBoundsError,
+            UncertaintyBase.validate,
+            params
+        )
 
     # def test_random_timing(self):
     #     import time

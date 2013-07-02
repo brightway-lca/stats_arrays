@@ -3,7 +3,7 @@ from numpy import *
 from scipy import stats
 from ...distributions import BetaUncertainty
 from ...errors import InvalidParamsError
-from ..uncertainty import UncertaintyTestCase
+from ..base import UncertaintyTestCase
 
 
 class BetaTestCase(UncertaintyTestCase):

@@ -4,3 +4,4 @@ syntax:glob
 dist
 MANIFEST
 build
+docs/_*

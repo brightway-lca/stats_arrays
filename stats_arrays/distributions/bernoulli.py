@@ -34,5 +34,8 @@ class BernoulliUncertainty(BoundedUncertaintyBase):
         percentages = cls.check_2d_inputs(params, percentages)
         adjusted_means, scale = cls.rescale(params)
         length = params.shape[0]
-        return (percentages >= adjusted_means.reshape(length, 1)) * \
-            scale.reshape(length, 1) + params['minimum'].reshape(length, 1)
+        return (
+            (percentages >= adjusted_means.reshape(length, 1))
+            * scale.reshape(length, 1)
+            + params['minimum'].reshape(length, 1)
+        )

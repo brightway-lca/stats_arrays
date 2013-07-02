@@ -30,3 +30,4 @@ class MultipleRowParamsArrayError(StandardError):
 
 class UnreasonableBoundsError(StandardError):
     """The provided bounds cover an unreasonably small section of the distribution sample space."""
+    pass

@@ -7,53 +7,132 @@ import numpy as np
 
 
 class UncertaintyBase(object):
-    """Abstract base class for uncertainty types. All methods on uncertainty classes should be `class methods <http://docs.python.org/library/functions.html#classmethod>`_, as instantiating uncertainty classes many times is not desired.
+    """
+Abstract base class for uncertainty types.
+
+All methods on uncertainty classes should be `class methods <http://docs.python.org/library/functions.html#classmethod>`_, as instantiating uncertainty classes many times is not desired.
 
 .. rubric:: Defaults
 
-* default_number_points_in_pdf : 200
-* standard_deviations_in_default_range : 3"""
+* ``default_number_points_in_pdf``: 200. The default number of points to calculate for PDF/CDF functions.
+* ``standard_deviations_in_default_range``: 3. The number of standard deviations that define the default range when calculating PDF/CDF values. In a normal distribution, 3 standard deviations is approximately 99% of all values.
+
+"""
     default_number_points_in_pdf = 200
     standard_deviations_in_default_range = 2.2
 
     ### Conversion utilities ###
     @classmethod
     def from_tuples(cls, *data):
-        params = construct_params_array(len(data))
+        """
+Construct a :ref:`hpa` from parameter tuples.
+
+The order of the parameters is:
+
+#. ``loc``
+#. ``scale``
+#. ``shape``
+#. ``minimum``
+#. ``maximum``
+#. ``negative``
+#. ``uncertainty_type``
+
+Each input tuple must have a length of exactly 7. For more flexibility, use ``from_dicts``.
+
+Example:
+
+.. code-block:: python
+
+    >>> from stats_arrays import UncertaintyBase
+    >>> import numpy as np
+    >>> UncertaintyBase.from_tuples(
+    ...     (2, 3, np.NaN, np.NaN, np.NaN, False, 3),
+    ...     (5, np.NaN, np.NaN, 3, 10, False, 5)
+    ...     )
+    array([(2.0, 3.0, nan, nan, nan, False, 3),
+           (5.0, nan, nan, 3.0, 10.0, False, 5)],
+           dtype=[('loc', '<f8'), ('scale', '<f8'), ('shape', '<f8'),
+                  ('minimum', '<f8'), ('maximum', '<f8'), ('negative', '?'),
+                  ('uncertainty_type', 'u1')])
+
+Args:
+    One of more tuples of length 7.
+
+Returns:
+    A :ref:`hpa`
+
+        """
+        params = construct_params_array(len(data), True)
         for index, row in enumerate(data):
-            if len(row) < 5:
-                row = row + (0,) * (5 - len(row))
             params[index] = row
         return params
 
     @classmethod
     def from_dicts(cls, *dicts):
-        params = construct_params_array(len(dicts))
-        for key in set.union(*(set(x.keys()) for x in dicts)):
-            params[key] = tuple([x[key] for x in dicts])
+        """
+Construct a :ref:`hpa` from parameter dictionaries.
+
+Dictionary keys are the normal parameter array columns. Each distribution defines which columns are required and which are optional.
+
+Example:
+
+.. code-block:: python
+
+    >>> from stats_arrays import UncertaintyBase
+    >>> import numpy as np
+    >>> UncertaintyBase.from_dicts(
+    ...     {'loc': 2, 'scale': 3, 'uncertainty_type': 3},
+    ...     {'loc': 5, 'minimum': 3, 'maximum': 10, 'uncertainty_type': 5}
+    ...     )
+    array([(2.0, 3.0, nan, nan, nan, False, 3),
+           (5.0, nan, nan, 3.0, 10.0, False, 5)],
+           dtype=[('loc', '<f8'), ('scale', '<f8'), ('shape', '<f8'),
+                  ('minimum', '<f8'), ('maximum', '<f8'), ('negative', '?'),
+                  ('uncertainty_type', 'u1')])
+
+Args:
+    One of more dictionaries.
+
+Returns:
+    A :ref:`hpa`
+
+        """
+        LABELS = [
+            ('loc', np.NaN),
+            ('scale', np.NaN),
+            ('shape', np.NaN),
+            ('minimum', np.NaN),
+            ('maximum', np.NaN),
+            ('negative', False),
+            ('uncertainty_type', 0),
+        ]
+        params = construct_params_array(len(dicts), True)
+        for index, obj in enumerate(dicts):
+            data = [obj.get(key, default) for key, default in LABELS]
+            params[index] = tuple(data)
         return params
 
     ### Utility methods ###
     @classmethod
     def validate(cls, params):
-        """Validate params array for uncertainty distribution. Should validate only against uncertainty parameters needed for the distribution, and raise an error in case of invalid values.
+        """
+Validate the parameter array for uncertainty distribution.
 
-.. rubric:: Inputs
+Validation is distribution specific. The only default check is that ``minimum`` is less than or equal to ``maximum``, and otherwise raises ``stats_arrays.ImproperBoundsError``.
 
-* params : A :ref:`params-array`."""
-        # No mean value
-        if np.isnan(params['loc']).sum():
-            raise InvalidParamsError("Mean values must always be defined.")
+Doesn't return anything.
+
+Args:
+    A :ref:`params-array`.
+
+    """
         # Minimum <= Maximum
         if (params['minimum'] >= params['maximum']).sum():
-            raise ImproperBoundsError
-        # Mean out of (minimum, maximum) range
-        if (params['minimum'] > params['loc']).sum() or (
-                params['maximum'] < params['loc']).sum():
             raise ImproperBoundsError
 
     @classmethod
     def check_2d_inputs(cls, params, vector):
+        """Convert ``vector`` to 2 dimensions if not already, and raise ``stats_arrays.InvalidParamsError`` if ``vector`` and ``params`` dimensions don't match."""
         if len(vector.shape) == 1:
             # Slices from structured arrays can't always be resized
             vector = np.array(vector)
@@ -66,7 +145,10 @@ class UncertaintyBase(object):
     @classmethod
     @one_row_params_array
     def check_bounds_reasonableness(cls, params, threshold=0.1):
-        """Test if there is at least a `threshold` percent chance of generating random numbers within the provided bounds. Raises UnreasonableBoundsError is this condition is not met.
+        """
+Test if there is at least a ``threshold`` percent chance of generating random numbers within the provided bounds.
+
+Doesn't return anything. Raises ``stats_arrays.UnreasonableBoundsError`` if this condition is not met.
 
 .. rubric:: Inputs
 
@@ -203,22 +285,6 @@ An array of cumulative densities, bounded on (0,1), with `params` rows and `vect
 
 A tuple of a vactor x values and a vector of y values. Y values are a one-dimensional array of probability densities, bounded on (0,1), with length `xs`, if provided, or `cls.default_number_points_in_pdf`."""
         raise NotImplementedError
-
-    @classmethod
-    def set_negative_flag(cls, params):
-        """
-        Set the ``negative`` flag for distributions where negative ``loc`` values are not allowed.
-
-        .. rubric:: Inputs
-
-        * params : :ref:`params-array`.
-
-        Operates in place.
-
-        """
-        params['negative'] = params['loc'] < 0
-        params['loc'] = np.abs(params['loc'])
-
 
 
 class BoundedUncertaintyBase(UncertaintyBase):
