@@ -1,5 +1,4 @@
-from ...errors import ImproperBoundsError, \
-    InvalidParamsError
+from ...errors import InvalidParamsError
 from ...distributions import LognormalUncertainty as LU
 from ..base import UncertaintyTestCase
 from scipy.special import erf
@@ -83,26 +82,15 @@ class LognormalTestCase(UncertaintyTestCase):
         ))
 
     def test_validation(self):
-        self.assertRaises(
-            InvalidParamsError,
-            LU.validate,
-            LU.from_dicts({'loc': 0.1, 'scale': np.NaN})
-        )
-        self.assertRaises(
-            InvalidParamsError,
-            LU.validate,
-            LU.from_dicts({'loc': np.NaN, 'scale': 0.1})
-        )
-        self.assertRaises(
-            InvalidParamsError,
-            LU.validate,
-            LU.from_dicts({'loc': -0.1, 'scale': 0.1})
-        )
-        self.assertRaises(
-            InvalidParamsError,
-            LU.validate,
-            LU.from_dicts({'loc': 0.1, 'scale': -0.1})
-        )
+        dicts = [
+            {'loc': np.NaN, 'scale': 0.1},
+            {'loc': 0.1, 'scale': np.NaN},
+            {'loc': -0.1, 'scale': 0.1},
+            {'loc': 0.1, 'scale': -0.1}
+        ]
+        for d in dicts:
+            with self.assertRaises(InvalidParamsError):
+                LU.validate(LU.from_dicts(d))
 
     def test_seeded_random(self):
         mu, sigma = np.random.random() / 5 + 0.2, np.random.random() / 10 + 0.1
@@ -119,7 +107,7 @@ class LognormalTestCase(UncertaintyTestCase):
         pa = LU.from_dicts({'loc': mu, 'scale': sigma})
         sample = LU.random_variables(pa, size=1e5).ravel()
         sample.sort()
-        self.assertTrue(np.allclose(np.median(sample), median, 0.001))
+        self.assertTrue(np.allclose(np.median(sample), median, 0.01))
         self.assertTrue(np.allclose(sample[97500], ci_upper_975, 0.01))
 
     def test_rng_negative(self):
