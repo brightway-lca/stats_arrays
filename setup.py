@@ -12,5 +12,5 @@ setup(
         'stats_arrays.tests'
     ],
     license='BSD 2-clause; LICENSE.txt',
-    long_description=open('README.txt').read(),
+    long_description=open('README.rst').read(),
 )
