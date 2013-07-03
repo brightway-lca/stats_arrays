@@ -26,13 +26,14 @@ Example
     ... )
     >>> my_variables
     array([(2.0, 0.5, nan, nan, nan, False, 3),
-       (1.5, nan, nan, 0.0, 10.0, False, 5)],
+           (1.5, nan, nan, 0.0, 10.0, False, 5)],
         dtype=[('loc', '<f8'), ('scale', '<f8'), ('shape', '<f8'),
                ('minimum', '<f8'), ('maximum', '<f8'), ('negative', '?'),
                ('uncertainty_type', 'u1')])
     >>> my_rng = MCRandomNumberGenerator(my_variables)
     >>> my_rng.next()
     array([ 2.74414022,  3.54748507])
+    >>> # can also be used as an interator
     >>> zip(my_rng, xrange(10))
     [(array([ 2.96893108,  2.90654471]), 0),
      (array([ 2.31190619,  1.49471845]), 1),
