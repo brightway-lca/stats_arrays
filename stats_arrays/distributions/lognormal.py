@@ -13,15 +13,15 @@ class LognormalUncertainty(UncertaintyBase):
     @classmethod
     def validate(cls, params):
         """Custom validation because mean gets log-transformed"""
-        if np.isnan(params['scale']).sum() or (params['scale'] <= 0).sum():
+        if np.isnan(params['loc']).sum() or (params['loc'] <= 0).sum():
             raise InvalidParamsError(
-                "Real, positive scale (mu) values are required for"
+                "Real, positive location (mu) values are required for"
                 " lognormal uncertainties. Negative mu's should have"
                 "``negative`` column set."
             )
-        if np.isnan(params['shape']).sum() or (params['shape'] <= 0).sum():
+        if np.isnan(params['scale']).sum() or (params['scale'] <= 0).sum():
             raise InvalidParamsError(
-                "Real, positive shape (sigma) values are required for"
+                "Real, positive scale (sigma) values are required for"
                 " lognormal uncertainties."
             )
 
@@ -30,8 +30,8 @@ class LognormalUncertainty(UncertaintyBase):
         if not seeded_random:
             seeded_random = np.random
         data = seeded_random.lognormal(
-            params['scale'],  # Mu
-            params['shape'],  # Sigma
+            params['loc'],  # Mu
+            params['scale'],  # Sigma
             size=(size, params.shape[0])
         ).T
         # Negative is needed because log loses sign information.
@@ -42,16 +42,13 @@ class LognormalUncertainty(UncertaintyBase):
     @classmethod
     def cdf(cls, params, vector):
         vector = cls.check_2d_inputs(params, vector)
-        # Vector is now shape (1,n).
-        # Flip sign of input parameters, just as mu values
-        # were flipped.
         vector[params['negative']] = -1 * vector[params['negative']]
         results = np.zeros(vector.shape)
         for row in range(params.shape[0]):
             results[row, :] = stats.lognorm.cdf(
                 vector[row, :],
                 params['scale'][row],
-                scale=params['loc'][row]
+                scale=np.exp(params['loc'][row])
             )
         return results
 
@@ -62,21 +59,19 @@ class LognormalUncertainty(UncertaintyBase):
         for row in range(percentages.shape[0]):
             results[row, :] = stats.lognorm.ppf(
                 percentages[row, :],
-                params['shape'][row],
-                scale=params['scale'][row]
+                params['scale'][row],
+                scale=np.exp(params['loc'][row])
             )
         results[params['negative']] = -1 * results[params['negative']]
         return results
 
     @classmethod
     @one_row_params_array
-    def statistics(cls, params, transform=False):
-        if transform:
-            cls.set_negative_flag(params)
+    def statistics(cls, params):
         negative = -1 if bool(params['negative']) else 1
-        geometric_mu = float(np.exp(params['scale']))
-        sigma = float(params['shape'])
-        mu = float(params['scale'])
+        geometric_mu = float(np.exp(params['loc']))
+        sigma = float(params['scale'])
+        mu = float(params['loc'])
         geometric_sigma = float(np.exp(sigma))
         mean = np.exp(mu + (sigma ** 2) / 2)
         mode = np.exp(mu - sigma ** 2)
@@ -116,7 +111,9 @@ class LognormalUncertainty(UncertaintyBase):
             ).ravel()
             print xs.shape
 
-        ys = stats.lognorm.pdf(xs, params['shape'], scale=params['scale'])
+        if params['negative']:
+            xs = -1 * xs
+        ys = stats.lognorm.pdf(xs, params['scale'], scale=np.exp(params['loc']))
         if params['negative']:
             xs = -1 * xs
         return xs, ys.ravel()
