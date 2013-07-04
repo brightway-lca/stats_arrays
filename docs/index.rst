@@ -46,6 +46,8 @@ Example
      (array([ 1.77750176,  1.90119991]), 8),
      (array([ 2.32664152,  0.84490754]), 9)]
 
+See a `more complete notebook example <http://nbviewer.ipython.org/url/brightwaylca.org/examples/stats-arrays-demo.ipynb>`_.
+
 .. _params-array:
 
 Parameter array
