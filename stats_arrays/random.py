@@ -222,8 +222,10 @@ self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
         # Define the beginning points and step sizes - not all the same because
         # some distributions are bounded. Make adjustments to generic values
         # later.
-        inputs = tile(array((step_size, step_size)), self.length).reshape(
-            self.length, 2)
+        inputs = np.tile(
+            np.array((step_size, step_size)),
+            self.length
+        ).reshape(self.length, 2)
         for uncertainty_type in self.choices:
             mask = self.params['uncertainty_type'] == uncertainty_type.id
             if not mask.sum():
@@ -232,7 +234,7 @@ self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
             # Adjust inputs when bounds are present. Easiest to do in three
             # discrete steps. First, when only a lower bound is present.
             only_min_mask = ~np.isnan(subarray['minimum']) * \
-                isnan(subarray['maximum'])
+                np.isnan(subarray['maximum'])
             if only_min_mask.sum():
                 mins = uncertainty_type.cdf(subarray[only_min_mask],
                     subarray[only_min_mask]['minimum'])
@@ -240,30 +242,30 @@ self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
                 inputs[mask, :][only_min_mask] = np.hstack((mins + steps,
                     steps))
             # Next, if only a max bound is present
-            only_max_mask = isnan(subarray['minimum']) * \
-                ~isnan(subarray['maximum'])
+            only_max_mask = np.isnan(subarray['minimum']) * \
+                ~np.isnan(subarray['maximum'])
             if only_max_mask.sum():
                 maxs = uncertainty_type.cdf(subarray[only_max_mask],
                     subarray[only_max_mask]['maximum'])
                 steps = maxs / (self.samples + 1)
-                inputs[mask, :][only_max_mask] = hstack((steps, steps))
+                inputs[mask, :][only_max_mask] = np.hstack((steps, steps))
             # Finally, if both min and max bounds are present
-            both_mask = ~isnan(subarray['minimum']) * \
-                ~isnan(subarray['maximum'])
+            both_mask = ~np.isnan(subarray['minimum']) * \
+                ~np.isnan(subarray['maximum'])
             if both_mask.sum():
                 mins = uncertainty_type.cdf(subarray[both_mask],
                     subarray[both_mask]['minimum'])
                 maxs = uncertainty_type.cdf(subarray[both_mask],
                     subarray[both_mask]['maximum'])
                 steps = (maxs - mins) / (self.samples + 1)
-                inputs[mask, :][both_mask] = hstack((mins + steps,
+                inputs[mask, :][both_mask] = np.hstack((mins + steps,
                     steps))
         # Percentages is now a list, samples wide, of the percentages covered
         # by the bounded or unbounded distributions.
-        self.percentages = inputs[:, 0].reshape(self.length, 1) + arange(0,
+        self.percentages = inputs[:, 0].reshape(self.length, 1) + np.arange(0,
             self.samples, 1) * inputs[:, 1].reshape(self.length, 1)
         # Transform percentages into a sample space
-        self.hypercube = zeros((self.length, self.samples))
+        self.hypercube = np.zeros((self.length, self.samples))
         for uncertainty_type in self.choices:
             mask = self.params['uncertainty_type'] == uncertainty_type.id
             if not mask.sum():
@@ -274,7 +276,7 @@ self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
         self.hypercube[self.params['negative'], :] = \
             -1 * self.hypercube[self.params['negative'], :]
 
-    def iterate(self):
+    def next(self):
         """Draw directly from pre-computed sample space."""
         return self.hypercube[self.row_index,
             self.random.randint(self.samples, size=self.length)]
