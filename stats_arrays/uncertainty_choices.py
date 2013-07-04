@@ -10,7 +10,8 @@ DISTRIBUTIONS = (
     TriangularUncertainty,
     BernoulliUncertainty,
     BetaUncertainty,
-    DiscreteUniform
+    DiscreteUniform,
+    GammaUncertainty
 )
 
 
