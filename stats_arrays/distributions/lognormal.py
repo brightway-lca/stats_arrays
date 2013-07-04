@@ -13,11 +13,10 @@ class LognormalUncertainty(UncertaintyBase):
     @classmethod
     def validate(cls, params):
         """Custom validation because mean gets log-transformed"""
-        if np.isnan(params['loc']).sum() or (params['loc'] <= 0).sum():
+        if np.isnan(params['loc']).sum():
             raise InvalidParamsError(
-                "Real, positive location (mu) values are required for"
-                " lognormal uncertainties. Negative mu's should have"
-                "``negative`` column set."
+                "Real location (mu) values are required for"
+                " lognormal uncertainties."
             )
         if np.isnan(params['scale']).sum() or (params['scale'] <= 0).sum():
             raise InvalidParamsError(
