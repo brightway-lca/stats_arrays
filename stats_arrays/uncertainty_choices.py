@@ -11,7 +11,8 @@ DISTRIBUTIONS = (
     BernoulliUncertainty,
     BetaUncertainty,
     DiscreteUniform,
-    GammaUncertainty
+    GammaUncertainty,
+    WeibullUncertainty,
 )
 
 

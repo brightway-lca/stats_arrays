@@ -7,3 +7,4 @@ from .bernoulli import BernoulliUncertainty
 from .beta import BetaUncertainty
 from .discrete_uniform import DiscreteUniform
 from .gamma import GammaUncertainty
+from .weibull import WeibullUncertainty
