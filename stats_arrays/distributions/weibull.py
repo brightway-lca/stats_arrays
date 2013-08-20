@@ -1,6 +1,6 @@
 from __future__ import division
 from base import UncertaintyBase
-from stats_toolkit.errors import InvalidParamsError
+from ..errors import InvalidParamsError
 import numpy as np
 
 
