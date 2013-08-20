@@ -10,7 +10,7 @@ The generalized extreme value uncertainty distribution has the cumulative distri
 
 .. math:: f(x;\mu,\sigma,\xi) = \exp\left\{-\left[1+\xi\left(\frac{x-\mu}{\sigma}\right)\right]^{-1/\xi}\right\}
 
-In our implementation, :math:`\mu` is ``location``, :math:`\sigma` is ``scale``, and :math:`xi`  is ``shape``.
+In our implementation, :math:`\mu` is ``location``, :math:`\sigma` is ``scale``, and :math:`\xi`  is ``shape``.
 
 See http://en.wikipedia.org/wiki/Generalized_extreme_value_distribution.
     """
