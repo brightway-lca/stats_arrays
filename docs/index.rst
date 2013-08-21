@@ -105,19 +105,21 @@ Each uncertainty distribution has an integer ID number. See the table below for 
 Mapping parameter array columns to uncertainty distributions
 ------------------------------------------------------------
 
-======================= === =========================== =========================== =============== =============== ===============
-Name                    ID  ``loc``                     ``scale``                   ``shape``       ``minimum``             ``maximum``
-======================= === =========================== =========================== =============== =============== ===============
+======================= === =========================== =========================== ======================== =============== ===============
+Name                    ID  ``loc``                     ``scale``                   ``shape``                ``minimum``             ``maximum``
+======================= === =========================== =========================== ======================== =============== ===============
 Undefined               0   **static value**
 No uncertainty          1   **static value**
-:ref:`lognormal` [#]_   2   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                 *lower bound*   *upper bound*
-:ref:`normal` [#]_      3   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                 *lower bound*   *upper bound*
-Uniform [#]_            4                                                                           *minimum* [#]_  **maximum**
-Triangular [#]_         5   *mode* [#]_                                                             *minimum* [#]_  **maximum**
-:ref:`bernoulli` [#]_   6   **p**                                                                   *lower bound*   *upper bound*
-Discrete uniform [#]_   7                                                                           *minimum* [#]_  **upper bound**
+:ref:`lognormal` [#]_   2   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                          *lower bound*   *upper bound*
+:ref:`normal` [#]_      3   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                          *lower bound*   *upper bound*
+Uniform [#]_            4                                                                                    *minimum* [#]_  **maximum**
+Triangular [#]_         5   *mode* [#]_                                                                      *minimum* [#]_  **maximum**
+:ref:`bernoulli` [#]_   6   **p**                                                                            *lower bound*   *upper bound*
+Discrete uniform [#]_   7                                                                                    *minimum* [#]_  **upper bound**
 :ref:`beta`             10  :math:`\boldsymbol{\alpha}` :math:`\boldsymbol{\beta}`
-======================= === =========================== =========================== =============== =============== ===============
+:ref:`extreme`          11  :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}` :math:`\boldsymbol{\xi}`
+:ref:`students`         12  *median*                    *scale*                     :math:`\boldsymbol{\nu}`
+======================= === =========================== =========================== ======================== =============== ===============
 
 Items in **bold** are required, items in *italics* are optional.
 
@@ -159,6 +161,8 @@ Probability distributions
    distributions/triangular
    distributions/bernoulli
    distributions/beta
+   distributions/extreme
+   distributions/student
 
 Random number generators
 ------------------------
