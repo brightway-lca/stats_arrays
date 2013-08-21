@@ -9,3 +9,4 @@ from .discrete_uniform import DiscreteUniform
 from .gamma import GammaUncertainty
 from .weibull import WeibullUncertainty
 from .extreme import GeneralizedExtremeValueUncertainty
+from .student import StudentsTUncertainty
