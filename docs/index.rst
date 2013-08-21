@@ -105,40 +105,44 @@ Each uncertainty distribution has an integer ID number. See the table below for 
 Mapping parameter array columns to uncertainty distributions
 ------------------------------------------------------------
 
-======================= === =========================== =========================== ======================== =============== ===============
-Name                    ID  ``loc``                     ``scale``                   ``shape``                ``minimum``             ``maximum``
-======================= === =========================== =========================== ======================== =============== ===============
+======================= === =========================== ============================= =========================== =============== ===============
+Name                    ID  ``loc``                     ``scale``                     ``shape``                   ``minimum``             ``maximum``
+======================= === =========================== ============================= =========================== =============== ===============
 Undefined               0   **static value**
 No uncertainty          1   **static value**
-:ref:`lognormal` [#]_   2   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                          *lower bound*   *upper bound*
-:ref:`normal` [#]_      3   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                          *lower bound*   *upper bound*
-Uniform [#]_            4                                                                                    *minimum* [#]_  **maximum**
-Triangular [#]_         5   *mode* [#]_                                                                      *minimum* [#]_  **maximum**
-:ref:`bernoulli` [#]_   6   **p**                                                                            *lower bound*   *upper bound*
-Discrete uniform [#]_   7                                                                                    *minimum* [#]_  **upper bound**
+:ref:`lognormal` [#]_   2   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                               *lower bound*   *upper bound*
+:ref:`normal` [#]_      3   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                               *lower bound*   *upper bound*
+Uniform [#]_            4                                                                                         *minimum* [#]_  **maximum**
+Triangular [#]_         5   *mode* [#]_                                                                           *minimum* [#]_  **maximum**
+:ref:`bernoulli` [#]_   6   **p**                                                                                 *lower bound*   *upper bound*
+Discrete uniform [#]_   7                                                                                         *minimum* [#]_  **upper bound**
+:ref:`weibull`          8   *offset* [#]_               :math:`\boldsymbol{\lambda}`  :math:`\boldsymbol{k}`
+:ref:`gamma`            9   *offset* [#]_               :math:`\boldsymbol{\theta}`   :math:`\boldsymbol{k}`
 :ref:`beta`             10  :math:`\boldsymbol{\alpha}` :math:`\boldsymbol{\beta}`
-:ref:`extreme`          11  :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}` :math:`\boldsymbol{\xi}`
-:ref:`students`         12  *median*                    *scale*                     :math:`\boldsymbol{\nu}`
-======================= === =========================== =========================== ======================== =============== ===============
+:ref:`extreme`          11  :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`   :math:`\boldsymbol{\xi}`
+:ref:`students`         12  *median*                    *scale*                       :math:`\boldsymbol{\nu}`
+======================= === =========================== ============================= =========================== =============== ===============
 
 Items in **bold** are required, items in *italics* are optional.
 
-.. [#] `Lognormal distribution <http://en.wikipedia.org/wiki/Log-normal_distribution>`_. :math:`\mu` and :math:`\sigma` are the mean and standard deviation of the underlying normal distribution.
+.. [#] `Lognormal distribution <http://en.wikipedia.org/wiki/Log-normal_distribution>`_. :math:`\mu` and :math:`\sigma` are the mean and standard deviation of the underlying normal distribution
 .. [#] `Normal distribution <https://en.wikipedia.org/wiki/Normal_distribution>`_
 .. [#] `Uniform distribution <https://en.wikipedia.org/wiki/Uniform_distribution_(continuous)>`_
 .. [#] Default is 0 if not otherwise specified
 .. [#] `Triangular distribution <https://en.wikipedia.org/wiki/Triangular_distribution>`_
 .. [#] Default is :math:`(minimum + maximum) / 2`
 .. [#] Default is 0 if not otherwise specified
-.. [#] `Bernoulli distribution <https://en.wikipedia.org/wiki/Bernoulli_distribution>`_. If ``minimum`` **and** ``maximum`` are specified, :math:`p` is not limited to :math:`0 < p < 1`, but instead to the interval :math:`(minimum,maximum)`.
-.. [#] `Discrete uniform <https://en.wikipedia.org/wiki/Uniform_distribution_(discrete)>`_.
+.. [#] `Bernoulli distribution <https://en.wikipedia.org/wiki/Bernoulli_distribution>`_. If ``minimum`` **and** ``maximum`` are specified, :math:`p` is not limited to :math:`0 < p < 1`, but instead to the interval :math:`(minimum,maximum)`
+.. [#] `Discrete uniform <https://en.wikipedia.org/wiki/Uniform_distribution_(discrete)>`_
 .. [#] Default is 0 if not otherwise specified
+.. [#] Optional offset from the origin
+.. [#] Optional offset from the origin
 
 Unused columns can be given any value, but it is recommended that they are set to ``np.NaN``.
 
 .. warning::
 
-    The *minimum* and *maximum* columns must be set to ``np.NaN`` if no bounds are desired.
+    Unused optional columns **must** be set to ``np.NaN`` to avoid unexpected behaviour!
 
 Extending parameter arrays
 --------------------------
@@ -163,6 +167,8 @@ Probability distributions
    distributions/beta
    distributions/extreme
    distributions/student
+   distributions/gamma
+   distributions/weibull
 
 Random number generators
 ------------------------

@@ -5,16 +5,16 @@ import numpy as np
 
 
 class WeibullUncertainty(UncertaintyBase):
-    """
+    r"""
 The Weibull distribution has the probability distribution function:
 
 .. math:: f(x; k, \lambda) = \frac{k}{\lambda} \left( \frac{x}{\lambda} \right)^{k - 1} e^{- \left( x / \lambda \right)^{k}}
 
-In our implementation, :math:`\lambda` is ``scale``, and :math:`k`  is ``shape``.
+In our implementation, :math:`\lambda` is ``scale``, and :math:`k`  is ``shape``. An optional location parameter, which offsets the distribution from the origin, can be specified in ``loc``.
 
 See http://en.wikipedia.org/wiki/Weibull_distribution.
     """
-    id = 22
+    id = 8
     description = "Weibull uncertainty"
 
     @classmethod
@@ -31,7 +31,9 @@ See http://en.wikipedia.org/wiki/Weibull_distribution.
                          transform=False):
         if seeded_random is None:
             seeded_random = np.random
-        data = params['scale'].reshape((-1, 1)) * seeded_random.weibull(
+        offset = params['loc'].copy()
+        offset[np.isnan(offset)] = 0
+        data = offset + params['scale'].reshape((-1, 1)) * seeded_random.weibull(
             params['shape'],
             size=(size, params.shape[0])
         ).T

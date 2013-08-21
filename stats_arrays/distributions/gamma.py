@@ -1,35 +1,42 @@
 from __future__ import division
 from .base import UncertaintyBase
+from ..errors import InvalidParamsError
 import numpy as np
 
 
 class GammaUncertainty(UncertaintyBase):
-    """
-Gamma distribution.
+    r"""
+The Gamma uncertainty distribution probability density function as a function of :math:`k`, the shape parameters, and :math:`\theta`, the scale parameter:
 
-shape : scalar > 0
-    The shape of the gamma distribution.
-    Called "amount" in params array.
-scale : scalar > 0, optional
-    The scale of the gamma distribution.  Default is equal to 1.
-    Called "sigma" in params array.
+.. math:: f(x;k,\theta) =  \frac{x^{k-1}e^{-\frac{x}{\theta}}}{\theta^k\Gamma(k)}
 
+The scale parameter :math:`k` is ``shape``, and :math:`\theta` is ``scale``. An optional location parameter, which offsets the distribution from the origin, can be specified in ``loc``.
+
+See http://en.wikipedia.org/wiki/Gamma_distribution.
     """
 
-    id = 21
+    id = 9
     description = "Gamma uncertainty"
 
     @classmethod
     def validate(cls, params, transform=False):
-        return
+        if (params['shape'] <= 0).sum() or np.isnan(params['shape']).sum():
+            raise InvalidParamsError(
+                "Positive shape (k) values required for Gamma distribution."
+            )
+        if (params['scale'] <= 0).sum() or np.isnan(params['scale']).sum():
+            raise InvalidParamsError(
+                "Positive scale (theta) values required for Gamma distribution."
+            )
 
     @classmethod
     def random_variables(cls, params, size, seeded_random=None,
                          **kwargs):
-        if not seeded_random:
+        if seeded_random is None:
             seeded_random = np.random
-
-        data = seeded_random.gamma(
+        offset = params['loc'].copy()
+        offset[np.isnan(offset)] = 0
+        data = offset + seeded_random.gamma(
             shape=params['shape'],
             scale=params['scale'],
             size=(size, params.shape[0])).T
