@@ -11,6 +11,7 @@ class GeneralizedExtremeValueUncertaintyTestCase(UncertaintyTestCase):
         params = self.make_params_array()
         params['loc'] = 2
         params['scale'] = 5
+        # Formula for median (loc - scale * ln ln 2)
         expected_median = 2 - 5 * np.log(np.log(2))
         results = GEVU.random_variables(params, 10000)
         found_median = np.median(results)
