@@ -8,7 +8,11 @@ import numpy as np
 
 
 class DiscreteUniform(UncertaintyBase):
-    """Discrete uniform distribution. In SciPy, the uniform distribution is defined from loc to loc+scale."""
+    """
+The discrete uniform distribution includes all integer values from the ``minimum`` up to, but excluding the ``maximum``.
+
+See https://en.wikipedia.org/wiki/Uniform_distribution_(discrete).
+    """
     id = 7
     description = "Discrete uniform uncertainty"
 

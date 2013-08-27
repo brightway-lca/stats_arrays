@@ -12,7 +12,7 @@ The Weibull distribution has the probability distribution function:
 
 In our implementation, :math:`\lambda` is ``scale``, and :math:`k`  is ``shape``. An optional location parameter, which offsets the distribution from the origin, can be specified in ``loc``.
 
-See http://en.wikipedia.org/wiki/Weibull_distribution.
+See https://en.wikipedia.org/wiki/Weibull_distribution.
     """
     id = 8
     description = "Weibull uncertainty"
@@ -33,9 +33,11 @@ See http://en.wikipedia.org/wiki/Weibull_distribution.
             seeded_random = np.random
         offset = params['loc'].copy()
         offset[np.isnan(offset)] = 0
-        data = offset + params['scale'].reshape((-1, 1)) * seeded_random.weibull(
-            params['shape'],
-            size=(size, params.shape[0])
-        ).T
+        data = offset.reshape((-1, 1)) + \
+            params['scale'].reshape((-1, 1)) * \
+            seeded_random.weibull(
+                params['shape'],
+                size=(size, params.shape[0])
+            ).T
         data[params['negative'], :] = -1 * data[params['negative'], :]
         return data

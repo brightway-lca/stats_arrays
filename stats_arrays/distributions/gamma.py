@@ -12,7 +12,7 @@ The Gamma uncertainty distribution probability density function as a function of
 
 The scale parameter :math:`k` is ``shape``, and :math:`\theta` is ``scale``. An optional location parameter, which offsets the distribution from the origin, can be specified in ``loc``.
 
-See http://en.wikipedia.org/wiki/Gamma_distribution.
+See https://en.wikipedia.org/wiki/Gamma_distribution.
     """
 
     id = 9
@@ -36,7 +36,7 @@ See http://en.wikipedia.org/wiki/Gamma_distribution.
             seeded_random = np.random
         offset = params['loc'].copy()
         offset[np.isnan(offset)] = 0
-        data = offset + seeded_random.gamma(
+        data = offset.reshape((-1, 1)) + seeded_random.gamma(
             shape=params['shape'],
             scale=params['scale'],
             size=(size, params.shape[0])).T

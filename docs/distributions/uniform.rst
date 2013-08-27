@@ -1,3 +1,5 @@
+.. _uniform:
+
 Uniform
 *******
 

@@ -112,15 +112,15 @@ Undefined               0   **static value**
 No uncertainty          1   **static value**
 :ref:`lognormal` [#]_   2   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                               *lower bound*   *upper bound*
 :ref:`normal` [#]_      3   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                               *lower bound*   *upper bound*
-Uniform [#]_            4                                                                                         *minimum* [#]_  **maximum**
-Triangular [#]_         5   *mode* [#]_                                                                           *minimum* [#]_  **maximum**
+:ref:`uniform` [#]_     4                                                                                         *minimum* [#]_  **maximum**
+:ref:`triangular` [#]_  5   *mode* [#]_                                                                           *minimum* [#]_  **maximum**
 :ref:`bernoulli` [#]_   6   **p**                                                                                 *lower bound*   *upper bound*
-Discrete uniform [#]_   7                                                                                         *minimum* [#]_  **upper bound**
-:ref:`weibull`          8   *offset* [#]_               :math:`\boldsymbol{\lambda}`  :math:`\boldsymbol{k}`
-:ref:`gamma`            9   *offset* [#]_               :math:`\boldsymbol{\theta}`   :math:`\boldsymbol{k}`
-:ref:`beta`             10  :math:`\boldsymbol{\alpha}` :math:`\boldsymbol{\beta}`
-:ref:`extreme`          11  :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`   :math:`\boldsymbol{\xi}`
-:ref:`students`         12  *median*                    *scale*                       :math:`\boldsymbol{\nu}`
+:ref:`discreteu` [#]_   7                                                                                         *minimum* [#]_  **upper bound** [#]_
+:ref:`weibull` [#]_     8   *offset* [#]_               :math:`\boldsymbol{\lambda}`  :math:`\boldsymbol{k}`
+:ref:`gamma` [#]_       9   *offset* [#]_               :math:`\boldsymbol{\theta}`   :math:`\boldsymbol{k}`
+:ref:`beta` [#]_        10  :math:`\boldsymbol{\alpha}` :math:`\boldsymbol{\beta}`
+:ref:`extreme` [#]_     11  :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`   :math:`\boldsymbol{\xi}`
+:ref:`students` [#]_    12  *median*                    *scale*                       :math:`\boldsymbol{\nu}`
 ======================= === =========================== ============================= =========================== =============== ===============
 
 Items in **bold** are required, items in *italics* are optional.
@@ -134,9 +134,15 @@ Items in **bold** are required, items in *italics* are optional.
 .. [#] Default is 0 if not otherwise specified
 .. [#] `Bernoulli distribution <https://en.wikipedia.org/wiki/Bernoulli_distribution>`_. If ``minimum`` **and** ``maximum`` are specified, :math:`p` is not limited to :math:`0 < p < 1`, but instead to the interval :math:`(minimum,maximum)`
 .. [#] `Discrete uniform <https://en.wikipedia.org/wiki/Uniform_distribution_(discrete)>`_
-.. [#] Default is 0 if not otherwise specified
+.. [#] The discrete uniform operates on a "half-open" interval, :math:`[minimum, maximum)`, where the minimum is included but the maximum is not. Default is 0 if not otherwise specified.
+.. [#] The distribution includes values up to, but not including, the ``maximum``.
+.. [#] `Weibull distribution <https://en.wikipedia.org/wiki/Weibull_distribution>`_
 .. [#] Optional offset from the origin
+.. [#] `Gamma distribution <https://en.wikipedia.org/wiki/Gamma_distribution>`_
 .. [#] Optional offset from the origin
+.. [#] `Beta distribution <https://en.wikipedia.org/wiki/Beta_distribution>`_
+.. [#] `Extreme value distribution <https://en.wikipedia.org/wiki/Generalized_extreme_value_distribution>`_
+.. [#] `Student's T distribution <https://en.wikipedia.org/wiki/Student%27s_t-distribution>`_
 
 Unused columns can be given any value, but it is recommended that they are set to ``np.NaN``.
 
@@ -162,6 +168,7 @@ Probability distributions
    distributions/lognormal
    distributions/normal
    distributions/uniform
+   distributions/discrete-uniform
    distributions/triangular
    distributions/bernoulli
    distributions/beta

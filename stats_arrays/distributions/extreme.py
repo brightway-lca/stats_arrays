@@ -38,5 +38,4 @@ See http://en.wikipedia.org/wiki/Generalized_extreme_value_distribution.
             scale=params['scale'],
             size=(size, params.shape[0])
         ).T
-        data[params['negative'], :] = -1 * data[params['negative'], :]
         return data

@@ -7,7 +7,6 @@ import numpy as np
 
 class StudentsTTestCase(UncertaintyTestCase):
     def pretty_close(self, a, b):
-        print a, b
         if b == 0:
             self.assertTrue(a - 0.05 < b < a + 0.05)
         else:
@@ -32,7 +31,7 @@ class StudentsTTestCase(UncertaintyTestCase):
         sample_1 = StudentsTUncertainty.random_variables(params, 5000)
         params['scale'] = 2
         sample_2 = StudentsTUncertainty.random_variables(params, 5000)
-        self.assertTrue(np.std(sample_1) * 1.2 < np.std(sample_2))
+        self.assertTrue(np.std(sample_1) < np.std(sample_2))
 
     def test_random_variables(self):
         params = self.make_params_array()

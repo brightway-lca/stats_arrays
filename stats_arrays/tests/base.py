@@ -40,6 +40,8 @@ class UncertaintyTestCase(unittest.TestCase):
         params['maximum'] = 4
         return params
 
+
+class BaseTestCase(UncertaintyTestCase):
     def test_uncertainty_base_validate(self):
         """UncertaintyBase: Mean exists, and bounds are ok if present."""
         params = self.make_params_array(1)
@@ -50,28 +52,6 @@ class UncertaintyTestCase(unittest.TestCase):
             UncertaintyBase.validate,
             params
         )
-
-    # def test_random_timing(self):
-    #     import time
-    #     t = time.time()
-    #     params = self.make_params_array(1)
-    #     params['loc'] = 1
-    #     params['scale'] = 1
-    #     sample = NormalUncertainty.random_variables(params, size=50000)
-    #     print "Without limits: %.4f" % (time.time() - t)
-    #     t = time.time()
-    #     params = self.make_params_array(1)
-    #     params['loc'] = 1
-    #     params['scale'] = 1
-    #     sample = NormalUncertainty.bounded_random_variables(params, size=50000)
-    #     print "Without limits, but with bounded_r_v: %.4f" % (time.time() - t)
-    #     t = time.time()
-    #     params = self.make_params_array(1)
-    #     params['maximum'] = -0.2
-    #     params['loc'] = 1
-    #     params['scale'] = 1
-    #     sample = NormalUncertainty.bounded_random_variables(params, size=50000, maximum_iterations=1000)
-    #     print "With limits: %.4f" % (time.time() - t)
 
     def test_check_2d_inputs(self):
         params = self.make_params_array(2)
