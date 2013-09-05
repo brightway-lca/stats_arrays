@@ -118,7 +118,7 @@ No uncertainty          1   **static value**
 :ref:`discreteu` [#]_   7                                                                                         *minimum* [#]_  **upper bound** [#]_
 :ref:`weibull` [#]_     8   *offset* [#]_               :math:`\boldsymbol{\lambda}`  :math:`\boldsymbol{k}`
 :ref:`gamma` [#]_       9   *offset* [#]_               :math:`\boldsymbol{\theta}`   :math:`\boldsymbol{k}`
-:ref:`beta` [#]_        10  :math:`\boldsymbol{\alpha}` :math:`\boldsymbol{\beta}`
+:ref:`beta` [#]_        10  :math:`\boldsymbol{\alpha}` *upper bound*                 :math:`\boldsymbol{\beta}`
 :ref:`extreme` [#]_     11  :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`   :math:`\boldsymbol{\xi}`
 :ref:`students` [#]_    12  *median*                    *scale*                       :math:`\boldsymbol{\nu}`
 ======================= === =========================== ============================= =========================== =============== ===============
