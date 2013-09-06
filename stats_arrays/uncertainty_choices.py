@@ -2,16 +2,18 @@ from .distributions import *
 import warnings
 
 DISTRIBUTIONS = (
-    UndefinedUncertainty,
-    NoUncertainty,
-    LognormalUncertainty,
-    NormalUncertainty,
-    UniformUncertainty,
-    TriangularUncertainty,
     BernoulliUncertainty,
     BetaUncertainty,
     DiscreteUniform,
     GammaUncertainty,
+    GeneralizedExtremeValueUncertainty,
+    LognormalUncertainty,
+    NormalUncertainty,
+    NoUncertainty,
+    StudentsTUncertainty,
+    TriangularUncertainty,
+    UndefinedUncertainty,
+    UniformUncertainty,
     WeibullUncertainty,
 )
 
