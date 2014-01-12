@@ -5,6 +5,8 @@ from ..errors import InvalidParamsError,\
 from ..utils import one_row_params_array, construct_params_array
 import numpy as np
 
+np.seterr(invalid='ignore')
+
 
 class UncertaintyBase(object):
     """
