@@ -42,11 +42,14 @@ class UncertaintyChoices(object):
     def __len__(self):
         return len(self.id_dict)
 
+    def __contains__(self, choice):
+        return choice in self.choices
+
     def add(self, distribution):
         if not hasattr(distribution, "id") and isinstance(distributions.id, int):
             raise ValueError("Uncertainty distributions must have integer `id` attribute.")
         if distribution.id in self.id_dict:
-            warnings.warn("This distribution (id %s) is already present" % distribution.id)
+            warnings.warn("ERROR: This distribution (id %s) is already present!" % distribution.id)
             return
         self.choices.append(distribution)
         self.id_dict[distribution.id] = distribution
