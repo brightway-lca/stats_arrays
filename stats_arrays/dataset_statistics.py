@@ -12,9 +12,9 @@ def weighted_mean(values, weights):
 
 def weighted_sample_variance(values, weights):
     assert values.shape == weights.shape
-    return ((weights * values ** 2).sum() * weights.sum() - \
-        ((weights * values).sum()) ** 2) / ((weights.sum()) ** 2 - \
-        (weights ** 2).sum())
+    return ((weights * values ** 2).sum() * weights.sum() -
+            ((weights * values).sum()) ** 2) / ((weights.sum()) ** 2 -
+                                                (weights ** 2).sum())
 
 
 def weighted_sample_stddev(values, weights):

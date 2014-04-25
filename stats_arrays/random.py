@@ -6,6 +6,7 @@ import numpy as np
 
 
 class RandomNumberGenerator(object):
+
     def __init__(self, uncertainty_type, params, size=1,
                  maximum_iterations=100, seed=None,
                  **kwargs):
@@ -237,16 +238,16 @@ self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
                 np.isnan(subarray['maximum'])
             if only_min_mask.sum():
                 mins = uncertainty_type.cdf(subarray[only_min_mask],
-                    subarray[only_min_mask]['minimum'])
+                                            subarray[only_min_mask]['minimum'])
                 steps = (1 - mins) / (self.samples + 1)
                 inputs[mask, :][only_min_mask] = np.hstack((mins + steps,
-                    steps))
+                                                            steps))
             # Next, if only a max bound is present
             only_max_mask = np.isnan(subarray['minimum']) * \
                 ~np.isnan(subarray['maximum'])
             if only_max_mask.sum():
                 maxs = uncertainty_type.cdf(subarray[only_max_mask],
-                    subarray[only_max_mask]['maximum'])
+                                            subarray[only_max_mask]['maximum'])
                 steps = maxs / (self.samples + 1)
                 inputs[mask, :][only_max_mask] = np.hstack((steps, steps))
             # Finally, if both min and max bounds are present
@@ -254,16 +255,16 @@ self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
                 ~np.isnan(subarray['maximum'])
             if both_mask.sum():
                 mins = uncertainty_type.cdf(subarray[both_mask],
-                    subarray[both_mask]['minimum'])
+                                            subarray[both_mask]['minimum'])
                 maxs = uncertainty_type.cdf(subarray[both_mask],
-                    subarray[both_mask]['maximum'])
+                                            subarray[both_mask]['maximum'])
                 steps = (maxs - mins) / (self.samples + 1)
                 inputs[mask, :][both_mask] = np.hstack((mins + steps,
-                    steps))
+                                                        steps))
         # Percentages is now a list, samples wide, of the percentages covered
         # by the bounded or unbounded distributions.
         self.percentages = inputs[:, 0].reshape(self.length, 1) + np.arange(0,
-            self.samples, 1) * inputs[:, 1].reshape(self.length, 1)
+                                                                            self.samples, 1) * inputs[:, 1].reshape(self.length, 1)
         # Transform percentages into a sample space
         self.hypercube = np.zeros((self.length, self.samples))
         for uncertainty_type in self.choices:
@@ -272,11 +273,11 @@ self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
                 continue
             self.hypercube[mask, :] = \
                 uncertainty_type.ppf(params=self.params[mask],
-                percentages=self.percentages[mask, :])
+                                     percentages=self.percentages[mask, :])
         self.hypercube[self.params['negative'], :] = \
             -1 * self.hypercube[self.params['negative'], :]
 
     def next(self):
         """Draw directly from pre-computed sample space."""
         return self.hypercube[self.row_index,
-            self.random.randint(self.samples, size=self.length)]
+                              self.random.randint(self.samples, size=self.length)]
