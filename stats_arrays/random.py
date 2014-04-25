@@ -6,7 +6,6 @@ import numpy as np
 
 
 class RandomNumberGenerator(object):
-
     def __init__(self, uncertainty_type, params, size=1,
                  maximum_iterations=100, seed=None,
                  **kwargs):
