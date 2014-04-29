@@ -5,6 +5,7 @@ import numpy as np
 
 
 class GammaUncertainty(UncertaintyBase):
+
     r"""
 The Gamma uncertainty distribution probability density function as a function of :math:`k`, the shape parameters, and :math:`\theta`, the scale parameter:
 

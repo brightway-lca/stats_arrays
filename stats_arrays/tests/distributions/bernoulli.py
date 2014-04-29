@@ -1,11 +1,10 @@
-from ...errors import ImproperBoundsError, \
-    InvalidParamsError
 from ...distributions import BernoulliUncertainty
 from ..base import UncertaintyTestCase
 import numpy as np
 
 
 class BernoulliTestCase(UncertaintyTestCase):
+
     def test_bernoulli_ppf(self):
         oneDparams = self.biased_params_1d()
         params = self.biased_params_2d()
@@ -69,19 +68,19 @@ class BernoulliTestCase(UncertaintyTestCase):
         self.assertTrue(0.3 < np.average(variables) < 0.35)
         self.assertEqual(variables.shape, (1, 50000))
         variables = BernoulliUncertainty.random_variables(params, 50000)
-        self.assertTrue(0.3 < np.average(variables[0,:]) < 0.35)
-        self.assertTrue(0.3 < np.average(variables[1,:]) < 0.35)
+        self.assertTrue(0.3 < np.average(variables[0, :]) < 0.35)
+        self.assertTrue(0.3 < np.average(variables[1, :]) < 0.35)
         self.assertEqual(variables.shape, (2, 50000))
-        self.assertFalse(np.allclose(variables[0,:], variables[1,:]))
+        self.assertFalse(np.allclose(variables[0, :], variables[1,:]))
 
     def test_bernoulli_statistics(self):
         oneDparams = self.biased_params_1d()
         bern_stats = {'upper': None, 'lower': None, 'median': None,
-            'mode': None, 'mean': 3}
+                      'mode': None, 'mean': 3}
         self.assertEqual(BernoulliUncertainty.statistics(oneDparams),
-            bern_stats)
+                         bern_stats)
 
     def test_bernoulli_pdf(self):
         oneDparams = self.biased_params_1d()
         self.assertRaises(NotImplementedError, BernoulliUncertainty.pdf,
-            oneDparams)
+                          oneDparams)

@@ -1,5 +1,5 @@
 from __future__ import division
-from ..errors import InvalidParamsError, ImproperBoundsError
+from ..errors import InvalidParamsError
 from ..utils import one_row_params_array
 from .base import UncertaintyBase
 from scipy import stats
@@ -94,12 +94,12 @@ class LognormalUncertainty(UncertaintyBase):
             # Find nice range to graph
             if np.isnan(params['minimum']):
                 minimum = params['scale'] / (np.exp(params['shape']) **
-                    cls.standard_deviations_in_default_range)
+                                             cls.standard_deviations_in_default_range)
             else:
                 minimum = np.abs(params['minimum'])
             if np.isnan(params['maximum']):
                 maximum = params['scale'] * (np.exp(params['shape']) **
-                    cls.standard_deviations_in_default_range)
+                                             cls.standard_deviations_in_default_range)
             else:
                 maximum = np.abs(params['minimum'])
 

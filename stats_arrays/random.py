@@ -6,6 +6,7 @@ import numpy as np
 
 
 class RandomNumberGenerator(object):
+
     def __init__(self, uncertainty_type, params, size=1,
                  maximum_iterations=100, seed=None,
                  **kwargs):
@@ -100,6 +101,7 @@ Returns:
 
 
 class MCRandomNumberGenerator(object):
+
     """
 A Monte Carlo random number generator that operates on a :ref:`hpa`.
 
@@ -129,6 +131,7 @@ Returns:
     A class instance
 
     """
+
     def __init__(self, params, maximum_iterations=50, seed=None, **kwargs):
         self.params = params.copy()
         self.length = self.params.shape[0]
@@ -188,6 +191,7 @@ Returns:
 
 
 class LatinHypercubeRNG(MCRandomNumberGenerator):
+
     """
 A random number generator that pre-calculates a sample space to draw from.
 
@@ -197,6 +201,7 @@ A random number generator that pre-calculates a sample space to draw from.
 * seed : An integer (or array of integers) to seed the `NumPy random number generator <http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.mtrand.RandomState.html#numpy.random.mtrand.RandomState>`_.
 * samples : An integer number of samples to construct for each distribution.
     """
+
     def __init__(self, params, seed=None, samples=10, **kwargs):
         self.params = params
         self.length = self.params.shape[0]

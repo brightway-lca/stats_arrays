@@ -6,9 +6,10 @@ import numpy as np
 
 
 class LognormalTestCase(UncertaintyTestCase):
+
     def pdf(self, x, mu, sigma):
         return 1 / (x * np.sqrt(2 * np.pi * sigma ** 2)
-            ) * np.e ** (-((np.log(x) - mu) ** 2) / (
+                    ) * np.e ** (-((np.log(x) - mu) ** 2) / (
             2 * sigma ** 2))
 
     def cdf(self, x, mu, sigma):

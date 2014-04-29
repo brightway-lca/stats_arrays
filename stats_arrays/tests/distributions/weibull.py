@@ -6,6 +6,7 @@ import numpy as np
 
 
 class WeibullTestCase(UncertaintyTestCase):
+
     def pretty_close(self, a, b):
         print a, b
         if b == 0:

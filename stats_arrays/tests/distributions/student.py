@@ -6,6 +6,7 @@ import numpy as np
 
 
 class StudentsTTestCase(UncertaintyTestCase):
+
     def pretty_close(self, a, b):
         if b == 0:
             self.assertTrue(a - 0.05 < b < a + 0.05)

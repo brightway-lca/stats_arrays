@@ -7,6 +7,7 @@ import numpy as np
 
 
 class UncertaintyTestCase(unittest.TestCase):
+
     def make_params_array(self, length=1):
         assert isinstance(length, int)
         params = np.zeros((length,), dtype=[
@@ -42,6 +43,7 @@ class UncertaintyTestCase(unittest.TestCase):
 
 
 class BaseTestCase(UncertaintyTestCase):
+
     def test_uncertainty_base_validate(self):
         """UncertaintyBase: Mean exists, and bounds are ok if present."""
         params = self.make_params_array(1)

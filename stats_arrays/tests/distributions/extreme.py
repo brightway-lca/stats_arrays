@@ -1,5 +1,4 @@
 from __future__ import division
-from scipy import stats
 from ...distributions import GeneralizedExtremeValueUncertainty as GEVU
 from ...errors import InvalidParamsError
 from ..base import UncertaintyTestCase
@@ -7,6 +6,7 @@ import numpy as np
 
 
 class GeneralizedExtremeValueUncertaintyTestCase(UncertaintyTestCase):
+
     def test_random_variables(self):
         params = self.make_params_array()
         params['loc'] = 2

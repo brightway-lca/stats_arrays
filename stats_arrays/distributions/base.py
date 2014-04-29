@@ -9,6 +9,7 @@ np.seterr(invalid='ignore')
 
 
 class UncertaintyBase(object):
+
     """
 Abstract base class for uncertainty types.
 
@@ -23,7 +24,7 @@ All methods on uncertainty classes should be `class methods <http://docs.python.
     default_number_points_in_pdf = 200
     standard_deviations_in_default_range = 2.2
 
-    ### Conversion utilities ###
+    # Conversion utilities ###
     @classmethod
     def from_tuples(cls, *data):
         """
@@ -114,7 +115,7 @@ Returns:
             params[index] = tuple(data)
         return params
 
-    ### Utility methods ###
+    # Utility methods ###
     @classmethod
     def validate(cls, params):
         """
@@ -141,7 +142,9 @@ Args:
             # Transform to 2-dimensional
             vector.resize(vector.shape[0], 1)
         if params.shape[0] != vector.shape[0]:
-            raise InvalidParamsError("Vector shape must be either (m,) or (m,n), where params has m rows. Vector has shape %s, and params is %i rows" % (vector.shape, params.shape[0]))
+            raise InvalidParamsError(
+                "Vector shape must be either (m,) or (m,n), where params has m rows. Vector has shape %s, and params is %i rows" %
+                (vector.shape, params.shape[0]))
         return vector
 
     @classmethod
@@ -160,12 +163,13 @@ Doesn't return anything. Raises ``stats_arrays.UnreasonableBoundsError`` if this
         max_percentage = float(cls.cdf(params, params['maximum']))
         coverage = max_percentage - min_percentage
         if coverage < threshold:
-            raise UnreasonableBoundsError("The provided bounds cover only %.2f percent of the possible distribution" % coverage)
+            raise UnreasonableBoundsError(
+                "The provided bounds cover only %.2f percent of the possible distribution" % coverage)
 
-    ### Used for Monte Carlo ###
+    # Used for Monte Carlo ###
     @classmethod
     def bounded_random_variables(cls, params, size, seeded_random=None,
-            maximum_iterations=50):
+                                 maximum_iterations=50):
         """Generate random variables repeatedly until all varaibles are within the bounds of each distribution. Raise MaximumIterationsError if this takes more that `maximum_iterations`. Uses `random_variables` for random number generation.
 
 .. rubric:: Inputs
@@ -200,7 +204,7 @@ An array of random values, with dimensions `params` rows by `size`."""
             # around this inefficiency. See stats/tests/uncertainty.py -
             # UncertaintyTestCase - test_random_timing for a timing test.
             data[bounds_mask] = cls.random_variables(params,
-                size, seeded_random)[bounds_mask]
+                                                     size, seeded_random)[bounds_mask]
             bounds_mask = (data < min_array) + (data > max_array)
 
             counter += 1
@@ -223,7 +227,7 @@ An array of random values, with dimensions `params` rows by `size`."""
 An array of random values, with dimensions `params` rows by `size`."""
         raise NotImplementedError
 
-    ### Used for Latin Hypercube Monte Carlo ###
+    # Used for Latin Hypercube Monte Carlo ###
     @classmethod
     def ppf(cls, params, percentages):
         """Return percent point function (inverse of CDF, e.g. value in distribution where x percent of the distribution is less than value) for various distributions.
@@ -254,7 +258,7 @@ An array of cumulative densities, bounded on (0,1), with `params` rows and `vect
         vector = cls.check_cdf_inputs(params, vector)
         raise NotImplementedError
 
-    ### Used for graphing ###
+    # Used for graphing ###
     @classmethod
     @one_row_params_array
     def statistics(cls, params):
@@ -269,7 +273,7 @@ An array of cumulative densities, bounded on (0,1), with `params` rows and `vect
 {'mean': mean value, 'mode': mode value, 'median': median value, 'upper': upper limit value, 'lower': lower limit value}. All values should be floats (not single-element arrays). Parameters that are not defined should be returned `None`, not omitted.
         """
         return {'mean': params['loc'], 'mode': None, 'median': None,
-            'upper': None, 'lower': None}
+                'upper': None, 'lower': None}
 
     @classmethod
     @one_row_params_array
@@ -290,6 +294,7 @@ A tuple of a vactor x values and a vector of y values. Y values are a one-dimens
 
 
 class BoundedUncertaintyBase(UncertaintyBase):
+
     """An uncertainty distribution where minimum and maximum bounds are required. No bounds checking is required for these distributions, as bounds are integral inputs into the sample space generator."""
     @classmethod
     def validate(cls, params):
@@ -306,7 +311,7 @@ class BoundedUncertaintyBase(UncertaintyBase):
 
     @classmethod
     def bounded_random_variables(cls, params, size, seeded_random=None,
-            maximum_iterations=None):
+                                 maximum_iterations=None):
         """No bounds checking because the bounds do not exclude any of the distribution."""
         return cls.random_variables(params, size, seeded_random)
 

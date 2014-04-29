@@ -6,6 +6,7 @@ import numpy as np
 
 
 class UniformUncertainty(BoundedUncertaintyBase):
+
     """Continuous uniform distribution. In SciPy, the uniform distribution is defined from loc to loc+scale."""
     id = 4
     description = "Uniform uncertainty"
@@ -25,8 +26,8 @@ class UniformUncertainty(BoundedUncertaintyBase):
         results = np.zeros(vector.shape)
         for row in range(params.shape[0]):
             results[row, :] = stats.uniform.cdf(vector[row, :],
-                loc=params[row]['minimum'], scale=params[row]['maximum'] - \
-                params[row]['minimum'])
+                                                loc=params[row]['minimum'], scale=params[row]['maximum'] -
+                                                params[row]['minimum'])
         return results
 
     @classmethod
@@ -42,7 +43,7 @@ class UniformUncertainty(BoundedUncertaintyBase):
     def statistics(cls, params):
         mean = (params['maximum'] + params['minimum']) / 2
         return {'mean': mean, 'mode': mean, 'median': mean,
-            'lower': params['minimum'], 'upper': params['maximum']}
+                'lower': params['minimum'], 'upper': params['maximum']}
 
     @classmethod
     @one_row_params_array
@@ -82,7 +83,7 @@ class TriangularUncertainty(BoundedUncertaintyBase):
         results = np.zeros(vector.shape)
         for row in range(params.shape[0]):
             results[row, :] = stats.triang.cdf(adjusted_vector[row, :],
-                adjusted_means[row])
+                                               adjusted_means[row])
         return results
 
     @classmethod
@@ -104,14 +105,14 @@ class TriangularUncertainty(BoundedUncertaintyBase):
         lower = params['minimum']
         if mode > (upper - lower) / 2:
             median = lower + ((upper - lower) * (mode - lower)) ** 0.5 / (
-                    2 ** 0.5)
+                2 ** 0.5)
         elif mode < (upper - lower) / 2:
             median = upper - ((upper - lower) * (upper - mode)
-                ) ** 0.5 / (2 ** 0.5)
+                              ) ** 0.5 / (2 ** 0.5)
         else:
             median = mode
         return {'mean': float(mean), 'median': float(median),
-            'mode': float(mode), 'lower': None, 'upper': None}
+                'mode': float(mode), 'lower': None, 'upper': None}
 
     @classmethod
     @one_row_params_array

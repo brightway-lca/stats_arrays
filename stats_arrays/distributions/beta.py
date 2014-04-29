@@ -7,6 +7,7 @@ from scipy import stats
 
 
 class BetaUncertainty(UncertaintyBase):
+
     r"""
 The Beta distribution has the probability distribution function:
 
@@ -26,17 +27,17 @@ Wikipedia: `Beta distribution <http://en.wikipedia.org/wiki/Beta_distribution>`_
     @classmethod
     def validate(cls, params):
         if (params['loc'] > 0).sum() != params.shape[0]:
-            raise InvalidParamsError("Real, positive alpha values are" + \
-                " required for Beta uncertainties.")
+            raise InvalidParamsError("Real, positive alpha values are" +
+                                     " required for Beta uncertainties.")
         if (params['shape'] > 0).sum() != params.shape[0]:
-            raise InvalidParamsError("Real, positive beta values are" + \
-                " required for Beta uncertainties.")
+            raise InvalidParamsError("Real, positive beta values are" +
+                                     " required for Beta uncertainties.")
         if (params['scale'] <= 0).sum():
             raise InvalidParamsError("Scale value must be positive or NaN")
 
     @classmethod
     def random_variables(cls, params, size, seeded_random=None,
-            transform=False):
+                         transform=False):
         if not seeded_random:
             seeded_random = random
         scale = params['scale']
@@ -54,8 +55,8 @@ Wikipedia: `Beta distribution <http://en.wikipedia.org/wiki/Beta_distribution>`_
         scale[isnan(scale)] = 1
         for row in range(params.shape[0]):
             results[row, :] = stats.beta.cdf(vector[row, :],
-                params['loc'][row], params['shape'][row],
-                scale=scale[row])
+                                             params['loc'][row], params['shape'][row],
+                                             scale=scale[row])
         return results
 
     @classmethod
@@ -66,8 +67,8 @@ Wikipedia: `Beta distribution <http://en.wikipedia.org/wiki/Beta_distribution>`_
         scale[isnan(scale)] = 1
         for row in range(percentages.shape[0]):
             results[row, :] = stats.beta.ppf(percentages[row, :],
-                params['loc'][row], params['shape'][row],
-                scale=scale[row])
+                                             params['loc'][row], params['shape'][row],
+                                             scale=scale[row])
         return results
 
     @classmethod
@@ -86,7 +87,7 @@ Wikipedia: `Beta distribution <http://en.wikipedia.org/wiki/Beta_distribution>`_
             'median': "Not Implemented",
             'lower': "Not Implemented",
             'upper': "Not Implemented"
-            }
+        }
 
     @classmethod
     @one_row_params_array
@@ -95,5 +96,5 @@ Wikipedia: `Beta distribution <http://en.wikipedia.org/wiki/Beta_distribution>`_
         if xs == None:
             xs = arange(0, scale, scale / cls.default_number_points_in_pdf)
         ys = stats.beta.pdf(xs, params['loc'], params['shape'],
-            scale=scale)
+                            scale=scale)
         return xs, ys.reshape(ys.shape[1])

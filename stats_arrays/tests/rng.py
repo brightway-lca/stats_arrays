@@ -2,17 +2,19 @@ import unittest
 from numpy import *
 from ..random import RandomNumberGenerator as RNG
 from ..distributions import *
-from ..errors import ImproperBoundsError, UnknownUncertaintyType
+from ..errors import UnknownUncertaintyType
 import numpy as np
 
 
 class RandomNumberGeneratorTestCase(unittest.TestCase):
+
     def test_invalid_uncertainty_type(self):
         with self.assertRaises(UnknownUncertaintyType):
             RNG(object, UncertaintyBase.from_dicts({}))
 
     def test_uncertainty_not_subclass(self):
         class Foo(object):
+
             @classmethod
             def bounded_random_variables(self):
                 pass

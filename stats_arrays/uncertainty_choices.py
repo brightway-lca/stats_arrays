@@ -19,7 +19,9 @@ DISTRIBUTIONS = (
 
 
 class UncertaintyChoices(object):
+
     """An container for uncertainty distributions."""
+
     def __init__(self):
         # Sorted by id
         self.choices = sorted(DISTRIBUTIONS, key=lambda x: x.id)

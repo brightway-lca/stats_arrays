@@ -8,6 +8,7 @@ import numpy as np
 
 
 class DiscreteUniform(UncertaintyBase):
+
     """
 The discrete uniform distribution includes all integer values from the ``minimum`` up to, but excluding the ``maximum``.
 

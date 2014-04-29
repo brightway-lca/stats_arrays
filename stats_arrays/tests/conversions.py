@@ -5,6 +5,7 @@ import numpy as np
 
 
 class ConversionTestCase(unittest.TestCase):
+
     def get_right_1d_array(self):
         params = construct_params_array(include_type=True)
         params['loc'] = 1

@@ -5,6 +5,7 @@ import numpy as np
 
 
 class DiscreteUniformTestCase(UncertaintyTestCase):
+
     def test_array_shape_1d(self):
         params = self.make_params_array(length=1)
         params['minimum'] = 0

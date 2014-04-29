@@ -5,6 +5,7 @@ import numpy as np
 
 
 class GeneralizedExtremeValueUncertainty(UncertaintyBase):
+
     r"""
 The generalized extreme value uncertainty distribution has the cumulative distribution function (the PDF is even more complicated):
 

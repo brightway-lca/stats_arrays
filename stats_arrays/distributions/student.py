@@ -5,6 +5,7 @@ import numpy as np
 
 
 class StudentsTUncertainty(UncertaintyBase):
+
     r"""
 The Student's T uncertainty distribution probability density function is a function of :math:`\nu`, the degrees of freedom:
 
