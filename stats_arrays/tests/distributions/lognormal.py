@@ -28,11 +28,47 @@ class LognormalTestCase(UncertaintyTestCase):
     def test_pdf_negative(self):
         mu, sigma = np.random.random() / 5 + 0.2, np.random.random() / 10 + 0.1
         pa = LU.from_dicts({'loc': mu, 'scale': sigma, 'negative': True})
+
         self.assertTrue(np.allclose(
             self.pdf(1.2, mu, sigma),
             # [0] are X values, [1] are Y values
             LU.pdf(pa, np.array((-1.2,)))[1]
         ))
+
+    def test_pdf_bounds(self):
+        pa = LU.from_dicts({'loc': 1, 'scale': 0.5, 'minimum': 1, 'maximum': 2})
+        xs, ys = LU.pdf(pa)
+        print xs.min(), xs.max()
+        self.assertEqual(xs.min(), 1)
+        self.assertEqual(xs.max(), 2)
+
+        pa = LU.from_dicts({'loc': 1, 'scale': 0.5, 'minimum': 1})
+        xs, ys = LU.pdf(pa)
+        self.assertEqual(xs.min(), 1)
+        self.assertTrue(xs.max() > 2)
+
+        pa = LU.from_dicts({'loc': 1, 'scale': 0.5, 'maximum': 2})
+        xs, ys = LU.pdf(pa)
+        self.assertTrue(xs.min() < 1)
+        self.assertEqual(xs.max(), 2)
+
+    def test_pdf_bounds_negative(self):
+        pa = LU.from_dicts({'loc': 1, 'scale': 0.5, 'minimum': -2, 'maximum': -1,
+                            'negative': True})
+        xs, ys = LU.pdf(pa)
+        self.assertEqual(xs.min(), -2)
+        self.assertEqual(xs.max(), -1)
+
+        pa = LU.from_dicts({'loc': 1, 'scale': 0.5, 'minimum': -2, 'negative': True})
+        xs, ys = LU.pdf(pa)
+        print xs.min(), xs.max()
+        self.assertEqual(xs.min(), -2)
+        self.assertTrue(xs.max() > -1)
+
+        pa = LU.from_dicts({'loc': 1, 'scale': 0.5, 'maximum': -1, 'negative': True})
+        xs, ys = LU.pdf(pa)
+        self.assertTrue(xs.min() < -2)
+        self.assertEqual(xs.max(), -1)
 
     def test_cdf_positive(self):
         mu, sigma = np.random.random() / 5 + 0.2, np.random.random() / 10 + 0.1
@@ -114,36 +150,3 @@ class LognormalTestCase(UncertaintyTestCase):
         pa = LU.from_dicts({'loc': mu, 'scale': sigma, 'negative': True})
         sample = LU.random_variables(pa, size=100).ravel()
         self.assertEqual((sample < 0).sum(), 100)
-
-#     def test_lognormal_statistics(self):
-#         oneDparams = self.biased_params_1d()
-#         oneDparams['scale'] = 0.8
-#         to_array = lambda x: np.array([x[key] for key in sorted(x.keys())])
-#         self.assertTrue(np.allclose(
-#             to_array({
-#                 'upper': 14.859097922170479,
-#                 'lower': 0.60568955155650162,
-#                 'median': 3.0000000595022631,
-#                 'mode': 1.5818772733323232,
-#                 'mean': 4.131383414350033
-#             }),
-#             to_array(LognormalUncertainty.statistics(oneDparams))
-#         ))
-
-#     def test_lognormal_negative_statistics(self):
-#         oneDparams = self.biased_params_1d()
-#         oneDparams['scale'] = 0.8
-#         oneDparams['minimum'] = -4
-#         oneDparams['loc'] = -3
-#         oneDparams['maximum'] = -1
-#         to_array = lambda x: np.array([x[key] for key in sorted(x.keys())])
-#         self.assertTrue(np.allclose(
-#             to_array({
-#                 'lower': -14.859097922170479,
-#                 'upper': -0.60568955155650162,
-#                 'median': -3.0000000595022631,
-#                 'mode': -1.5818772733323232,
-#                 'mean': -4.131383414350033
-#             }),
-#             to_array(LognormalUncertainty.statistics(oneDparams, transform=True))
-#         ))

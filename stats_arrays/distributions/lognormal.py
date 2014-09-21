@@ -90,29 +90,27 @@ class LognormalUncertainty(UncertaintyBase):
     @one_row_params_array
     def pdf(cls, params, xs=None):
         """Generate probability distribution function for lognormal distribution."""
+        n = params['negative']
         if xs is None:
             # Find nice range to graph
-            if np.isnan(params['minimum']):
-                minimum = params['scale'] / (np.exp(params['shape']) **
-                                             cls.standard_deviations_in_default_range)
-            else:
-                minimum = np.abs(params['minimum'])
-            if np.isnan(params['maximum']):
-                maximum = params['scale'] * (np.exp(params['shape']) **
-                                             cls.standard_deviations_in_default_range)
-            else:
-                maximum = np.abs(params['minimum'])
+            lower = ((-1 if n else 1) *
+                       params['loc'] / (np.exp(params['scale']) **
+                       cls.standard_deviations_in_default_range))[0, 0]
+            upper = ((-1 if n else 1) *
+                       params['loc'] * (np.exp(params['scale']) **
+                       cls.standard_deviations_in_default_range))[0, 0]
+            if n:
+                lower, upper = upper, lower
 
             xs = np.linspace(
-                minimum,
-                maximum,
+                (lower if np.isnan(params['minimum']) else params['minimum']).ravel(),
+                (upper if np.isnan(params['maximum']) else params['maximum']).ravel(),
                 cls.default_number_points_in_pdf
             ).ravel()
-            print xs.shape
 
-        if params['negative']:
-            xs = -1 * xs
-        ys = stats.lognorm.pdf(xs, params['scale'], scale=np.exp(params['loc']))
-        if params['negative']:
-            xs = -1 * xs
+        ys = stats.lognorm.pdf(
+            -1 * xs if n else xs,
+            params['scale'],
+            scale=np.exp(params['loc'])
+        )
         return xs, ys.ravel()
