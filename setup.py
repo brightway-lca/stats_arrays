@@ -1,8 +1,8 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='stats_arrays',
-    version='0.3.1',
+    version='0.3.2',
     author='Chris Mutel',
     author_email='cmutel@gmail.com',
     url='https://bitbucket.org/cmutel/stats_arrays',

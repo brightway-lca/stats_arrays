@@ -9,7 +9,7 @@ class StudentsTTestCase(UncertaintyTestCase):
 
     def pretty_close(self, a, b):
         if b == 0:
-            self.assertTrue(a - 0.05 < b < a + 0.05)
+            self.assertTrue(a - 0.1 < b < a + 0.1)
         else:
             self.assertTrue(0.95 * a < b < 1.05 * a)
 
@@ -30,7 +30,7 @@ class StudentsTTestCase(UncertaintyTestCase):
         params = self.make_params_array()
         params['shape'] = 1
         sample_1 = StudentsTUncertainty.random_variables(params, 5000)
-        params['scale'] = 2
+        params['scale'] = 5
         sample_2 = StudentsTUncertainty.random_variables(params, 5000)
         self.assertTrue(np.std(sample_1) < np.std(sample_2))
 

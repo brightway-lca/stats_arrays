@@ -6,3 +6,4 @@ MANIFEST
 build
 docs/_*
 dev
+stats_arrays.egg-info

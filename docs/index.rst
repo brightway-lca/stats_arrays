@@ -77,6 +77,8 @@ The core data structure for ``stats_arrays`` is a parameter array, which is made
 
 In general, most uncertainty distributions can be defined by three variables, commonly called *location*, *scale*, and *shape*. The *minimum* and *maximum* values make distributions **bounded**, so that one can, for example, define a normal uncertainty which is always positive.
 
+.. warning:: Bounds are not applied in the following methods: 1) Distribution functions (``PDF``, ``CDF``, etc.) where you supply the input vector. 2) ``.statistics``, which gives 95 percent confidence intervals for the unbounded distribution.
+
 .. _hpa:
 
 Heterogeneous parameter array
