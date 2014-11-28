@@ -93,7 +93,7 @@ Wikipedia: `Beta distribution <http://en.wikipedia.org/wiki/Beta_distribution>`_
     @one_row_params_array
     def pdf(cls, params, xs=None):
         scale = 1 if isnan(params['scale'])[0] else float(params['scale'])
-        if xs == None:
+        if xs is None:
             xs = arange(0, scale, scale / cls.default_number_points_in_pdf)
         ys = stats.beta.pdf(xs, params['loc'], params['shape'],
                             scale=scale)
