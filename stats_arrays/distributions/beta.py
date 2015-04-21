@@ -8,16 +8,16 @@ from scipy import stats
 
 class BetaUncertainty(UncertaintyBase):
 
-    r"""
+    u"""
 The Beta distribution has the probability distribution function:
 
-.. math:: f(x; \alpha, \beta) = \frac{1}{B(\alpha, \beta)} x^{\alpha - 1}(1 - x)^{\beta - 1},
+.. math:: f(x; \\alpha, \\beta) = \\frac{1}{B(\\alpha, \\beta)} x^{\\alpha - 1}(1 - x)^{\\beta - 1},
 
 where the normalisation, *B*, is the beta function:
 
-.. math:: B(\alpha, \beta) = \int_0^1 t^{\alpha - 1}(1 - t)^{\beta - 1} dt
+.. math:: B(\\alpha, \\beta) = \\int_0^1 t^{\\alpha - 1}(1 - t)^{\\beta - 1} dt
 
-The :math:`\alpha` parameter is ``loc``, and :math:`\beta` is ``shape``. By default, the Beta distribution is defined from 0 to 1; the upper bound can be rescaled with the ``scale`` parameter.
+The :math:`\\alpha` parameter is ``loc``, and :math:`\\beta` is ``shape``. By default, the Beta distribution is defined from 0 to 1; the upper bound can be rescaled with the ``scale`` parameter.
 
 Wikipedia: `Beta distribution <http://en.wikipedia.org/wiki/Beta_distribution>`_
     """
