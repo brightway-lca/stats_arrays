@@ -3,12 +3,12 @@ from functools import wraps
 import numpy as np
 
 BASE_DTYPE = [
-    (u'loc', np.float64),
-    (u'scale', np.float64),
-    (u'shape', np.float64),
-    (u'minimum', np.float64),
-    (u'maximum', np.float64),
-    (u'negative', np.bool)
+    ('loc', np.float64),
+    ('scale', np.float64),
+    ('shape', np.float64),
+    ('minimum', np.float64),
+    ('maximum', np.float64),
+    ('negative', np.bool)
 ]
 
 
@@ -39,8 +39,8 @@ def one_row_params_array(function):
 def construct_params_array(length=1, include_type=False):
     dtype = BASE_DTYPE
     if include_type:
-        dtype = dtype + [(u'uncertainty_type', np.uint8)]
+        dtype = dtype + [('uncertainty_type', np.uint8)]
     params = np.zeros((length,), dtype=dtype)
-    params[u'minimum'] = params[u'maximum'] = np.NaN
-    params[u'scale'] = params[u'loc'] = params[u'shape'] = np.NaN
+    params['minimum'] = params['maximum'] = np.NaN
+    params['scale'] = params['loc'] = params['shape'] = np.NaN
     return params
