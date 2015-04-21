@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name=u'stats_arrays',
-    version=u'0.3.2',
+    version=u'0.4',
     author=u'Chris Mutel',
     author_email=u'cmutel@gmail.com',
     url=u'https://bitbucket.org/cmutel/stats_arrays',
