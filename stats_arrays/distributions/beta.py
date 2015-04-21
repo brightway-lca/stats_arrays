@@ -1,7 +1,7 @@
 from __future__ import division
 from ..errors import InvalidParamsError
 from ..utils import one_row_params_array
-from base import UncertaintyBase
+from .base import UncertaintyBase
 from numpy import random, zeros, isnan, arange
 from scipy import stats
 

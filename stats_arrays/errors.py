@@ -1,33 +1,33 @@
-class ImproperBoundsError(StandardError):
+class ImproperBoundsError(Exception):
     """The bounds and mean specified are illegal for this distribution."""
     pass
 
 
-class MaximumIterationsError(StandardError):
+class MaximumIterationsError(Exception):
     """Drawing random numbers from the distribution to fit in the bounds specified used more than the maximum number of iterations allowed."""
     pass
 
 
-class UnknownUncertaintyType(StandardError):
+class UnknownUncertaintyType(Exception):
     """The uncertainty type is not defined in uncertainty_choices."""
     pass
 
 
-class UndefinedDistributionError(StandardError):
+class UndefinedDistributionError(Exception):
     """Values were attempted to be calculated by an undefined distribution."""
     pass
 
 
-class InvalidParamsError(StandardError):
+class InvalidParamsError(Exception):
     """Invalid params array passed to uncertainty distribution init."""
     pass
 
 
-class MultipleRowParamsArrayError(StandardError):
+class MultipleRowParamsArrayError(Exception):
     """A function or method which doesn't accept it was passed a params array with more than one row."""
     pass
 
 
-class UnreasonableBoundsError(StandardError):
+class UnreasonableBoundsError(Exception):
     """The provided bounds cover an unreasonably small section of the distribution sample space."""
     pass

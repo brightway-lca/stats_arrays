@@ -1,16 +1,16 @@
 from __future__ import division
-from base import UncertaintyBase
+from .base import UncertaintyBase
 from ..errors import InvalidParamsError
 import numpy as np
 
 
 class WeibullUncertainty(UncertaintyBase):
-    r"""
+    u"""
 The Weibull distribution has the probability distribution function:
 
-.. math:: f(x; k, \lambda) = \frac{k}{\lambda} \left( \frac{x}{\lambda} \right)^{k - 1} e^{- \left( x / \lambda \right)^{k}}
+.. math:: f(x; k, \\lambda) = \\frac{k}{\\lambda} \\left( \\frac{x}{\\lambda} \\right)^{k - 1} e^{- \\left( x / \\lambda \\right)^{k}}
 
-In our implementation, :math:`\lambda` is ``scale``, and :math:`k`  is ``shape``. An optional location parameter, which offsets the distribution from the origin, can be specified in ``loc``.
+In our implementation, :math:`\\lambda` is ``scale``, and :math:`k`  is ``shape``. An optional location parameter, which offsets the distribution from the origin, can be specified in ``loc``.
 
 See https://en.wikipedia.org/wiki/Weibull_distribution.
     """

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from ...errors import InvalidParamsError
 from ...distributions import LognormalUncertainty as LU
 from ..base import UncertaintyTestCase
@@ -38,7 +39,7 @@ class LognormalTestCase(UncertaintyTestCase):
     def test_pdf_bounds(self):
         pa = LU.from_dicts({'loc': 1, 'scale': 0.5, 'minimum': 1, 'maximum': 2})
         xs, ys = LU.pdf(pa)
-        print xs.min(), xs.max()
+        print(xs.min(), xs.max())
         self.assertEqual(xs.min(), 1)
         self.assertEqual(xs.max(), 2)
 
@@ -61,7 +62,7 @@ class LognormalTestCase(UncertaintyTestCase):
 
         pa = LU.from_dicts({'loc': 1, 'scale': 0.5, 'minimum': -2, 'negative': True})
         xs, ys = LU.pdf(pa)
-        print xs.min(), xs.max()
+        print(xs.min(), xs.max())
         self.assertEqual(xs.min(), -2)
         self.assertTrue(xs.max() > -1)
 
