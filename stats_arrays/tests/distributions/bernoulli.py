@@ -1,3 +1,4 @@
+from __future__ import print_function
 from ...distributions import BernoulliUncertainty
 from ..base import UncertaintyTestCase
 import numpy as np
@@ -43,11 +44,11 @@ class BernoulliTestCase(UncertaintyTestCase):
 
     def test_bernoulli_seeded_random(self):
         oneDparams = self.biased_params_1d()
-        print BernoulliUncertainty.random_variables(
+        print(BernoulliUncertainty.random_variables(
             oneDparams,
             10,
             self.seeded_random()
-        )
+        ))
         self.assertTrue(np.allclose(
             BernoulliUncertainty.random_variables(
                 oneDparams,

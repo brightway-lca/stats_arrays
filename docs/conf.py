@@ -18,9 +18,9 @@
 # built documents.
 #
 # The short X.Y version.
-version = '0.3'
+version = '0.4'
 # The full version, including alpha/beta/rc tags.
-release = '0.3.1'
+release = '0.4'
 
 import sys
 from os.path import abspath, dirname
@@ -31,7 +31,7 @@ sys.path.insert(1, abspath(dirname(dirname(__file__))))
 # Load mathjax through https so it works on RTD/Chrome. See: # http://sphinx-doc.org/ext/math.html
 # http://docs.mathjax.org/en/latest/start.html#secure-access-to-the-cdn
 # https://github.com/rtfd/readthedocs.org/issues/283
-mathjax_path = "https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+mathjax_path = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
 
 # -- General configuration -----------------------------------------------------
 
@@ -100,7 +100,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'alabaster'
 RTD_NEW_THEME = True
 
 # Theme options are theme-specific and customize the look and feel of a theme

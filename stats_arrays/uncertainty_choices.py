@@ -19,8 +19,7 @@ DISTRIBUTIONS = (
 
 
 class UncertaintyChoices(object):
-
-    """An container for uncertainty distributions."""
+    u"""An container for uncertainty distributions."""
 
     def __init__(self):
         # Sorted by id
@@ -31,8 +30,10 @@ class UncertaintyChoices(object):
         self.id_dict = {}
         for dist in self.choices:
             if dist.id in self.id_dict:
-                raise ValueError("Uncertainty id %i is already in use by %s" %
-                                (dist.id, self.id_dict[dist.id]))
+                raise ValueError(
+                    u"Uncertainty id {:d} is already in use by {:d}".format(
+                    dist.id, self.id_dict[dist.id])
+                )
             self.id_dict[dist.id] = dist
 
     def __iter__(self):
@@ -48,10 +49,13 @@ class UncertaintyChoices(object):
         return choice in self.choices
 
     def add(self, distribution):
-        if not hasattr(distribution, "id") and isinstance(distributions.id, int):
-            raise ValueError("Uncertainty distributions must have integer `id` attribute.")
+        if not hasattr(distribution, u"id") and isinstance(distributions.id, int):
+            raise ValueError(u"Uncertainty distributions must have integer `id` attribute.")
         if distribution.id in self.id_dict:
-            warnings.warn("ERROR: This distribution (id %s) is already present!" % distribution.id)
+            warnings.warn(
+                u"ERROR: This distribution (id {:d}) is already present!".format(
+                distribution.id)
+            )
             return
         self.choices.append(distribution)
         self.id_dict[distribution.id] = distribution

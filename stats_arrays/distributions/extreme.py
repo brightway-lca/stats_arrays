@@ -6,14 +6,11 @@ import numpy as np
 
 class GeneralizedExtremeValueUncertainty(UncertaintyBase):
 
-    r"""
-The generalized extreme value uncertainty distribution has the cumulative distribution function (the PDF is even more complicated):
+    u"""
+The generalized extreme value uncertainty, or Fisher-Tippett, distribution is described in the Wikipedia article: http://en.wikipedia.org/wiki/Generalized_extreme_value_distribution.
 
-.. math:: f(x;\mu,\sigma,\xi) = \exp\left\{-\left[1+\xi\left(\frac{x-\mu}{\sigma}\right)\right]^{-1/\xi}\right\}
+In our implementation, :math:`\\mu` is ``location``, :math:`\\sigma` is ``scale``, and :math:`\\xi`  is ``shape``.
 
-In our implementation, :math:`\mu` is ``location``, :math:`\sigma` is ``scale``, and :math:`\xi`  is ``shape``.
-
-See http://en.wikipedia.org/wiki/Generalized_extreme_value_distribution.
     """
     id = 11
     description = "Generalized extreme value uncertainty"

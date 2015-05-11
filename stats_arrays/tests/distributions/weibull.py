@@ -8,7 +8,6 @@ import numpy as np
 class WeibullTestCase(UncertaintyTestCase):
 
     def pretty_close(self, a, b):
-        print a, b
         if b == 0:
             self.assertTrue(a - 0.05 < b < a + 0.05)
         else:

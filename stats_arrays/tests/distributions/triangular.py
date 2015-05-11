@@ -50,8 +50,9 @@ class TriangularTestCase(UncertaintyTestCase):
 
     def test_triangular_statistics(self):
         oneDparams = self.biased_params_1d()
-        tri_stats = {'upper': None, 'lower': None, 'median': 2.732050895690918,
-                     'mode': 3.0, 'mean': 2.6666667461395264}
+        tri_stats = {'upper': 3.8063508384608244, 'lower': 1.2738612828334341,
+                     'median': 2.7320508333784455, 'mode': 3.0,
+                     'mean': 2.6666667461395264}
         self.assertEqual(TriangularUncertainty.statistics(oneDparams),
                          tri_stats)
 

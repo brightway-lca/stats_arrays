@@ -48,7 +48,7 @@ class UniformUncertainty(BoundedUncertaintyBase):
     @classmethod
     @one_row_params_array
     def pdf(cls, params, xs=None):
-        if xs == None:
+        if xs is None:
             xs = (params['minimum'], params['maximum'])
         percentage = 1 / (params['maximum'] - params['minimum'])
         ys = np.array([float(percentage) for x in xs])
@@ -101,23 +101,15 @@ class TriangularUncertainty(BoundedUncertaintyBase):
     def statistics(cls, params):
         mode = params['loc']
         mean = (params['minimum'] + params['maximum'] + mode) / 3
-        upper = params['maximum']
-        lower = params['minimum']
-        if mode > (upper - lower) / 2:
-            median = lower + ((upper - lower) * (mode - lower)) ** 0.5 / (
-                2 ** 0.5)
-        elif mode < (upper - lower) / 2:
-            median = upper - ((upper - lower) * (upper - mode)
-                              ) ** 0.5 / (2 ** 0.5)
-        else:
-            median = mode
+        lower, median, upper = cls.ppf(params, np.array([[0.0125, 0.5, 0.9875]])).ravel()
         return {'mean': float(mean), 'median': float(median),
-                'mode': float(mode), 'lower': None, 'upper': None}
+                'mode': float(mode), 'lower': float(lower),
+                'upper': float(upper)}
 
     @classmethod
     @one_row_params_array
     def pdf(cls, params, xs=None):
-        if xs == None:
+        if xs is None:
             lower = params['minimum']
             upper = params['maximum']
             mode = params['loc']

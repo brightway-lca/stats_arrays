@@ -6,16 +6,16 @@ import numpy as np
 
 class StudentsTUncertainty(UncertaintyBase):
 
-    r"""
-The Student's T uncertainty distribution probability density function is a function of :math:`\nu`, the degrees of freedom:
+    u"""
+The Student's T uncertainty distribution probability density function is a function of :math:`\\nu`, the degrees of freedom:
 
-.. math:: f(x; \nu) = \frac{\Gamma(\frac{\nu+1}{2})} {\sqrt{\nu\pi}\,\Gamma(\frac{\nu}{2})} \left(1+\frac{x^2}{\nu} \right)^{-\frac{\nu+1}{2}}
+.. math:: f(x; \\nu) = \\frac{\\Gamma(\\frac{\\nu+1}{2})} {\\sqrt{\\nu\\pi},\\Gamma(\\frac{\\nu}{2})} \\left(1+\\frac{x^2}{\\nu} \\right)^{-\\frac{\\nu+1}{2}}
 
 A non-standardized distribution, with a location and scale parameter, is also possible, through the transformation:
 
-.. math:: X = \mu + \sigma f
+.. math:: X = \\mu + \\sigma f
 
-In our implementation, the location parameter :math:`\mu` is ``location``, the scale parameter :math:`\sigma` is ``scale``, and :math:`\nu` (the degrees of freedom)  is ``shape``.
+In our implementation, the location parameter :math:`\\mu` is ``location``, the scale parameter :math:`\\sigma` is ``scale``, and :math:`\\nu` (the degrees of freedom)  is ``shape``.
 
 See http://en.wikipedia.org/wiki/Student%27s_t-distribution
     """

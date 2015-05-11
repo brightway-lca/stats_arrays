@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest
 from ..distributions import UncertaintyBase
 from ..utils import construct_params_array
@@ -72,7 +73,7 @@ class ConversionTestCase(unittest.TestCase):
     def sa_allclose(self, a, b):
         """allclose for structured arrays"""
         for name in a.dtype.names:
-            print name, a[name], b[name]
+            print(name, a[name], b[name])
             nan_mask_a = np.isnan(a[name])
             nan_mask_b = np.isnan(b[name])
             self.assertTrue(np.allclose(nan_mask_a, nan_mask_b))
