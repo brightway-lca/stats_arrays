@@ -1,18 +1,18 @@
 from setuptools import setup
 
 setup(
-    name=u'stats_arrays',
-    version=u'0.4',
-    author=u'Chris Mutel',
-    author_email=u'cmutel@gmail.com',
-    url=u'https://bitbucket.org/cmutel/stats_arrays',
-    install_requires=[u"numpy", u"scipy", u"nose"],
+    name='stats_arrays',
+    version='0.4.1',
+    author='Chris Mutel',
+    author_email='cmutel@gmail.com',
+    url='https://bitbucket.org/cmutel/stats_arrays',
+    install_requires=["numpy", "scipy", "nose"],
     packages=[
-        u'stats_arrays',
-        u'stats_arrays.distributions',
-        u'stats_arrays.tests',
-        u'stats_arrays.tests.distributions',
+        'stats_arrays',
+        'stats_arrays.distributions',
+        'stats_arrays.tests',
+        'stats_arrays.tests.distributions',
     ],
-    license=u'BSD 2-clause; LICENSE.txt',
-    long_description=open(u'README.rst').read(),
+    license='BSD 2-clause; LICENSE.txt',
+    long_description=open('README.rst').read(),
 )
