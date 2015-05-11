@@ -1,5 +1,5 @@
 from __future__ import division
-from base import UncertaintyBase
+from .base import UncertaintyBase
 from ..errors import InvalidParamsError
 import numpy as np
 
