@@ -1,9 +1,27 @@
 from ...distributions import TriangularUncertainty
+from ...errors import ImproperBoundsError
 from ..base import UncertaintyTestCase
 import numpy as np
 
 
 class TriangularTestCase(UncertaintyTestCase):
+
+    def test_bounds(self):
+        params = self.make_params_array(1)
+        params['minimum'] = 1
+        params['loc'] = 0
+        params['maximum'] = 4
+        with self.assertRaises(ImproperBoundsError):
+            TriangularUncertainty.validate(params)
+        params['loc'] = 5
+        with self.assertRaises(ImproperBoundsError):
+            TriangularUncertainty.validate(params)
+        params['loc'] = 1
+        with self.assertRaises(ImproperBoundsError):
+            TriangularUncertainty.validate(params)
+        params['loc'] = 4
+        with self.assertRaises(ImproperBoundsError):
+            TriangularUncertainty.validate(params)
 
     def test_triangular(self):
         oneDparams = self.biased_params_1d()
