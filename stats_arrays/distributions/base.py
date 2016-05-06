@@ -10,7 +10,7 @@ np.seterr(invalid='ignore')
 
 class UncertaintyBase(object):
 
-    """
+    u"""
 Abstract base class for uncertainty types.
 
 All methods on uncertainty classes should be `class methods <http://docs.python.org/library/functions.html#classmethod>`_, as instantiating uncertainty classes many times is not desired.
@@ -27,7 +27,7 @@ All methods on uncertainty classes should be `class methods <http://docs.python.
     # Conversion utilities ###
     @classmethod
     def from_tuples(cls, *data):
-        """
+        u"""
 Construct a :ref:`hpa` from parameter tuples.
 
 The order of the parameters is:
@@ -72,7 +72,7 @@ Returns:
 
     @classmethod
     def from_dicts(cls, *dicts):
-        """
+        u"""
 Construct a :ref:`hpa` from parameter dictionaries.
 
 Dictionary keys are the normal parameter array columns. Each distribution defines which columns are required and which are optional.
@@ -118,7 +118,7 @@ Returns:
     # Utility methods ###
     @classmethod
     def validate(cls, params):
-        """
+        u"""
 Validate the parameter array for uncertainty distribution.
 
 Validation is distribution specific. The only default check is that ``minimum`` is less than or equal to ``maximum``, and otherwise raises ``stats_arrays.ImproperBoundsError``.
@@ -135,7 +135,7 @@ Args:
 
     @classmethod
     def check_2d_inputs(cls, params, vector):
-        """Convert ``vector`` to 2 dimensions if not already, and raise ``stats_arrays.InvalidParamsError`` if ``vector`` and ``params`` dimensions don't match."""
+        u"""Convert ``vector`` to 2 dimensions if not already, and raise ``stats_arrays.InvalidParamsError`` if ``vector`` and ``params`` dimensions don't match."""
         if len(vector.shape) == 1:
             # Slices from structured arrays can't always be resized
             vector = np.array(vector)
@@ -150,7 +150,7 @@ Args:
     @classmethod
     @one_row_params_array
     def check_bounds_reasonableness(cls, params, threshold=0.1):
-        """
+        u"""
 Test if there is at least a ``threshold`` percent chance of generating random numbers within the provided bounds.
 
 Doesn't return anything. Raises ``stats_arrays.UnreasonableBoundsError`` if this condition is not met.
@@ -170,7 +170,7 @@ Doesn't return anything. Raises ``stats_arrays.UnreasonableBoundsError`` if this
     @classmethod
     def bounded_random_variables(cls, params, size, seeded_random=None,
                                  maximum_iterations=50):
-        """Generate random variables repeatedly until all varaibles are within the bounds of each distribution. Raise MaximumIterationsError if this takes more that `maximum_iterations`. Uses `random_variables` for random number generation.
+        u"""Generate random variables repeatedly until all varaibles are within the bounds of each distribution. Raise MaximumIterationsError if this takes more that `maximum_iterations`. Uses `random_variables` for random number generation.
 
 .. rubric:: Inputs
 
@@ -214,7 +214,7 @@ An array of random values, with dimensions `params` rows by `size`."""
 
     @classmethod
     def random_variables(cls, params, size, seeded_random=None):
-        """Generate random variables for the given uncertainty. Should **not check** to ensure that random samples are with the (minimum, maximum bounds). Bounds checking is provided by the `bounded_random_variables` class method.
+        u"""Generate random variables for the given uncertainty. Should **not check** to ensure that random samples are with the (minimum, maximum bounds). Bounds checking is provided by the `bounded_random_variables` class method.
 
 .. rubric:: Inputs
 
@@ -230,7 +230,7 @@ An array of random values, with dimensions `params` rows by `size`."""
     # Used for Latin Hypercube Monte Carlo ###
     @classmethod
     def ppf(cls, params, percentages):
-        """Return percent point function (inverse of CDF, e.g. value in distribution where x percent of the distribution is less than value) for various distributions.
+        u"""Return percent point function (inverse of CDF, e.g. value in distribution where x percent of the distribution is less than value) for various distributions.
 
 .. rubric:: Inputs
 
@@ -245,7 +245,7 @@ An array of values within the ranges of each distribtion, with `params` rows and
 
     @classmethod
     def cdf(cls, params, vector):
-        """Used when a distribution is bounded, to determine where to begin or end the percentages used in calculating hypercube sampling space.
+        u"""Used when a distribution is bounded, to determine where to begin or end the percentages used in calculating hypercube sampling space.
 
 .. rubric:: Inputs
 
@@ -262,7 +262,7 @@ An array of cumulative densities, bounded on (0,1), with `params` rows and `vect
     @classmethod
     @one_row_params_array
     def statistics(cls, params):
-        """Build a dictionary of mean, mode, median, and 95% confidence interval upper and lower values.
+        u"""Build a dictionary of mean, mode, median, and 95% confidence interval upper and lower values.
 
 .. rubric:: Inputs
 
@@ -278,7 +278,7 @@ An array of cumulative densities, bounded on (0,1), with `params` rows and `vect
     @classmethod
     @one_row_params_array
     def pdf(cls, params, xs=None):
-        """Provide a standard interface to calculate the probability distribution function of a uncertainty distribution. Default is `cls.default_number_points_in_pdf` points between min to max range if bounds are present, or `cls.standard_deviations_in_default_range` standard distributions.
+        u"""Provide a standard interface to calculate the probability distribution function of a uncertainty distribution. Default is `cls.default_number_points_in_pdf` points between min to max range if bounds are present, or `cls.standard_deviations_in_default_range` standard distributions.
 
 .. rubric:: Inputs
 
@@ -295,7 +295,7 @@ A tuple of a vactor x values and a vector of y values. Y values are a one-dimens
 
 class BoundedUncertaintyBase(UncertaintyBase):
 
-    """An uncertainty distribution where minimum and maximum bounds are required. No bounds checking is required for these distributions, as bounds are integral inputs into the sample space generator."""
+    u"""An uncertainty distribution where minimum and maximum bounds are required. No bounds checking is required for these distributions, as bounds are integral inputs into the sample space generator."""
     @classmethod
     def validate(cls, params):
         super(BoundedUncertaintyBase, cls).validate(params)
@@ -304,7 +304,7 @@ class BoundedUncertaintyBase(UncertaintyBase):
 
     @classmethod
     def rescale(cls, params):
-        """Rescale params to a (0,1) interval. Return adjusted_means and scale. Needed because SciPy assumes a (0,1) interval for many distributions."""
+        u"""Rescale params to a (0,1) interval. Return adjusted_means and scale. Needed because SciPy assumes a (0,1) interval for many distributions."""
         scale = (params['maximum'] - params['minimum'])
         adjusted_means = (params['loc'] - params['minimum']) / scale
         return adjusted_means, scale
@@ -312,11 +312,11 @@ class BoundedUncertaintyBase(UncertaintyBase):
     @classmethod
     def bounded_random_variables(cls, params, size, seeded_random=None,
                                  maximum_iterations=None):
-        """No bounds checking because the bounds do not exclude any of the distribution."""
+        u"""No bounds checking because the bounds do not exclude any of the distribution."""
         return cls.random_variables(params, size, seeded_random)
 
     @classmethod
     @one_row_params_array
     def check_bounds_reasonableness(cls, params):
-        """Always true because the bounds do not exclude any of the distribution."""
+        u"""Always true because the bounds do not exclude any of the distribution."""
         return

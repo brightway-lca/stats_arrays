@@ -5,7 +5,7 @@ from numpy import random, zeros, array
 
 class BernoulliUncertainty(BoundedUncertaintyBase):
     id = 6
-    description = "Bernoulli uncertainty"
+    description = u"Bernoulli uncertainty"
 
     @classmethod
     def random_variables(cls, params, size, seeded_random=None):

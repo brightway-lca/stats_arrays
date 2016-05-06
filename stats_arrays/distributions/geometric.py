@@ -1,5 +1,6 @@
 from __future__ import division
 from ..utils import one_row_params_array
+from ..errors import ImproperBoundsError
 from .base import BoundedUncertaintyBase
 from scipy import stats
 import numpy as np
@@ -58,6 +59,13 @@ class UniformUncertainty(BoundedUncertaintyBase):
 class TriangularUncertainty(BoundedUncertaintyBase):
     id = 5
     description = "Triangular uncertainty"
+
+    @classmethod
+    def validate(cls, params):
+        super(TriangularUncertainty, cls).validate(params)
+        if ((params['loc'] >= params['maximum']).sum() or
+            (params['loc'] <= params['minimum']).sum()):
+            raise ImproperBoundsError("Most likely value outside the given bounds.")
 
     @classmethod
     def random_variables(cls, params, size, seeded_random=None):

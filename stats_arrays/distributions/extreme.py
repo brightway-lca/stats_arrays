@@ -19,13 +19,13 @@ In our implementation, :math:`\\mu` is ``location``, :math:`\\sigma` is ``scale`
     def validate(cls, params):
         if np.isnan(params['loc']).sum():
             raise InvalidParamsError(
-                "Real ``mu`` values needed for generalized extreme value.")
+                u"Real ``mu`` values needed for generalized extreme value.")
         if (params['scale'] <= 0).sum():
             raise InvalidParamsError(
-                "Real, positive ``sigma`` values need for generalized extreme value.")
+                u"Real, positive ``sigma`` values need for generalized extreme value.")
         if (params['shape'] != 0).sum():
             raise InvalidParamsError(
-                "Non-zero ``xi`` values are not yet supported.")
+                u"Non-zero ``xi`` values are not yet supported.")
 
     @classmethod
     def random_variables(cls, params, size, seeded_random=None, **kwargs):

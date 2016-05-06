@@ -2,7 +2,7 @@ import unittest
 from numpy import *
 from ..random import RandomNumberGenerator as RNG
 from ..distributions import *
-from ..errors import UnknownUncertaintyType
+from ..errors import UnknownUncertaintyType, ImproperBoundsError
 import numpy as np
 
 
@@ -65,3 +65,15 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
             size=10
         )
         self.assertTrue(rng.next().shape, (2, 10))
+
+    def test_validation(self):
+        with self.assertRaises(ImproperBoundsError):
+            rng = RNG(
+                TriangularUncertainty,
+                UncertaintyBase.from_dicts({'loc': 0, 'minimum': 0, 'maximum': 1})
+            )
+        # No error
+        rng = RNG(
+            TriangularUncertainty,
+            UncertaintyBase.from_dicts({'loc': 0.5, 'minimum': 0, 'maximum': 1})
+        )
