@@ -47,4 +47,4 @@ More
 ====
 
 * Source code: https://bitbucket.org/cmutel/stats_arrays
-* Online documentation: https://stats_arrays.readthedocs.org/en/latest/
+* Online documentation: https://stats_arrays.readthedocs.io/en/latest/
