@@ -141,7 +141,7 @@ class LognormalTestCase(UncertaintyTestCase):
         median = np.exp(mu)
         ci_upper_975 = np.exp(mu) * (np.exp(sigma) ** 1.96)
         pa = LU.from_dicts({'loc': mu, 'scale': sigma})
-        sample = LU.random_variables(pa, size=1e5).ravel()
+        sample = LU.random_variables(pa, size=int(1e5)).ravel()
         sample.sort()
         self.assertTrue(np.allclose(np.median(sample), median, 0.01))
         self.assertTrue(np.allclose(sample[97500], ci_upper_975, 0.01))
