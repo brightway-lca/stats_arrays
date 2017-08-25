@@ -82,3 +82,30 @@ class ConversionTestCase(unittest.TestCase):
                 b[name][~nan_mask_b]
             ))
         return True
+
+
+def test_hetergeneous_from_dicts():
+    dicts = [{
+        'uncertainty type': 4,
+        'minimum': 2,
+        'maximum': 5,
+        'amount': 3,
+        'loc': 3,
+    }, {
+        'uncertainty_type': 2,
+        'loc': 3,
+        'scale': 0.2,
+    }]
+    answer = UncertaintyBase.from_dicts(*dicts)
+    assert np.allclose(answer['uncertainty_type'], np.array((4, 2)))
+
+def test_without_underscore():
+    dicts = [{
+        'uncertainty type': 4,
+        'minimum': 2,
+        'maximum': 5,
+        'amount': 3,
+        'loc': 3,
+    }]
+    answer = UncertaintyBase.from_dicts(*dicts)
+    assert np.allclose(answer['uncertainty_type'][0], 4)

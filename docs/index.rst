@@ -98,6 +98,8 @@ Parameter arrays can have multiple uncertainty distributions. To distinguish bet
         ('negative', np.bool)
     ]
 
+Note that `stats_arrays` was developed in conjunction with the `Brightway LCA framework <https://brightwaylca.org/>`__; Brightway uses the field name "uncertainty type", without the underscore. Be sure to use the underscore when using `stats_arrays`.
+
 Each uncertainty distribution has an integer ID number. See the table below for built-in distribution IDs.
 
 .. note::

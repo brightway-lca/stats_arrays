@@ -112,6 +112,8 @@ Returns:
         params = construct_params_array(len(dicts), True)
         for index, obj in enumerate(dicts):
             data = [obj.get(key, default) for key, default in LABELS]
+            if 'uncertainty type' in obj and 'uncertainty_type' not in obj:
+                data[-1] = obj['uncertainty type']
             params[index] = tuple(data)
         return params
 
