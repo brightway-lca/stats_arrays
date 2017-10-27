@@ -24,10 +24,10 @@ class LatinHypercubeMCTestCase(unittest.TestCase):
         params['loc'] = 0.5
         params['scale'] = NaN
         lhc = LatinHypercubeRNG(params, seed=11111, samples=9)
-        self.assertTrue(allclose(lhc.iterate(), array([[0.5]])))
-        self.assertTrue(allclose(lhc.iterate(), array([[0.7]])))
-        self.assertTrue(allclose(lhc.iterate(), array([[0.5]])))
-        self.assertTrue(allclose(lhc.iterate(), array([[0.6]])))
+        self.assertTrue(allclose(next(lhc), array([[0.5]])))
+        self.assertTrue(allclose(next(lhc), array([[0.7]])))
+        self.assertTrue(allclose(next(lhc), array([[0.5]])))
+        self.assertTrue(allclose(next(lhc), array([[0.6]])))
 
     def test_no_uncertainty_intervals(self):
         # Two-dimensional array check
