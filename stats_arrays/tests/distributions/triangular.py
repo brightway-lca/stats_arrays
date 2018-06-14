@@ -17,11 +17,9 @@ class TriangularTestCase(UncertaintyTestCase):
         with self.assertRaises(ImproperBoundsError):
             TriangularUncertainty.validate(params)
         params['loc'] = 1
-        with self.assertRaises(ImproperBoundsError):
-            TriangularUncertainty.validate(params)
+        TriangularUncertainty.validate(params)
         params['loc'] = 4
-        with self.assertRaises(ImproperBoundsError):
-            TriangularUncertainty.validate(params)
+        TriangularUncertainty.validate(params)
 
     def test_triangular(self):
         oneDparams = self.biased_params_1d()
@@ -66,6 +64,56 @@ class TriangularTestCase(UncertaintyTestCase):
         self.assertTrue(2.61 < np.average(variables[0, :]) < 2.71)
         self.assertTrue(2.61 < np.average(variables[1, :]) < 2.71)
 
+    def test_right_triangles(self):
+        right_triangle_min = self.right_triangles_min()
+        right_triangle_min_stats = {'upper': 3.6648459510835116, 'lower': 1.0188257132115006,
+                     'median': 1.8789162245549995, 'mode': 1.0,
+                     'mean': 2}
+        right_triangle_min_stats_expected_arr = np.array([
+            right_triangle_min_stats['upper'],
+            right_triangle_min_stats['lower'],
+            right_triangle_min_stats['median'],
+            right_triangle_min_stats['mode'],
+            right_triangle_min_stats['mean'],
+        ])
+        calculated_stats_min = TriangularUncertainty.statistics(right_triangle_min)
+        right_triangle_min_stats_calculated_arr = np.array([
+            calculated_stats_min['upper'],
+            calculated_stats_min['lower'],
+            calculated_stats_min['median'],
+            calculated_stats_min['mode'],
+            calculated_stats_min['mean'],
+        ])
+        self.assertTrue(np.allclose(right_triangle_min_stats_expected_arr,
+                                    right_triangle_min_stats_calculated_arr,
+                                    rtol=1e-03
+                                    )
+                        )
+
+        right_triangle_max = self.right_triangles_max()
+        right_triangle_max_stats = {'upper': 3.981087302412936, 'lower': 1.3350311212247066,
+                     'median': 3.1208194598959116, 'mode': 4.0,
+                     'mean': 3}
+        right_triangle_max_stats_expected_arr = np.array([
+            right_triangle_max_stats['upper'],
+            right_triangle_max_stats['lower'],
+            right_triangle_max_stats['median'],
+            right_triangle_max_stats['mode'],
+            right_triangle_max_stats['mean'],
+        ])
+        calculated_stats_max = TriangularUncertainty.statistics(right_triangle_max)
+        right_triangle_max_stats_calculated_arr = np.array([
+            calculated_stats_max['upper'],
+            calculated_stats_max['lower'],
+            calculated_stats_max['median'],
+            calculated_stats_max['mode'],
+            calculated_stats_max['mean'],
+        ])
+        self.assertTrue(np.allclose(right_triangle_max_stats_expected_arr,
+                                    right_triangle_max_stats_calculated_arr,
+                                    rtol=1e-03
+                                    )
+                        )
     def test_triangular_statistics(self):
         oneDparams = self.biased_params_1d()
         tri_stats = {'upper': 3.8063508384608244, 'lower': 1.2738612828334341,
