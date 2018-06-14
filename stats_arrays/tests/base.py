@@ -41,6 +41,19 @@ class UncertaintyTestCase(unittest.TestCase):
         params['maximum'] = 4
         return params
 
+    def right_triangles_min(self):
+        params = self.make_params_array(1)
+        params['minimum'] = 1
+        params['loc'] = 1
+        params['maximum'] = 4
+        return params
+
+    def right_triangles_max(self):
+        params = self.make_params_array(1)
+        params['minimum'] = 1
+        params['loc'] = 4
+        params['maximum'] = 4
+        return params
 
 class BaseTestCase(UncertaintyTestCase):
 
