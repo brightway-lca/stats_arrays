@@ -70,10 +70,18 @@ class RandomNumberGeneratorTestCase(unittest.TestCase):
         with self.assertRaises(ImproperBoundsError):
             rng = RNG(
                 TriangularUncertainty,
-                UncertaintyBase.from_dicts({'loc': 0, 'minimum': 0, 'maximum': 1})
+                UncertaintyBase.from_dicts({'loc': -0.000000001, 'minimum': 0, 'maximum': 1})
             )
         # No error
         rng = RNG(
             TriangularUncertainty,
             UncertaintyBase.from_dicts({'loc': 0.5, 'minimum': 0, 'maximum': 1})
+        )
+        rng = RNG(
+            TriangularUncertainty,
+            UncertaintyBase.from_dicts({'loc': 0., 'minimum': 0, 'maximum': 1})
+        )
+        rng = RNG(
+            TriangularUncertainty,
+            UncertaintyBase.from_dicts({'loc': 1., 'minimum': 0, 'maximum': 1})
         )
