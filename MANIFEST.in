@@ -1,3 +1,4 @@
+include *.md
 include *.txt
 recursive-include stats_arrays *.py
 recursive-include docs *.rst

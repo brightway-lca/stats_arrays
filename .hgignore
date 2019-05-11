@@ -7,3 +7,5 @@ build
 docs/_*
 dev
 stats_arrays.egg-info
+.pytest_cache
+.cache
