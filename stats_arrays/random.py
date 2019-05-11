@@ -3,10 +3,13 @@ from __future__ import division
 from .errors import UnknownUncertaintyType
 from .uncertainty_choices import *
 import numpy as np
-import collections
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 
-class RandomNumberGenerator(collections.Iterable):
+class RandomNumberGenerator(Iterable):
 
     def __init__(self, uncertainty_type, params, size=1,
                  maximum_iterations=100, seed=None,
@@ -104,7 +107,7 @@ Returns:
         return self
 
 
-class MCRandomNumberGenerator(collections.Iterable):
+class MCRandomNumberGenerator(Iterable):
 
     u"""
 A Monte Carlo random number generator that operates on a :ref:`hpa`.
