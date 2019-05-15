@@ -164,36 +164,35 @@ Returns:
             if mask.sum():
                 uncertainty_type.validate(self.params[mask])
 
-    def generate(self, size=1):
+    def generate(self, samples=1):
         """Generate random samples.
 
-        If ``size`` is one, return a one-dimensional array. Otherwise returns a ``num_parameters, size`` array."""
-        if not hasattr(self, u"random_data"):
-            if size == 1:
-                self.random_data = np.zeros(self.length)
-            else:
-                self.random_data = np.zeros(self.length, size)
+        If ``samples`` is one, return a one-dimensional array. Otherwise returns a ``num_parameters, samples`` array."""
+        if samples == 1:
+            self.random_data = np.zeros(self.length)
+        else:
+            self.random_data = np.zeros((self.length, samples))
 
         offset = 0
         for uncertainty_type in self.choices:
-            size = self.positions[uncertainty_type]
-            if not size:
+            numparams = self.positions[uncertainty_type]
+            if not numparams:
                 continue
             random_data = uncertainty_type.bounded_random_variables(
-                self.params[offset:size + offset],
-                size,
+                self.params[offset:numparams + offset],
+                samples,
                 self.random,
                 self.maximum_iterations
             )
-            if size == 1:
+            if samples == 1:
                 if len(random_data.shape) == 2:
                     random_data = random_data[:, 0]  # Restore to 1-d
-                self.random_data[offset:size + offset] = random_data
+                self.random_data[offset:numparams + offset] = random_data
             else:
-                self.random_data[offset:size + offset, :] = random_data
-            offset += size
+                self.random_data[offset:numparams + offset, :] = random_data
+            offset += numparams
 
-        self.random_data = self.random_data[np.argsort(self.ordering), :]
+        self.random_data = self.random_data[np.argsort(self.ordering)]
         return self.random_data
 
     def next(self):
