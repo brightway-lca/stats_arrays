@@ -1,6 +1,5 @@
-from __future__ import division
-from ...distributions import GeneralizedExtremeValueUncertainty as GEVU
-from ...errors import InvalidParamsError
+from stats_arrays.distributions import GeneralizedExtremeValueUncertainty as GEVU
+from stats_arrays.errors import InvalidParamsError
 from ..base import UncertaintyTestCase
 import numpy as np
 

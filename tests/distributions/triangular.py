@@ -1,5 +1,5 @@
-from ...distributions import TriangularUncertainty
-from ...errors import ImproperBoundsError
+from stats_arrays.distributions import TriangularUncertainty
+from stats_arrays.errors import ImproperBoundsError
 from ..base import UncertaintyTestCase
 import numpy as np
 

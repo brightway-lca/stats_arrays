@@ -5,8 +5,7 @@ import numpy as np
 
 
 class GeneralizedExtremeValueUncertainty(UncertaintyBase):
-
-    u"""
+    """
 The generalized extreme value uncertainty, or Fisher-Tippett, distribution is described in the Wikipedia article: http://en.wikipedia.org/wiki/Generalized_extreme_value_distribution.
 
 In our implementation, :math:`\\mu` is ``location``, :math:`\\sigma` is ``scale``, and :math:`\\xi`  is ``shape``.

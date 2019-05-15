@@ -1,7 +1,7 @@
-from ...distributions import NormalUncertainty
 from ..base import UncertaintyTestCase
+from stats_arrays.distributions import NormalUncertainty
+from stats_arrays.errors import InvalidParamsError
 import numpy as np
-from ...errors import InvalidParamsError
 
 
 class NormalTestCase(UncertaintyTestCase):

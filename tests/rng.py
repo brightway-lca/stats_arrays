@@ -1,8 +1,8 @@
 import unittest
 from numpy import *
-from ..random import RandomNumberGenerator as RNG
-from ..distributions import *
-from ..errors import UnknownUncertaintyType, ImproperBoundsError
+from stats_arrays.random import RandomNumberGenerator as RNG
+from stats_arrays.distributions import *
+from stats_arrays.errors import UnknownUncertaintyType, ImproperBoundsError
 import numpy as np
 
 

@@ -1,8 +1,7 @@
-from __future__ import division
 from numpy import *
 from scipy import stats
-from ...distributions import BetaUncertainty
-from ...errors import InvalidParamsError
+from stats_arrays.distributions import BetaUncertainty
+from stats_arrays.errors import InvalidParamsError
 from ..base import UncertaintyTestCase
 
 
