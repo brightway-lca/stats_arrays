@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*
-from __future__ import division
 from .errors import UnknownUncertaintyType
 from .uncertainty_choices import *
+from collections.abc import Iterable
 import numpy as np
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
 
 
 class RandomNumberGenerator(Iterable):
@@ -14,7 +9,7 @@ class RandomNumberGenerator(Iterable):
     def __init__(self, uncertainty_type, params, size=1,
                  maximum_iterations=100, seed=None,
                  **kwargs):
-        u"""
+        """
 Create a random number generator from a :ref:`params-array` and an uncertainty distribution.
 
 Upon instantiation, the class checks that:
@@ -65,7 +60,7 @@ Returns:
         self.verify_params()
 
     def verify_params(self, params=None, uncertainty_type=None):
-        u"""Verify that parameters are within bounds. Mean is not restricted to bounds, unless the distribution requires it (e.g. triangular)."""
+        """Verify that parameters are within bounds. Mean is not restricted to bounds, unless the distribution requires it (e.g. triangular)."""
         if params is None:  # Can't convert array to boolean
             params = self.params
         if not uncertainty_type:
@@ -73,7 +68,7 @@ Returns:
         uncertainty_type.validate(params)
 
     def verify_uncertainty_type(self, uncertainty_type=None):
-        u"""Make sure the given uncertainty type provides the method ``bounded_random_variables``."""
+        """Make sure the given uncertainty type provides the method ``bounded_random_variables``."""
         if not uncertainty_type:
             uncertainty_type = self.uncertainty_type
         if not hasattr(uncertainty_type, u"bounded_random_variables"):
@@ -109,7 +104,7 @@ Returns:
 
 class MCRandomNumberGenerator(Iterable):
 
-    u"""
+    """
 A Monte Carlo random number generator that operates on a :ref:`hpa`.
 
 Upon instantiation, the class checks that:
@@ -151,12 +146,12 @@ Returns:
         self.positions = self.get_positions()
 
     def get_positions(self):
-        u"""Construct dictionary of where each distribution starts and stops in the sorted parameter array"""
+        """Construct dictionary of where each distribution starts and stops in the sorted parameter array"""
         return dict([(choice, (self.params[u'uncertainty_type'] == choice.id).sum()
                       ) for choice in self.choices])
 
     def verify_params(self):
-        u"""Verify that all uncertainty types are allowed, and parameter validate using distribution class methods"""
+        """Verify that all uncertainty types are allowed, and parameter validate using distribution class methods"""
         ids = set(np.unique(self.params[u'uncertainty_type']))
         extra_ids = ids.difference(set([x.id for x in self.choices]))
         if extra_ids:
@@ -169,10 +164,15 @@ Returns:
             if mask.sum():
                 uncertainty_type.validate(self.params[mask])
 
-    def next(self):
-        u"""Generate a new vector of random numbers"""
+    def generate(self, size=1):
+        """Generate random samples.
+
+        If ``size`` is one, return a one-dimensional array. Otherwise returns a ``num_parameters, size`` array."""
         if not hasattr(self, u"random_data"):
-            self.random_data = np.zeros(self.length)
+            if size == 1:
+                self.random_data = np.zeros(self.length)
+            else:
+                self.random_data = np.zeros(self.length, size)
 
         offset = 0
         for uncertainty_type in self.choices:
@@ -181,17 +181,24 @@ Returns:
                 continue
             random_data = uncertainty_type.bounded_random_variables(
                 self.params[offset:size + offset],
-                1,
+                size,
                 self.random,
                 self.maximum_iterations
             )
-            if len(random_data.shape) == 2:
-                random_data = random_data[:, 0]  # Restore to 1-d
-            self.random_data[offset:size + offset] = random_data
+            if size == 1:
+                if len(random_data.shape) == 2:
+                    random_data = random_data[:, 0]  # Restore to 1-d
+                self.random_data[offset:size + offset] = random_data
+            else:
+                self.random_data[offset:size + offset, :] = random_data
             offset += size
 
-        self.random_data = self.random_data[np.argsort(self.ordering)]
+        self.random_data = self.random_data[np.argsort(self.ordering), :]
         return self.random_data
+
+    def next(self):
+        """Generate a new vector of random numbers"""
+        return self.generate()
 
     def __next__(self):
         return self.next()
@@ -202,7 +209,7 @@ Returns:
 
 class LatinHypercubeRNG(MCRandomNumberGenerator):
 
-    u"""
+    """
 A random number generator that pre-calculates a sample space to draw from.
 
 .. rubric:: Inputs
@@ -226,7 +233,7 @@ A random number generator that pre-calculates a sample space to draw from.
         self.build_hypercube()
 
     def build_hypercube(self):
-        u"""Build an array, of shape `self.length` rows by `self.samples` columns, which contains the sample space to be drawn from when doing Latin Hypercubic sampling.
+        """Build an array, of shape `self.length` rows by `self.samples` columns, which contains the sample space to be drawn from when doing Latin Hypercubic sampling.
 
 Each row represents a different data point and distribution. The final sample space is `self.hypercube`. All distributions from `uncertainty_choices` are usable, and bounded distributions are also fine.
 

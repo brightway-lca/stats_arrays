@@ -19,7 +19,7 @@ DISTRIBUTIONS = (
 
 
 class UncertaintyChoices(object):
-    u"""An container for uncertainty distributions."""
+    """An container for uncertainty distributions."""
 
     def __init__(self):
         # Sorted by id

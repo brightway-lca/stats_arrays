@@ -1,7 +1,6 @@
-from __future__ import print_function
 import unittest
-from ..distributions import UncertaintyBase
-from ..utils import construct_params_array
+from stats_arrays.distributions import UncertaintyBase
+from stats_arrays.utils import construct_params_array
 import numpy as np
 
 

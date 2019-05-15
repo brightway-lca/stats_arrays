@@ -1,4 +1,4 @@
-from ...distributions import UniformUncertainty
+from stats_arrays.distributions import UniformUncertainty
 from ..base import UncertaintyTestCase
 import numpy as np
 

@@ -1,5 +1,4 @@
-from __future__ import print_function
-from ...distributions import BernoulliUncertainty
+from stats_arrays.distributions import BernoulliUncertainty
 from ..base import UncertaintyTestCase
 import numpy as np
 

@@ -7,8 +7,7 @@ from scipy import stats
 
 
 class BetaUncertainty(UncertaintyBase):
-
-    u"""
+    """
 The Beta distribution has the probability distribution function:
 
 .. math:: f(x; \\alpha, \\beta) = \\frac{1}{B(\\alpha, \\beta)} x^{\\alpha - 1}(1 - x)^{\\beta - 1},

@@ -5,7 +5,7 @@ import numpy as np
 
 
 class WeibullUncertainty(UncertaintyBase):
-    u"""
+    """
 The Weibull distribution has the probability distribution function:
 
 .. math:: f(x; k, \\lambda) = \\frac{k}{\\lambda} \\left( \\frac{x}{\\lambda} \\right)^{k - 1} e^{- \\left( x / \\lambda \\right)^{k}}

@@ -5,8 +5,7 @@ import numpy as np
 
 
 class StudentsTUncertainty(UncertaintyBase):
-
-    u"""
+    """
 The Student's T uncertainty distribution probability density function is a function of :math:`\\nu`, the degrees of freedom:
 
 .. math:: f(x; \\nu) = \\frac{\\Gamma(\\frac{\\nu+1}{2})} {\\sqrt{\\nu\\pi},\\Gamma(\\frac{\\nu}{2})} \\left(1+\\frac{x^2}{\\nu} \\right)^{-\\frac{\\nu+1}{2}}

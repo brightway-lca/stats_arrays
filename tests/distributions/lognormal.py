@@ -1,6 +1,5 @@
-from __future__ import print_function
-from ...errors import InvalidParamsError
-from ...distributions import LognormalUncertainty as LU
+from stats_arrays.errors import InvalidParamsError
+from stats_arrays.distributions import LognormalUncertainty as LU
 from ..base import UncertaintyTestCase
 from scipy.special import erf
 import numpy as np
