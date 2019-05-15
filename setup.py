@@ -12,8 +12,10 @@ setup(
         'stats_arrays.distributions',
     ],
     license=open('LICENSE').read(),
-    long_description=open('README.rst').read(),
-        classifiers=[
+    desciption="Standard NumPy array interface for defining uncertain parameters",
+    long_description=open('README.md', encoding='utf-8').read(),
+    long_description_content_type='text/markdown',
+    classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',

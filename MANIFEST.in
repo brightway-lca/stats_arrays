@@ -1,5 +1,6 @@
 include *.md
 include *.txt
+include *.rst
 include LICENSE
 recursive-include stats_arrays *.py
 recursive-include docs *.rst
