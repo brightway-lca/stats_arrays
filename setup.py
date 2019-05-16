@@ -11,9 +11,9 @@ setup(
         'stats_arrays',
         'stats_arrays.distributions',
     ],
-    license=open('LICENSE').read(),
-    desciption="Standard NumPy array interface for defining uncertain parameters",
-    long_description=open('README.md', encoding='utf-8').read(),
+    license="BSD 3-Clause License",
+    description="Standard NumPy array interface for defining uncertain parameters",
+    long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
