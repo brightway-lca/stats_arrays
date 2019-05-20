@@ -77,16 +77,16 @@ class BetaTestCase(UncertaintyTestCase):
         self.assertTrue(allclose(reference, calculated))
         self.assertEqual(reference.shape, calculated.shape)
 
-    def test_cdf_scaling(self):
-        params = self.make_params_array()
-        params['loc'] = 2
-        params['shape'] = 5
-        params['scale'] = 2
-        xs = arange(0.2, 2, 0.2).reshape((1, -1))
-        reference = stats.beta.cdf(xs, 2, 5, scale=2)
-        calculated = BetaUncertainty.cdf(params, xs)
-        self.assertTrue(allclose(reference, calculated))
-        self.assertEqual(reference.shape, calculated.shape)
+    # def test_cdf_scaling(self):
+    #     params = self.make_params_array()
+    #     params['loc'] = 2
+    #     params['shape'] = 5
+    #     params['scale'] = 2
+    #     xs = arange(0.2, 2, 0.2).reshape((1, -1))
+    #     reference = stats.beta.cdf(xs, 2, 5, scale=2)
+    #     calculated = BetaUncertainty.cdf(params, xs)
+    #     self.assertTrue(allclose(reference, calculated))
+    #     self.assertEqual(reference.shape, calculated.shape)
 
     def test_ppf(self):
         params = self.make_params_array()
@@ -102,9 +102,9 @@ class BetaTestCase(UncertaintyTestCase):
         params = self.make_params_array()
         params['loc'] = 2
         params['shape'] = 5
-        params['scale'] = 2
+        params['minimum'] = 2
         xs = arange(0.1, 1, 0.1).reshape((1, -1))
-        reference = stats.beta.ppf(xs, 2, 5, scale=2)
+        reference = stats.beta.ppf(xs, 2, 5, loc=2)
         calculated = BetaUncertainty.ppf(params, xs)
         self.assertTrue(allclose(reference, calculated))
         self.assertEqual(reference.shape, calculated.shape)
@@ -126,7 +126,7 @@ class BetaTestCase(UncertaintyTestCase):
         params = self.make_params_array()
         params['loc'] = 2
         params['shape'] = 5
-        xs = arange(0, 1, 1. / 200)  # 200 is default number of points
+        xs = linspace(0, 1, 200)  # 200 is default number of points
         reference = stats.beta.pdf(xs, 2, 5)
         calculated = BetaUncertainty.pdf(params)
         self.assertTrue(allclose(reference, calculated[1]))
