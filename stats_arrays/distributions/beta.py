@@ -38,9 +38,11 @@ Wikipedia: `Beta distribution <http://en.wikipedia.org/wiki/Beta_distribution>`_
     @classmethod
     def _rescale(cls, params, results):
         mask = ~isnan(params['minimum'])
-        results[mask] += params[mask]['minimum']
+        if mask.sum():
+            results[mask] += params[mask]['minimum']
         mask = ~isnan(params['maximum'])
-        results[mask] *= params[mask]['maximum']
+        if mask.sum():
+            results[mask] *= params[mask]['maximum']
         return results
 
     @classmethod
