@@ -49,7 +49,7 @@ class UncertaintyChoices(object):
         return choice in self.choices
 
     def add(self, distribution):
-        if not hasattr(distribution, u"id") and isinstance(distributions.id, int):
+        if not hasattr(distribution, u"id") and isinstance(distribution.id, int):
             raise ValueError(u"Uncertainty distributions must have integer `id` attribute.")
         if distribution.id in self.id_dict:
             warnings.warn(
