@@ -1,7 +1,9 @@
 # `stats_arrays` Changelog
 
-# 0.6 (dev)
+# 0.6 (29-07-2019)
 
+* Several bug fixes from Daniel de Koning
+* Start improvement of beta distribution
 * Allow `MCRandomNumberGenerator` to generate multiple samples at once
 * Move tests to pytest
 * Add tests for MCRNG
