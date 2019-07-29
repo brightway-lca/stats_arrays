@@ -1,4 +1,4 @@
-__version__ = (0, 6)
+__version__ = (0, 6, 1)
 
 from .distributions import *
 from .uncertainty_choices import uncertainty_choices
