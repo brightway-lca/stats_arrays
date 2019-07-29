@@ -24,10 +24,11 @@ def weighted_sample_stddev(values, weights):
 def test():
     from numpy import array
     a = array((1, 2, 3, 4))
-    print a ** 2
+    print(a ** 2)
     b = array((0.5, 0.5, 1, 1))
-    print weighted_mean(a, b)
-    print weighted_sample_stddev(a, b)
+    print(weighted_mean(a, b))
+    print(weighted_sample_stddev(a, b))
+
 
 if __name__ == '__main__':
     test()
