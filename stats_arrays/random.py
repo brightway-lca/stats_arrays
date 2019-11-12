@@ -1,7 +1,10 @@
 from .errors import UnknownUncertaintyType
 from .uncertainty_choices import *
-from collections.abc import Iterable
 import numpy as np
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 
 class RandomNumberGenerator(Iterable):
