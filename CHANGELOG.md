@@ -1,5 +1,13 @@
 # `stats_arrays` Changelog
 
+## 0.6.3 (29-11-2019)
+
+* Improve speed of lognormal CDF and PPF under common conditions
+
+## 0.6.2 (13-11-2019)
+
+* Restore Python 2.7 compatibility
+
 ## 0.6.1 (29-07-2019)
 
 * Several bug fixes from Daniel de Koning
