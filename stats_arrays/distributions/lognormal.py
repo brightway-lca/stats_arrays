@@ -40,27 +40,43 @@ class LognormalUncertainty(UncertaintyBase):
 
     @classmethod
     def cdf(cls, params, vector):
-        vector = cls.check_2d_inputs(params, vector)
         vector[params['negative']] = -1 * vector[params['negative']]
-        results = np.zeros(vector.shape)
-        for row in range(params.shape[0]):
-            results[row, :] = stats.lognorm.cdf(
-                vector[row, :],
-                params['scale'][row],
-                scale=np.exp(params['loc'][row])
-            )
+        if vector.ndim == 1 or vector.shape[1] == 1:
+            # Can do all at once, **much** faster
+            results = stats.lognorm.cdf(
+                vector.reshape((-1,)),
+                params['scale'],
+                scale=np.exp(params['loc'])
+            ).reshape((-1, 1))
+        else:
+            vector = cls.check_2d_inputs(params, vector)
+            results = np.zeros(vector.shape)
+            for row in range(params.shape[0]):
+                results[row, :] = stats.lognorm.cdf(
+                    vector[row, :],
+                    params['scale'][row],
+                    scale=np.exp(params['loc'][row])
+                )
         return results
 
     @classmethod
     def ppf(cls, params, percentages):
-        percentages = cls.check_2d_inputs(params, percentages)
-        results = np.zeros(percentages.shape)
-        for row in range(percentages.shape[0]):
-            results[row, :] = stats.lognorm.ppf(
-                percentages[row, :],
-                params['scale'][row],
-                scale=np.exp(params['loc'][row])
-            )
+        if percentages.ndim == 1 or percentages.shape[1] == 1:
+            # Can do all at once, **much** faster
+            results = stats.lognorm.ppf(
+                percentages.reshape((-1,)),
+                params['scale'],
+                scale=np.exp(params['loc'])
+            ).reshape((-1, 1))
+        else:
+            percentages = cls.check_2d_inputs(params, percentages)
+            results = np.zeros(percentages.shape)
+            for row in range(percentages.shape[0]):
+                results[row, :] = stats.lognorm.ppf(
+                    percentages[row, :],
+                    params['scale'][row],
+                    scale=np.exp(params['loc'][row])
+                )
         results[params['negative']] = -1 * results[params['negative']]
         return results
 
