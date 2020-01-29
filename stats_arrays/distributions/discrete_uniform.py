@@ -77,7 +77,7 @@ See https://en.wikipedia.org/wiki/Uniform_distribution_(discrete).
         return {
             'mean': mean,
             'mode': "Undefined",
-            'median': int(round(mean)),
+            'median': int(mean.round(0)),
             'lower': params['minimum'],
             'upper': params['maximum']
         }
