@@ -1,5 +1,9 @@
 # `stats_arrays` Changelog
 
+## 0.6.4 (31-01-2020)
+
+* Merged [PR #5](https://bitbucket.org/cmutel/stats_arrays/pull-requests/5/use-meanround-0-instead-of-round-mean/diff), fix rounding function.
+
 ## 0.6.3 (29-11-2019)
 
 * Improve speed of lognormal CDF and PPF under common conditions
