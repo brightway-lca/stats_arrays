@@ -8,7 +8,7 @@ BASE_DTYPE = [
     ('shape', np.float64),
     ('minimum', np.float64),
     ('maximum', np.float64),
-    ('negative', np.bool)
+    ('negative', bool)
 ]
 
 
