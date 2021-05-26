@@ -5,7 +5,7 @@ setup(
     version='0.6.5',
     author='Chris Mutel',
     author_email='cmutel@gmail.com',
-    url='https://bitbucket.org/cmutel/stats_arrays',
+    url='https://github.com/brightway-lca/stats_arrays',
     install_requires=["numpy", "scipy"],
     packages=[
         'stats_arrays',
