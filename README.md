@@ -45,5 +45,5 @@ array([ 2.74414022,  3.54748507])
 
 # More
 
-* Source code: https://bitbucket.org/cmutel/stats_arrays
+* Source code: https://github.com/brightway-lca/stats_arrays
 * Online documentation: https://stats_arrays.readthedocs.io/en/latest/
