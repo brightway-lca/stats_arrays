@@ -15,8 +15,8 @@ class GeneralizedExtremeValueUncertaintyTestCase(UncertaintyTestCase):
         results = GEVU.random_variables(params, 10000)
         found_median = np.median(results)
         self.assertEqual(results.shape, (1, 10000))
-        self.assertTrue(0.95 * expected_median < found_median)
-        self.assertTrue(found_median < 1.05 * expected_median)
+        self.assertTrue(0.9 * expected_median < found_median)
+        self.assertTrue(found_median < 1.1 * expected_median)
 
     def test_loc_validation(self):
         params = self.make_params_array()
