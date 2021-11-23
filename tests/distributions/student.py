@@ -10,7 +10,7 @@ class StudentsTTestCase(UncertaintyTestCase):
         if b == 0:
             self.assertTrue(a - 0.1 < b < a + 0.1)
         else:
-            self.assertTrue(0.95 * a < b < 1.05 * a)
+            self.assertTrue(0.9 * a < b < 1.1 * a)
 
     def test_loc_and_scale_nan(self):
         params = self.make_params_array()
@@ -29,7 +29,7 @@ class StudentsTTestCase(UncertaintyTestCase):
         params = self.make_params_array()
         params['shape'] = 1
         sample_1 = StudentsTUncertainty.random_variables(params, 5000)
-        params['scale'] = 5
+        params['scale'] = 1000
         sample_2 = StudentsTUncertainty.random_variables(params, 5000)
         self.assertTrue(np.std(sample_1) < np.std(sample_2))
 
