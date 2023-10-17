@@ -145,6 +145,7 @@ Returns:
         self.random = np.random.RandomState(seed)
         self.verify_params()
         self.ordering = np.argsort(self.params["uncertainty_type"])
+        self.reverse_ordering = np.argsort(self.ordering)
         self.params = self.params[self.ordering]
         self.positions = self.get_positions()
 
@@ -195,7 +196,7 @@ Returns:
                 self.random_data[offset:numparams + offset, :] = random_data
             offset += numparams
 
-        self.random_data = self.random_data[np.argsort(self.ordering)]
+        self.random_data = self.random_data[self.reverse_ordering]
         return self.random_data
 
     def next(self):
