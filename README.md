@@ -45,4 +45,5 @@ array([ 2.74414022,  3.54748507])
 
 # More
 
+* Source code: https://github.com/brightway-lca/stats_arrays
 * Online documentation: https://stats-arrays.readthedocs.io/en/latest/
