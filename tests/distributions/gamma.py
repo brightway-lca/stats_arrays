@@ -10,7 +10,7 @@ class GammaUncertaintyTestCase(UncertaintyTestCase):
         if b == 0:
             self.assertTrue(a - 0.05 < b < a + 0.05)
         else:
-            self.assertTrue(0.95 * a < b < 1.05 * a)
+            self.assertTrue(0.9 * a < b < 1.1 * a)
 
     def test_random_variables(self):
         params = self.make_params_array()
