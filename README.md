@@ -8,7 +8,7 @@ The `stats_arrays` package provides a standard NumPy array interface for definin
 * Want simple Monte Carlo random number generators that return a vector of parameter values to be fed into uncertainty or sensitivity analysis
 * Want something simple, extensible, documented and tested
 
-The `stats_arrays package was originally developed for the [Brightway2 life cycle assessment framework](http://brightwaylca.org/), but can be applied to any stochastic model.
+The `stats_arrays package was originally developed for the [Brightway2 life cycle assessment framework](https://docs.brightway.dev/), but can be applied to any stochastic model.
 
 # Example
 
@@ -46,4 +46,4 @@ array([ 2.74414022,  3.54748507])
 # More
 
 * Source code: https://github.com/brightway-lca/stats_arrays
-* Online documentation: https://stats_arrays.readthedocs.io/en/latest/
+* Online documentation: https://stats-arrays.readthedocs.io/en/latest/

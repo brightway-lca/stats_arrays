@@ -1,4 +1,4 @@
-# `stats_arrays` Changelog
+# stats_arrays Changelog
 
 ## 0.6.4 (31-01-2020)
 
