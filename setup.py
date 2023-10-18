@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='stats_arrays',
-    version='0.6.5',
+    version='0.6.6',
     author='Chris Mutel',
     author_email='cmutel@gmail.com',
     url='https://github.com/brightway-lca/stats_arrays',
