@@ -1,0 +1,24 @@
+{
+  "template": "https://github.com/brightway-lca/cookiecutter-brightwaylib",
+  "commit": "381dab8b97badf672c02a2f221e46c12d5e74235",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "full_name": "Chris Mutel",
+      "email": "cmutel@gmail.com",
+      "github_username": "brightway-lca",
+      "project_name": "stats_arrays",
+      "package_name": "stats_arrays",
+      "project_short_description": "Standard NumPy array interface for defining uncertain parameters",
+      "version": "0.7",
+      "use_pytest": "y",
+      "open_source_license": "BSD-3-Clause",
+      "copyright_year": "2024",
+      "_copy_without_render": [
+        ".github/*"
+      ],
+      "_template": "https://github.com/brightway-lca/cookiecutter-brightwaylib"
+    }
+  },
+  "directory": null
+}

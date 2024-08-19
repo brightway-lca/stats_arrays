@@ -1,5 +1,20 @@
-from .distributions import *
 import warnings
+
+from .distributions import (
+    BernoulliUncertainty,
+    BetaUncertainty,
+    DiscreteUniform,
+    GammaUncertainty,
+    GeneralizedExtremeValueUncertainty,
+    LognormalUncertainty,
+    NormalUncertainty,
+    NoUncertainty,
+    StudentsTUncertainty,
+    TriangularUncertainty,
+    UndefinedUncertainty,
+    UniformUncertainty,
+    WeibullUncertainty,
+)
 
 DISTRIBUTIONS = (
     BernoulliUncertainty,
@@ -18,7 +33,7 @@ DISTRIBUTIONS = (
 )
 
 
-class UncertaintyChoices(object):
+class UncertaintyChoices:
     """An container for uncertainty distributions."""
 
     def __init__(self):
@@ -31,8 +46,9 @@ class UncertaintyChoices(object):
         for dist in self.choices:
             if dist.id in self.id_dict:
                 raise ValueError(
-                    u"Uncertainty id {:d} is already in use by {:d}".format(
-                    dist.id, self.id_dict[dist.id])
+                    "Uncertainty id {:d} is already in use by {:d}".format(
+                        dist.id, self.id_dict[dist.id]
+                    )
                 )
             self.id_dict[dist.id] = dist
 
@@ -49,15 +65,19 @@ class UncertaintyChoices(object):
         return choice in self.choices
 
     def add(self, distribution):
-        if not hasattr(distribution, u"id") and isinstance(distribution.id, int):
-            raise ValueError(u"Uncertainty distributions must have integer `id` attribute.")
+        if not hasattr(distribution, "id") and isinstance(distribution.id, int):
+            raise ValueError(
+                "Uncertainty distributions must have integer `id` attribute."
+            )
         if distribution.id in self.id_dict:
             warnings.warn(
-                u"ERROR: This distribution (id {:d}) is already present!".format(
-                distribution.id)
+                "ERROR: This distribution (id {:d}) is already present!".format(
+                    distribution.id
+                )
             )
             return
         self.choices.append(distribution)
         self.id_dict[distribution.id] = distribution
+
 
 uncertainty_choices = UncertaintyChoices()

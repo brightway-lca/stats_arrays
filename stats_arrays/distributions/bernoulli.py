@@ -1,11 +1,13 @@
 from __future__ import division
+
+from numpy import array, random, zeros
+
 from .base import BoundedUncertaintyBase
-from numpy import random, zeros, array
 
 
 class BernoulliUncertainty(BoundedUncertaintyBase):
     id = 6
-    description = u"Bernoulli uncertainty"
+    description = "Bernoulli uncertainty"
 
     @classmethod
     def random_variables(cls, params, size, seeded_random=None):
@@ -16,8 +18,12 @@ class BernoulliUncertainty(BoundedUncertaintyBase):
         adjusted_means.resize(params.shape[0], 1)
         # nums = seeded_random.random_sample(size * params.shape[0])
         # nums_rs = nums.reshape(params.shape[0], size)
-        mask = seeded_random.random_sample(size * params.shape[0]).reshape(
-            (params.shape[0], size)) >= adjusted_means
+        mask = (
+            seeded_random.random_sample(size * params.shape[0]).reshape(
+                (params.shape[0], size)
+            )
+            >= adjusted_means
+        )
         data[mask] = 1
         return data
 
@@ -25,7 +31,7 @@ class BernoulliUncertainty(BoundedUncertaintyBase):
     def cdf(cls, params, vector):
         vector = cls.check_2d_inputs(params, vector)
         # Turn into column vector
-        mean = array(params['loc'])
+        mean = array(params["loc"])
         mean.resize(params.shape[0], 1)
         return (vector >= mean) * 1
 
@@ -34,8 +40,6 @@ class BernoulliUncertainty(BoundedUncertaintyBase):
         percentages = cls.check_2d_inputs(params, percentages)
         adjusted_means, scale = cls.rescale(params)
         length = params.shape[0]
-        return (
-            (percentages >= adjusted_means.reshape(length, 1))
-            * scale.reshape(length, 1)
-            + params['minimum'].reshape(length, 1)
-        )
+        return (percentages >= adjusted_means.reshape(length, 1)) * scale.reshape(
+            length, 1
+        ) + params["minimum"].reshape(length, 1)

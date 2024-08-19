@@ -1,5 +1,10 @@
 # stats_arrays Changelog
 
+# 0.7 (2024-08-19)
+
+* Moved to `pyproject.toml` packaging and `pytest` tests
+* Numpy 2.0 compatiblity
+
 ## 0.6.6 (2023-10-18)
 
 * Merged [PR #13](https://github.com/brightway-lca/stats_arrays/pull/13). Move argsort to save on execution time. Thanks @Loisel!

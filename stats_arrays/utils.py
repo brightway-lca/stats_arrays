@@ -1,22 +1,23 @@
-from .errors import MultipleRowParamsArrayError
 from functools import wraps
+
 import numpy as np
 
+from .errors import MultipleRowParamsArrayError
+
 BASE_DTYPE = [
-    ('loc', np.float64),
-    ('scale', np.float64),
-    ('shape', np.float64),
-    ('minimum', np.float64),
-    ('maximum', np.float64),
-    ('negative', bool)
+    ("loc", np.float64),
+    ("scale", np.float64),
+    ("shape", np.float64),
+    ("minimum", np.float64),
+    ("maximum", np.float64),
+    ("negative", bool),
 ]
 
 
 def flatten_numpy_array(obj):
     if not isinstance(obj, np.ndarray):
         return obj
-    else:
-        return obj.ravel()
+    return obj.ravel()
 
 
 def one_row_params_array(function):
@@ -30,17 +31,17 @@ def one_row_params_array(function):
         # Flatten any additional inputs to one dimension
         # Needed for PDF optional xs input
         args = [flatten_numpy_array(x) for x in args]
-        kwargs = dict([(key, flatten_numpy_array(obj)) for key, obj in
-                      kwargs.items()])
+        kwargs = {key: flatten_numpy_array(obj) for key, obj in kwargs.items()}
         return function(cls, params, *args, **kwargs)
+
     return wrapper
 
 
 def construct_params_array(length=1, include_type=False):
     dtype = BASE_DTYPE
     if include_type:
-        dtype = dtype + [('uncertainty_type', np.uint8)]
+        dtype = dtype + [("uncertainty_type", np.uint8)]
     params = np.zeros((length,), dtype=dtype)
-    params['minimum'] = params['maximum'] = np.nan
-    params['scale'] = params['loc'] = params['shape'] = np.nan
+    params["minimum"] = params["maximum"] = np.nan
+    params["scale"] = params["loc"] = params["shape"] = np.nan
     return params
