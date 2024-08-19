@@ -10,12 +10,14 @@ def test_array_shape_1d(make_params_array):
     sample = DiscreteUniform.random_variables(params, 100)
     assert sample.shape == (1, 100)
 
+
 def test_array_shape_2d(make_params_array):
     params = make_params_array(length=10)
     params["minimum"] = 0
     params["maximum"] = 10
     sample = DiscreteUniform.random_variables(params, 100)
     assert sample.shape == (10, 100)
+
 
 def test_random_variables(make_params_array):
     params = make_params_array(length=10)

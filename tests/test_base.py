@@ -1,7 +1,12 @@
 import numpy as np
 import pytest
 
-from stats_arrays.distributions import NormalUncertainty, UncertaintyBase, BoundedUncertaintyBase, UndefinedUncertainty
+from stats_arrays.distributions import (
+    BoundedUncertaintyBase,
+    NormalUncertainty,
+    UncertaintyBase,
+    UndefinedUncertainty,
+)
 from stats_arrays.errors import (
     ImproperBoundsError,
     InvalidParamsError,

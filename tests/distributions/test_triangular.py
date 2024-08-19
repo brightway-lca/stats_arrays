@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 from stats_arrays.distributions import TriangularUncertainty
 from stats_arrays.errors import ImproperBoundsError
@@ -28,7 +28,9 @@ def test_triangular_ppf(biased_params_1d, biased_params_2d):
         np.array([1, 2.73205083, 4]),
     )
     assert np.allclose(
-        TriangularUncertainty.ppf(biased_params_2d, np.array([[0, 0.5, 1], [0, 0.5, 1]])),
+        TriangularUncertainty.ppf(
+            biased_params_2d, np.array([[0, 0.5, 1], [0, 0.5, 1]])
+        ),
         np.array([[1, 2.73205083, 4], [1, 2.73205083, 4]]),
     )
 

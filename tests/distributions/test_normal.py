@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 from stats_arrays.distributions import NormalUncertainty
 from stats_arrays.errors import InvalidParamsError
@@ -45,7 +45,9 @@ def test_normal_seeded_random(biased_params_1d):
     biased_params_1d["scale"] = 0.8
     assert np.allclose(
         np.array([[1.49734064]]),
-        NormalUncertainty.random_variables(biased_params_1d, 1, np.random.RandomState(111111)),
+        NormalUncertainty.random_variables(
+            biased_params_1d, 1, np.random.RandomState(111111)
+        ),
     )
 
 
@@ -73,7 +75,8 @@ def test_normal_statistics(biased_params_1d):
             "median": 3.0,
             "mode": 3.0,
             "mean": 3.0,
-        } == NormalUncertainty.statistics(biased_params_1d),
+        }
+        == NormalUncertainty.statistics(biased_params_1d),
     )
 
 

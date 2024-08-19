@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 from stats_arrays.distributions import UniformUncertainty
 
@@ -82,7 +82,13 @@ def test_uniform_random(unif_params_1d, unif_params_2d):
 
 def test_uniform_statistics(unif_params_1d):
     oneDparams = unif_params_1d
-    assert UniformUncertainty.statistics(oneDparams) == {"mean": 2, "mode": 2, "median": 2, "lower": 1, "upper": 3}
+    assert UniformUncertainty.statistics(oneDparams) == {
+        "mean": 2,
+        "mode": 2,
+        "median": 2,
+        "lower": 1,
+        "upper": 3,
+    }
 
 
 def test_uniform_pdf(unif_params_1d):

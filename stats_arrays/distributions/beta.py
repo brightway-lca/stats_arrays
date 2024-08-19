@@ -3,7 +3,7 @@ from __future__ import division
 from numpy import isnan, linspace, random, zeros
 from scipy import stats
 
-from ..errors import InvalidParamsError
+from ..errors import InvalidParamsError, ImproperBoundsError
 from ..utils import one_row_params_array
 from .base import UncertaintyBase
 

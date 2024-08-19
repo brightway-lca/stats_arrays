@@ -1,6 +1,11 @@
 import pytest
 
-from stats_arrays import NormalUncertainty, TriangularUncertainty, UncertaintyBase, MCRandomNumberGenerator
+from stats_arrays import (
+    MCRandomNumberGenerator,
+    NormalUncertainty,
+    TriangularUncertainty,
+    UncertaintyBase,
+)
 
 
 @pytest.fixture()

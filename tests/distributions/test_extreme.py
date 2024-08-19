@@ -41,17 +41,20 @@ def test_random_variables(make_params_array):
     assert 0.9 * expected_median < found_median
     assert found_median < 1.1 * expected_median
 
+
 def test_loc_validation(make_params_array):
     params = make_params_array()
     params["loc"] = np.nan
     with pytest.raises(InvalidParamsError):
         GEVU.validate(params)
 
+
 def test_scale_validation(make_params_array):
     params = make_params_array()
     params["scale"] = -1
     with pytest.raises(InvalidParamsError):
         GEVU.validate(params)
+
 
 def test_shape_validation(make_params_array):
     params = make_params_array()

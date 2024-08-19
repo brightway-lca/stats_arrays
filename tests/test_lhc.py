@@ -1,7 +1,15 @@
-import pytest
 import numpy as np
+import pytest
 
-from stats_arrays.distributions import UniformUncertainty, NoUncertainty, UndefinedUncertainty, LognormalUncertainty, NormalUncertainty, BernoulliUncertainty, TriangularUncertainty
+from stats_arrays.distributions import (
+    BernoulliUncertainty,
+    LognormalUncertainty,
+    NormalUncertainty,
+    NoUncertainty,
+    TriangularUncertainty,
+    UndefinedUncertainty,
+    UniformUncertainty,
+)
 from stats_arrays.random import LatinHypercubeRNG
 
 

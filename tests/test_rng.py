@@ -1,7 +1,11 @@
-import pytest
 import numpy as np
+import pytest
 
-from stats_arrays.distributions import UncertaintyBase, NormalUncertainty, TriangularUncertainty
+from stats_arrays.distributions import (
+    NormalUncertainty,
+    TriangularUncertainty,
+    UncertaintyBase,
+)
 from stats_arrays.errors import ImproperBoundsError, UnknownUncertaintyType
 from stats_arrays.random import RandomNumberGenerator as RNG
 

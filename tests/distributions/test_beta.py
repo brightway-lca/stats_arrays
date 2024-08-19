@@ -1,9 +1,10 @@
 import numpy as np
 import pytest
-# from scipy import stats
 
 from stats_arrays.distributions import BetaUncertainty
 from stats_arrays.errors import InvalidParamsError
+
+# from scipy import stats
 
 
 ALPHA = 3.3
