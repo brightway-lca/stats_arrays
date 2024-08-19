@@ -1,4 +1,4 @@
-__version__ = "0.7.dev4"
+__version__ = "0.7.dev5"
 
 __all__ = (
     "BernoulliUncertainty",
