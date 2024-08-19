@@ -24,6 +24,9 @@ jobs:
         pip install
         build
         --user
+    - name: Debug publication process
+      run: >-
+        echo $GITHUB_REF
     - name: Build a binary wheel and a source tarball
       run: >-
         python -m
