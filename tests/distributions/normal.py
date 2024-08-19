@@ -8,7 +8,7 @@ class NormalTestCase(UncertaintyTestCase):
 
     def test_normal_validate(self):
         params = self.make_params_array(1)
-        params['scale'] = np.NaN
+        params['scale'] = np.nan
         self.assertRaises(
             InvalidParamsError,
             NormalUncertainty.validate,
@@ -99,7 +99,7 @@ class NormalTestCase(UncertaintyTestCase):
     def test_normal_unbounded_pdf(self):
         oneDparams = self.biased_params_1d()
         oneDparams['scale'] = 0.8
-        oneDparams['minimum'] = oneDparams['maximum'] = np.NaN
+        oneDparams['minimum'] = oneDparams['maximum'] = np.nan
         xs, ys = NormalUncertainty.pdf(oneDparams.copy())
         self.assertEqual(xs.shape, (200,))
         self.assertEqual(ys.shape, (200,))

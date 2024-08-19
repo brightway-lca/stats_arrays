@@ -148,11 +148,11 @@ Items in **bold** are required, items in *italics* are optional.
 .. [#] `Extreme value distribution <https://en.wikipedia.org/wiki/Generalized_extreme_value_distribution>`_
 .. [#] `Student's T distribution <https://en.wikipedia.org/wiki/Student%27s_t-distribution>`_
 
-Unused columns can be given any value, but it is recommended that they are set to ``np.NaN``.
+Unused columns can be given any value, but it is recommended that they are set to ``np.nan``.
 
 .. warning::
 
-    Unused optional columns **must** be set to ``np.NaN`` to avoid unexpected behaviour!
+    Unused optional columns **must** be set to ``np.nan`` to avoid unexpected behaviour!
 
 Extending parameter arrays
 --------------------------

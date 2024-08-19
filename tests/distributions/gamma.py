@@ -34,14 +34,14 @@ class GammaUncertaintyTestCase(UncertaintyTestCase):
         params = self.make_params_array(2)
         params['shape'] = (2, 3)
         params['scale'] = (5, 10)
-        params['loc'] = (100, np.NaN)
+        params['loc'] = (100, np.nan)
         sample = GammaUncertainty.random_variables(params, 10000)
         self.pretty_close(2 * 5 + 100, np.mean(sample[0, :]))
         self.pretty_close(3 * 10, np.mean(sample[1, :]))
 
     def test_loc_nan_ok(self):
         params = self.make_params_array()
-        params['loc'] = np.NaN
+        params['loc'] = np.nan
         params['scale'] = 1
         params['shape'] = 1
         GammaUncertainty.validate(params)
@@ -49,7 +49,7 @@ class GammaUncertaintyTestCase(UncertaintyTestCase):
 
     def test_scale_validation(self):
         params = self.make_params_array()
-        params['loc'] = np.NaN
+        params['loc'] = np.nan
         params['scale'] = -1
         params['shape'] = 1
         self.assertRaises(
@@ -60,7 +60,7 @@ class GammaUncertaintyTestCase(UncertaintyTestCase):
 
     def test_shape_validation(self):
         params = self.make_params_array()
-        params['loc'] = np.NaN
+        params['loc'] = np.nan
         params['scale'] = 1
         params['shape'] = -1
         self.assertRaises(

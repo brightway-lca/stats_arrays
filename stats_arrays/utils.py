@@ -41,6 +41,6 @@ def construct_params_array(length=1, include_type=False):
     if include_type:
         dtype = dtype + [('uncertainty_type', np.uint8)]
     params = np.zeros((length,), dtype=dtype)
-    params['minimum'] = params['maximum'] = np.NaN
-    params['scale'] = params['loc'] = params['shape'] = np.NaN
+    params['minimum'] = params['maximum'] = np.nan
+    params['scale'] = params['loc'] = params['shape'] = np.nan
     return params

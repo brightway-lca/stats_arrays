@@ -120,8 +120,8 @@ class LognormalTestCase(UncertaintyTestCase):
 
     def test_validation(self):
         dicts = [
-            {'loc': np.NaN, 'scale': 0.1},
-            {'loc': 0.1, 'scale': np.NaN},
+            {'loc': np.nan, 'scale': 0.1},
+            {'loc': 0.1, 'scale': np.nan},
         ]
         for d in dicts:
             with self.assertRaises(InvalidParamsError):

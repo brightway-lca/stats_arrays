@@ -48,8 +48,8 @@ Example:
     >>> from stats_arrays import UncertaintyBase
     >>> import numpy as np
     >>> UncertaintyBase.from_tuples(
-    ...     (2, 3, np.NaN, np.NaN, np.NaN, False, 3),
-    ...     (5, np.NaN, np.NaN, 3, 10, False, 5)
+    ...     (2, 3, np.nan, np.nan, np.nan, False, 3),
+    ...     (5, np.nan, np.nan, 3, 10, False, 5)
     ...     )
     array([(2.0, 3.0, nan, nan, nan, False, 3),
            (5.0, nan, nan, 3.0, 10.0, False, 5)],
@@ -100,11 +100,11 @@ Returns:
 
         """
         LABELS = [
-            ('loc', np.NaN),
-            ('scale', np.NaN),
-            ('shape', np.NaN),
-            ('minimum', np.NaN),
-            ('maximum', np.NaN),
+            ('loc', np.nan),
+            ('scale', np.nan),
+            ('shape', np.nan),
+            ('minimum', np.nan),
+            ('maximum', np.nan),
             ('negative', False),
             ('uncertainty_type', 0),
         ]

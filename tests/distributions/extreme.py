@@ -20,7 +20,7 @@ class GeneralizedExtremeValueUncertaintyTestCase(UncertaintyTestCase):
 
     def test_loc_validation(self):
         params = self.make_params_array()
-        params['loc'] = np.NaN
+        params['loc'] = np.nan
         self.assertRaises(
             InvalidParamsError,
             GEVU.validate,
@@ -57,6 +57,6 @@ class GeneralizedExtremeValueUncertaintyTestCase(UncertaintyTestCase):
             ('minimum', 'f4'),
             ('maximum', 'f4')
         ])
-        params['minimum'] = params['maximum'] = np.NaN
+        params['minimum'] = params['maximum'] = np.nan
         params['loc'] = params['scale'] = 1
         return params

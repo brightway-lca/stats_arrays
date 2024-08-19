@@ -35,7 +35,7 @@ class ConversionTestCase(unittest.TestCase):
         )
 
     def test_1d_tuple(self):
-        values = (1, 3, np.NaN, 0, 2, False, 0)
+        values = (1, 3, np.nan, 0, 2, False, 0)
         self.sa_allclose(
             UncertaintyBase.from_tuples(values),
             self.get_right_1d_array(),
@@ -61,8 +61,8 @@ class ConversionTestCase(unittest.TestCase):
 
     def test_2d_tuple(self):
         values = (
-            (1, 3, np.NaN, 0, 10, False, 0),
-            (2, 4, np.NaN, 0, 10, False, 0),
+            (1, 3, np.nan, 0, 10, False, 0),
+            (2, 4, np.nan, 0, 10, False, 0),
         )
         self.sa_allclose(
             UncertaintyBase.from_tuples(*values),

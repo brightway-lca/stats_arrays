@@ -18,8 +18,8 @@ def make_params_array(length=1):
         ('minimum', 'f4'),
         ('maximum', 'f4')
     ])
-    params['minimum'] = params['maximum'] = np.NaN
-    params['scale'] = params['shape'] = np.NaN
+    params['minimum'] = params['maximum'] = np.nan
+    params['scale'] = params['shape'] = np.nan
     return params
 
 
@@ -36,8 +36,8 @@ class UncertaintyTestCase(unittest.TestCase):
             ('minimum', 'f4'),
             ('maximum', 'f4')
         ])
-        params['minimum'] = params['maximum'] = np.NaN
-        params['scale'] = params['shape'] = np.NaN
+        params['minimum'] = params['maximum'] = np.nan
+        params['scale'] = params['shape'] = np.nan
         return params
 
     def seeded_random(self, seed=111111):
@@ -146,12 +146,12 @@ def test_bounded_uncertainty_base_validate():
     params = make_params_array(1)
     # Only maximum
     params['maximum'] = 1
-    params['minimum'] = np.NaN
+    params['minimum'] = np.nan
     with pytest.raises(ImproperBoundsError):
         BoundedUncertaintyBase.validate(params)
 
     # Only minimum
-    params['maximum'] = np.NaN
+    params['maximum'] = np.nan
     params['minimum'] = -1
     with pytest.raises(ImproperBoundsError):
         BoundedUncertaintyBase.validate(params)

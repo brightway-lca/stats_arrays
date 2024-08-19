@@ -32,14 +32,14 @@ class WeibullTestCase(UncertaintyTestCase):
         params = self.make_params_array(2)
         params['scale'] = (5, 10)
         params['shape'] = (2, 3)
-        params['loc'] = (100, np.NaN)
+        params['loc'] = (100, np.nan)
         sample = WeibullUncertainty.random_variables(params, 10000)
         self.pretty_close(100 + 5 * np.log(2) ** (1 / 2), np.median(sample[0, :]))
         self.pretty_close(10 * np.log(2) ** (1 / 3), np.median(sample[1, :]))
 
     def test_loc_nan_ok(self):
         params = self.make_params_array()
-        params['loc'] = np.NaN
+        params['loc'] = np.nan
         params['scale'] = 1
         params['shape'] = 1
         WeibullUncertainty.validate(params)
@@ -47,7 +47,7 @@ class WeibullTestCase(UncertaintyTestCase):
 
     def test_scale_validation(self):
         params = self.make_params_array()
-        params['loc'] = np.NaN
+        params['loc'] = np.nan
         params['scale'] = -1
         params['shape'] = 1
         self.assertRaises(
@@ -58,7 +58,7 @@ class WeibullTestCase(UncertaintyTestCase):
 
     def test_shape_validation(self):
         params = self.make_params_array()
-        params['loc'] = np.NaN
+        params['loc'] = np.nan
         params['scale'] = 1
         params['shape'] = -1
         self.assertRaises(
