@@ -125,6 +125,7 @@ No uncertainty          1   **static value**
 :ref:`beta` [#]_        10  :math:`\boldsymbol{\alpha}`                               :math:`\boldsymbol{\beta}`  *lower bound*           *upper bound*
 :ref:`extreme` [#]_     11  :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`   :math:`\boldsymbol{\xi}`
 :ref:`students` [#]_    12  *median*                    *scale*                       :math:`\boldsymbol{\nu}`
+:ref:`beta_pert` [#]_   13  **mean**                    *lambda*                                                  **minimum**             **maximum**
 ======================= === =========================== ============================= =========================== =============== ===============
 
 Items in **bold** are required, items in *italics* are optional.
@@ -147,12 +148,13 @@ Items in **bold** are required, items in *italics* are optional.
 .. [#] `Beta distribution <https://en.wikipedia.org/wiki/Beta_distribution>`_
 .. [#] `Extreme value distribution <https://en.wikipedia.org/wiki/Generalized_extreme_value_distribution>`_
 .. [#] `Student's T distribution <https://en.wikipedia.org/wiki/Student%27s_t-distribution>`_
+.. [#] `Beta PERT distribution <https://en.wikipedia.org/wiki/PERT_distribution>`_
 
 Unused columns can be given any value, but it is recommended that they are set to ``np.nan``.
 
 .. warning::
 
-    Unused optional columns **must** be set to ``np.nan`` to avoid unexpected behaviour!
+    Optional columns without data **must** be set to ``np.nan`` to avoid unexpected behaviour!
 
 Extending parameter arrays
 --------------------------
@@ -180,6 +182,7 @@ Probability distributions
    distributions/student
    distributions/gamma
    distributions/weibull
+   distributions/beta_pert
 
 Random number generators
 ------------------------
