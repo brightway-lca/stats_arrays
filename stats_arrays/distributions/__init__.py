@@ -1,6 +1,7 @@
 __all__ = (
     "BernoulliUncertainty",
     "BetaUncertainty",
+    "BetaPERTUncertainty",
     "BoundedUncertaintyBase",
     "DiscreteUniform",
     "GammaUncertainty",
@@ -28,3 +29,4 @@ from .normal import NormalUncertainty
 from .student import StudentsTUncertainty
 from .undefined import NoUncertainty, UndefinedUncertainty
 from .weibull import WeibullUncertainty
+from .beta_pert import BetaPERTUncertainty
