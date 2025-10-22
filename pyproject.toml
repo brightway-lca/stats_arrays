@@ -29,7 +29,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering"
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 dependencies = [
     # dependencies as strings with quotes, e.g. "foo"
     # You can add version requirements like "foo>2.0"
@@ -64,6 +64,7 @@ dev = [
 [tool.setuptools]
 license-files = ["LICENSE"]
 include-package-data = true
+package-dir = {"" = "src"}
 packages = [
     "stats_arrays",
     "stats_arrays.distributions",
@@ -79,7 +80,8 @@ norecursedirs = [
     "build",
     ".tox"
 ]
-testpaths = ["tests/*.py", "tests/distributions/*.py"]
+testpaths = ["tests"]
+pythonpath = ["src"]
 
 [tool.flake8]
 # Some sane defaults for the code style checker flake8
@@ -93,6 +95,7 @@ exclude = [
     "dist",
     ".eggs",
     "docs/conf.py",
+    "src/stats_arrays/__pycache__",
 ]
 
 [tool.black]
