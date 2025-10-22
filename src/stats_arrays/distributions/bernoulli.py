@@ -2,7 +2,7 @@ from __future__ import division
 
 from numpy import array, random, zeros
 
-from .base import BoundedUncertaintyBase
+from stats_arrays.distributions.base import BoundedUncertaintyBase
 
 
 class BernoulliUncertainty(BoundedUncertaintyBase):

@@ -3,9 +3,9 @@ from __future__ import division
 import numpy as np
 from scipy import stats
 
-from ..errors import InvalidParamsError
-from ..utils import one_row_params_array
-from .base import UncertaintyBase
+from stats_arrays.errors import InvalidParamsError
+from stats_arrays.utils import one_row_params_array
+from stats_arrays.distributions.base import UncertaintyBase
 
 
 class LognormalUncertainty(UncertaintyBase):

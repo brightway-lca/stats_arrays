@@ -3,6 +3,7 @@ __version__ = "0.7.dev8"
 __all__ = (
     "BernoulliUncertainty",
     "BetaUncertainty",
+    "BetaPERTUncertainty",
     "BoundedUncertaintyBase",
     "DiscreteUniform",
     "GammaUncertainty",
@@ -30,9 +31,10 @@ __all__ = (
     "WeibullUncertainty",
 )
 
-from .distributions import (
+from stats_arrays.distributions import (
     BernoulliUncertainty,
     BetaUncertainty,
+    BetaPERTUncertainty,
     BoundedUncertaintyBase,
     DiscreteUniform,
     GammaUncertainty,
@@ -47,7 +49,7 @@ from .distributions import (
     UniformUncertainty,
     WeibullUncertainty,
 )
-from .errors import (
+from stats_arrays.errors import (
     ImproperBoundsError,
     InvalidParamsError,
     MaximumIterationsError,
@@ -57,5 +59,5 @@ from .errors import (
     UnknownUncertaintyType,
     UnreasonableBoundsError,
 )
-from .random import LatinHypercubeRNG, MCRandomNumberGenerator, RandomNumberGenerator
-from .uncertainty_choices import uncertainty_choices
+from stats_arrays.random import LatinHypercubeRNG, MCRandomNumberGenerator, RandomNumberGenerator
+from stats_arrays.uncertainty_choices import uncertainty_choices

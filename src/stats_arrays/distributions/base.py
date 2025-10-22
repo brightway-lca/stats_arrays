@@ -2,13 +2,13 @@ from __future__ import division
 
 import numpy as np
 
-from ..errors import (
+from stats_arrays.errors import (
     ImproperBoundsError,
     InvalidParamsError,
     MaximumIterationsError,
     UnreasonableBoundsError,
 )
-from ..utils import construct_params_array, one_row_params_array
+from stats_arrays.utils import construct_params_array, one_row_params_array
 
 np.seterr(invalid="ignore")
 

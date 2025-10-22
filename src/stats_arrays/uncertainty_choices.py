@@ -1,6 +1,6 @@
 import warnings
 
-from .distributions import (
+from stats_arrays.distributions import (
     BernoulliUncertainty,
     BetaUncertainty,
     DiscreteUniform,

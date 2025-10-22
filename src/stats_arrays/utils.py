@@ -2,7 +2,7 @@ from functools import wraps
 
 import numpy as np
 
-from .errors import MultipleRowParamsArrayError
+from stats_arrays.errors import MultipleRowParamsArrayError
 
 BASE_DTYPE = [
     ("loc", np.float64),

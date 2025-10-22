@@ -2,9 +2,9 @@
 import numpy as np
 from scipy import stats
 
-from ..errors import ImproperBoundsError, InvalidParamsError
-from ..utils import one_row_params_array
-from .base import UncertaintyBase
+from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
+from stats_arrays.utils import one_row_params_array
+from stats_arrays.distributions.base import UncertaintyBase
 
 
 class DiscreteUniform(UncertaintyBase):

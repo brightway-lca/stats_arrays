@@ -3,9 +3,9 @@ from __future__ import division
 import numpy as np
 from scipy import stats
 
-from ..errors import ImproperBoundsError
-from ..utils import one_row_params_array
-from .base import BoundedUncertaintyBase
+from stats_arrays.errors import ImproperBoundsError
+from stats_arrays.utils import one_row_params_array
+from stats_arrays.distributions.base import BoundedUncertaintyBase
 
 
 class UniformUncertainty(BoundedUncertaintyBase):

@@ -17,16 +17,16 @@ __all__ = (
     "WeibullUncertainty",
 )
 
-from .base import BoundedUncertaintyBase, UncertaintyBase
-from .bernoulli import BernoulliUncertainty
-from .beta import BetaUncertainty
-from .discrete_uniform import DiscreteUniform
-from .extreme import GeneralizedExtremeValueUncertainty
-from .gamma import GammaUncertainty
-from .geometric import TriangularUncertainty, UniformUncertainty
-from .lognormal import LognormalUncertainty
-from .normal import NormalUncertainty
-from .student import StudentsTUncertainty
-from .undefined import NoUncertainty, UndefinedUncertainty
-from .weibull import WeibullUncertainty
-from .beta_pert import BetaPERTUncertainty
+from stats_arrays.distributions.base import BoundedUncertaintyBase, UncertaintyBase
+from stats_arrays.distributions.bernoulli import BernoulliUncertainty
+from stats_arrays.distributions.beta import BetaUncertainty
+from stats_arrays.distributions.discrete_uniform import DiscreteUniform
+from stats_arrays.distributions.extreme import GeneralizedExtremeValueUncertainty
+from stats_arrays.distributions.gamma import GammaUncertainty
+from stats_arrays.distributions.geometric import TriangularUncertainty, UniformUncertainty
+from stats_arrays.distributions.lognormal import LognormalUncertainty
+from stats_arrays.distributions.normal import NormalUncertainty
+from stats_arrays.distributions.student import StudentsTUncertainty
+from stats_arrays.distributions.undefined import NoUncertainty, UndefinedUncertainty
+from stats_arrays.distributions.weibull import WeibullUncertainty
+from stats_arrays.distributions.beta_pert import BetaPERTUncertainty

@@ -2,8 +2,8 @@ from __future__ import division
 
 from numpy import repeat, tile
 
-from ..errors import UndefinedDistributionError
-from .base import UncertaintyBase
+from stats_arrays.errors import UndefinedDistributionError
+from stats_arrays.distributions.base import UncertaintyBase
 
 
 class UndefinedUncertainty(UncertaintyBase):

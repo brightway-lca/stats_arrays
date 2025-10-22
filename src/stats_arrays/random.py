@@ -1,7 +1,7 @@
 import numpy as np
 
-from .errors import UnknownUncertaintyType
-from .uncertainty_choices import uncertainty_choices
+from stats_arrays.errors import UnknownUncertaintyType
+from stats_arrays.uncertainty_choices import uncertainty_choices
 
 try:
     from collections.abc import Iterable

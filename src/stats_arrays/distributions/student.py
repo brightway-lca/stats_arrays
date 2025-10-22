@@ -2,8 +2,8 @@ from __future__ import division
 
 import numpy as np
 
-from ..errors import InvalidParamsError
-from .base import UncertaintyBase
+from stats_arrays.errors import InvalidParamsError
+from stats_arrays.distributions.base import UncertaintyBase
 
 
 class StudentsTUncertainty(UncertaintyBase):
