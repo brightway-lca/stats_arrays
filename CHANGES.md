@@ -1,5 +1,11 @@
 # stats_arrays Changelog
 
+# 0.8 (2025-10-23)
+
+* [#19: Add Beta PERT distribution](https://github.com/brightway-lca/stats_arrays/pull/19).
+* Moved to a `src` layout.
+* Switch to absolute imports
+
 # 0.7 (2024-08-19)
 
 * Moved to `pyproject.toml` packaging and `pytest` tests
