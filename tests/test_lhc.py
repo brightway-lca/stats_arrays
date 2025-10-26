@@ -466,23 +466,20 @@ def test_bernoulli():
     # Two-dimensional array check
     params = make_params_array(2)
     params["uncertainty_type"] = BernoulliUncertainty.id
-    params["maximum"] = 2
-    params["minimum"] = 1
-    params["loc"] = 1.6
+    params["loc"] = .6
     lhc = LatinHypercubeRNG(params)
+    print(lhc.hypercube)
     assert np.allclose(
         lhc.hypercube,
-        np.array([[1, 1, 1, 1, 1, 1, 2, 2, 2, 2], [1, 1, 1, 1, 1, 1, 2, 2, 2, 2]]),
+        np.array([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0,], [1, 1, 1, 1, 1, 1, 0, 0, 0, 0]]),
     )
 
     # One-dimensional array check
     params = make_params_array(1)
     params["uncertainty_type"] = BernoulliUncertainty.id
-    params["maximum"] = 2
-    params["minimum"] = 1
-    params["loc"] = 1.6
+    params["loc"] = .4
     lhc = LatinHypercubeRNG(params)
-    assert np.allclose(lhc.hypercube, np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2]))
+    assert np.allclose(lhc.hypercube, np.array([1, 1, 1, 1, 0, 0, 0, 0, 0, 0]))
 
 
 def test_heterogeneous_params():
