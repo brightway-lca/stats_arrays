@@ -118,7 +118,7 @@ No uncertainty          1   **static value**
 :ref:`normal` [#]_      3   :math:`\boldsymbol{\mu}`    :math:`\boldsymbol{\sigma}`                               *lower bound*   *upper bound*
 :ref:`uniform` [#]_     4                                                                                         *minimum* [#]_  **maximum**
 :ref:`triangular` [#]_  5   *mode* [#]_                                                                           *minimum* [#]_  **maximum**
-:ref:`bernoulli` [#]_   6   **p**                                                                                 *lower bound*   *upper bound*
+:ref:`bernoulli` [#]_   6   **p**
 :ref:`discreteu` [#]_   7                                                                                         *minimum* [#]_  **upper bound** [#]_
 :ref:`weibull` [#]_     8   *offset* [#]_               :math:`\boldsymbol{\lambda}`  :math:`\boldsymbol{k}`
 :ref:`gamma` [#]_       9   *offset* [#]_               :math:`\boldsymbol{\theta}`   :math:`\boldsymbol{k}`

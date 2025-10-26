@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Any, Callable, List, TypeVar, overload
+from typing import Any, Callable, List, TypeVar, overload, Tuple, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -75,3 +75,43 @@ def construct_params_array(length: int = 1, include_type: bool = False) -> Param
     params["minimum"] = params["maximum"] = np.nan
     params["scale"] = params["loc"] = params["shape"] = np.nan
     return params
+
+
+def rescale_to_unitary_interval(params: ParamsArray, vector: Optional[npt.NDArray] = None) -> Tuple[npt.NDArray, npt.NDArray]:
+    """Rescale params to a (0,1) interval. Return adjusted `loc` and scale (`minimum - maximum`).
+
+    Uses default values of (0, 1) for minimum and maximum if not present.
+
+    Needed because SciPy assumes a (0,1) interval for many distributions."""
+    if vector is None:
+        vector = params["loc"]
+
+    minimum = params["minimum"].copy()
+    maximum = params["maximum"].copy()
+
+    minimum[np.isnan(minimum)] = 0
+    maximum[np.isnan(maximum)] = 1
+
+    scale = maximum - minimum
+    adjusted_loc = (vector - minimum) / scale
+    return adjusted_loc, scale
+
+
+def rescale_vector_to_params(params: npt.NDArray, vector: npt.NDArray) -> npt.NDArray:
+    """Unscale `vector` from a (0,1) interval to the `(params["maximum"] - params["minimum"])`."""
+    minimum = params["minimum"].copy()
+    maximum = params["maximum"].copy()
+
+    # Handle NaN values by defaulting to (0, 1)
+    minimum[np.isnan(minimum)] = 0
+    maximum[np.isnan(maximum)] = 1
+
+    scale = maximum - minimum
+
+    # Handle broadcasting for multiple rows
+    if vector.ndim == 2 and scale.ndim == 1:
+        # vector shape: (n_rows, n_samples), scale/minimum shape: (n_rows,)
+        return vector * scale[:, np.newaxis] + minimum[:, np.newaxis]
+    else:
+        # Single row case or matching dimensions
+        return vector * scale + minimum
