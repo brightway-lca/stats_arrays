@@ -11,30 +11,106 @@ PDF = np.array([1.56479181717, 1.82088038112, 1.536047041126])
 CDF = np.array([0.30549, 0.47638, 0.8333])
 
 
-def _make_params_array(length=2):
-    params = np.zeros(
-        (length,),
-        dtype=[
-            ("input", "u4"),
-            ("output", "u4"),
-            ("loc", "f4"),
-            ("negative", "b1"),
-            ("scale", "f4"),
-            ("shape", "f4"),
-            ("minimum", "f4"),
-            ("maximum", "f4"),
-        ],
-    )
-    params["minimum"] = params["maximum"] = np.nan
-    params["scale"] = params["shape"] = np.nan
-    params[:]["loc"] = ALPHA
-    params[:]["shape"] = BETA
-    return params
-
-
 @pytest.fixture()
 def make_params_array():
-    return _make_params_array
+    def func(length=2):
+        params = np.zeros(
+            (length,),
+            dtype=[
+                ("input", "u4"),
+                ("output", "u4"),
+                ("loc", "f4"),
+                ("negative", "b1"),
+                ("scale", "f4"),
+                ("shape", "f4"),
+                ("minimum", "f4"),
+                ("maximum", "f4"),
+            ],
+        )
+        params["minimum"] = params["maximum"] = np.nan
+        params["scale"] = params["shape"] = np.nan
+        params[:]["loc"] = ALPHA
+        params[:]["shape"] = BETA
+        return params
+
+    return func
+
+
+# ===== VALIDATION TESTS =====
+
+
+def test_validation_nan_values(make_params_array):
+    """Test validation with NaN values"""
+    params = make_params_array(1)
+    params["loc"] = np.nan
+
+    with pytest.raises(InvalidParamsError):
+        BetaUncertainty.validate(params)
+
+    params = make_params_array(1)
+    params["shape"] = np.nan
+
+    with pytest.raises(InvalidParamsError):
+        BetaUncertainty.validate(params)
+
+
+def test_validation_negative_values(make_params_array):
+    """Test validation with negative values"""
+    params = make_params_array(1)
+    params["loc"] = -1.0
+
+    with pytest.raises(InvalidParamsError):
+        BetaUncertainty.validate(params)
+
+    params = make_params_array(1)
+    params["shape"] = -2.0
+
+    with pytest.raises(InvalidParamsError):
+        BetaUncertainty.validate(params)
+
+
+def test_validation_zero_values(make_params_array):
+    """Test validation with zero values"""
+    params = make_params_array(1)
+    params["loc"] = 0.0
+
+    with pytest.raises(InvalidParamsError):
+        BetaUncertainty.validate(params)
+
+    params = make_params_array(1)
+    params["shape"] = 0.0
+
+    with pytest.raises(InvalidParamsError):
+        BetaUncertainty.validate(params)
+
+
+def test_validation_min_max_inconsistency(make_params_array):
+    """Test validation for min/max inconsistency"""
+    params = make_params_array(1)
+    params["minimum"] = 5.0
+    params["maximum"] = 3.0  # maximum < minimum
+
+    with pytest.raises(ImproperBoundsError):
+        BetaUncertainty.validate(params)
+
+
+def test_validation_min_equals_max(make_params_array):
+    """Test validation when minimum equals maximum"""
+    params = make_params_array(1)
+    params["minimum"] = 3.0
+    params["maximum"] = 3.0  # minimum = maximum
+
+    with pytest.raises(ImproperBoundsError):
+        BetaUncertainty.validate(params)
+
+
+# ===== RANDOM VARIABLES TESTS =====
+
+def test_random_variables_single_row(make_params_array):
+    params = make_params_array(1)
+    results = BetaUncertainty.random_variables(params, 1000)
+    assert results.shape == (1, 1000)
+    assert 0.55 < np.average(results) < 0.65
 
 
 def test_random_variables_broadcasting(make_params_array):
@@ -45,32 +121,112 @@ def test_random_variables_broadcasting(make_params_array):
     assert 0.55 < np.average(results[1, :]) < 0.65
 
 
-def test_random_variables_single_row(make_params_array):
+def test_seeded_random(make_params_array):
+    sr = np.random.RandomState(111111)
     params = make_params_array(1)
+    params["shape"] = params["loc"] = 1
+    result = BetaUncertainty.random_variables(params, 4, seeded_random=sr)
+    expected = np.array([0.59358266, 0.84368537, 0.01394206, 0.87557834])
+    assert np.allclose(result, expected)
+
+
+def test_random_variables_with_scaling(make_params_array):
+    """Test random variable generation with scaling"""
+    params = make_params_array(1)
+    params["minimum"] = 2.0
+    params["maximum"] = 5.0
+
     results = BetaUncertainty.random_variables(params, 1000)
     assert results.shape == (1, 1000)
-    assert 0.55 < np.average(results) < 0.65
+
+    # Values should be within the scaled range [2, 5]
+    assert np.all(results >= 2.0)
+    assert np.all(results <= 5.0)
+
+    # Mean should be approximately the expected scaled mean
+    # For alpha=3.3, beta=2.2, mean = 0.6, so scaled mean = 0.6 * 3 + 2 = 3.8
+    expected_mean = (ALPHA / (ALPHA + BETA)) * 3.0 + 2.0  # 3.8
+    assert 3.6 < np.average(results) < 4.0
 
 
-def test_alpha_validation(make_params_array):
-    params = make_params_array()
-    params["loc"] = 0
-    with pytest.raises(InvalidParamsError):
-        BetaUncertainty.validate(params)
+def test_random_variables_broadcasting_with_scaling(make_params_array):
+    """Test random variable generation with broadcasting and scaling"""
+    params = make_params_array(2)
+    params[0]["minimum"] = 1.0
+    params[0]["maximum"] = 3.0
+    params[1]["minimum"] = 2.0
+    params[1]["maximum"] = 6.0
+
+    results = BetaUncertainty.random_variables(params, 1000)
+    assert results.shape == (2, 1000)
+
+    # First row should be in [1, 3]
+    assert np.all(results[0, :] >= 1.0)
+    assert np.all(results[0, :] <= 3.0)
+
+    # Second row should be in [2, 6]
+    assert np.all(results[1, :] >= 2.0)
+    assert np.all(results[1, :] <= 6.0)
 
 
-def test_beta_validation(make_params_array):
-    params = make_params_array()
-    params["shape"] = 0
-    with pytest.raises(InvalidParamsError):
-        BetaUncertainty.validate(params)
-
+# ===== CDF TESTS =====
 
 def test_cdf(make_params_array):
+    """Test basic CDF calculation without scaling"""
     params = make_params_array(1)
     calculated = BetaUncertainty.cdf(params, INPUTS)
     assert np.allclose(CDF, calculated, rtol=1e-4)
     assert calculated.shape == (1, 3)
+
+
+def test_cdf_broadcasting(make_params_array):
+    """Test CDF with multiple rows"""
+    params = make_params_array(2)
+    test_points = np.array([[0.2, 0.5, 0.8], [0.3, 0.6, 0.9]])
+    cdf_values = BetaUncertainty.cdf(params, test_points)
+    
+    assert cdf_values.shape == (2, 3)
+    # CDF should be between 0 and 1
+    assert np.all(cdf_values >= 0.0)
+    assert np.all(cdf_values <= 1.0)
+    # CDF should be monotonically increasing for each row
+    assert cdf_values[0, 0] < cdf_values[0, 1] < cdf_values[0, 2]
+    assert cdf_values[1, 0] < cdf_values[1, 1] < cdf_values[1, 2]
+
+
+def test_cdf_with_scaling(make_params_array):
+    """Test CDF calculation with scaling"""
+    params = make_params_array(1)
+    params["minimum"] = 1.0
+    params["maximum"] = 3.0
+
+    # Test points in the scaled range
+    test_points = np.array([[1.2, 2.0, 2.8]])
+    cdf_values = BetaUncertainty.cdf(params, test_points)
+
+    assert cdf_values.shape == (1, 3)
+    # CDF should be monotonically increasing
+    assert cdf_values[0, 0] < cdf_values[0, 1] < cdf_values[0, 2]
+    # CDF should be between 0 and 1
+    assert np.all(cdf_values >= 0.0)
+    assert np.all(cdf_values <= 1.0)
+
+
+# ===== PPF TESTS =====
+
+def test_ppf_broadcasting(make_params_array):
+    """Test PPF with multiple rows"""
+    params = make_params_array(2)
+    percentiles = np.array([[0.1, 0.5, 0.9], [0.2, 0.6, 0.95]])
+    ppf_values = BetaUncertainty.ppf(params, percentiles)
+    
+    assert ppf_values.shape == (2, 3)
+    # PPF should be between 0 and 1 for standard Beta
+    assert np.all(ppf_values >= 0.0)
+    assert np.all(ppf_values <= 1.0)
+    # PPF should be monotonically increasing for each row
+    assert ppf_values[0, 0] < ppf_values[0, 1] < ppf_values[0, 2]
+    assert ppf_values[1, 0] < ppf_values[1, 1] < ppf_values[1, 2]
 
 
 def test_ppf(make_params_array):
@@ -80,6 +236,55 @@ def test_ppf(make_params_array):
     assert calculated.shape == (1, 3)
 
 
+def test_ppf_with_scaling(make_params_array):
+    """Test PPF calculation with scaling"""
+    params = make_params_array(1)
+    params["minimum"] = 1.0
+    params["maximum"] = 3.0
+
+    # Test percentiles
+    percentiles = np.array([[0.0, 0.5, 1.0]])
+    ppf_values = BetaUncertainty.ppf(params, percentiles)
+
+    assert ppf_values.shape == (1, 3)
+    # PPF should return values in the scaled range [1, 3]
+    assert np.all(ppf_values >= 1.0)
+    assert np.all(ppf_values <= 3.0)
+    # PPF should be monotonically increasing
+    assert ppf_values[0, 0] < ppf_values[0, 1] < ppf_values[0, 2]
+
+
+# ===== CDF/PPF ROUNDTRIP TESTS =====
+
+def test_cdf_ppf_roundtrip(make_params_array):
+    """Test that CDF and PPF are inverse functions"""
+    params = make_params_array(1)
+    test_points = np.array([[0.2, 0.5, 0.8]])
+
+    # CDF -> PPF roundtrip
+    cdf_values = BetaUncertainty.cdf(params, test_points)
+    ppf_values = BetaUncertainty.ppf(params, cdf_values)
+
+    assert np.allclose(test_points, ppf_values, atol=1e-6)
+
+
+def test_cdf_ppf_roundtrip_with_scaling(make_params_array):
+    """Test CDF-PPF roundtrip with scaling"""
+    params = make_params_array(1)
+    params["minimum"] = 1.0
+    params["maximum"] = 4.0
+
+    test_points = np.array([[1.5, 2.5, 3.5]])
+
+    # CDF -> PPF roundtrip
+    cdf_values = BetaUncertainty.cdf(params, test_points)
+    ppf_values = BetaUncertainty.ppf(params, cdf_values)
+
+    assert np.allclose(test_points, ppf_values, atol=1e-6)
+
+
+# ===== PDF TESTS =====
+
 def test_pdf(make_params_array):
     params = make_params_array(1)
     calculated = BetaUncertainty.pdf(params, INPUTS)[1]
@@ -87,14 +292,40 @@ def test_pdf(make_params_array):
     assert calculated.shape == (3,)
 
 
-def test_seeded_random(make_params_array):
-    sr = np.random.RandomState(111111)
+def test_pdf_no_xs(make_params_array):
+    """Test PDF calculation without providing xs parameter"""
     params = make_params_array(1)
-    params["shape"] = params["loc"] = 1
-    result = BetaUncertainty.random_variables(params, 4, seeded_random=sr)
-    expected = np.array([0.59358266, 0.84368537, 0.01394206, 0.87557834])
-    assert np.allclose(result, expected)
+    xs, ys = BetaUncertainty.pdf(params)
 
+    # Should return default number of points
+    assert len(xs) == BetaUncertainty.default_number_points_in_pdf
+    assert len(ys) == BetaUncertainty.default_number_points_in_pdf
+    assert len(xs) == len(ys)
+
+    # X values should be in range [0, 1] for standard Beta distribution
+    assert np.all(xs >= 0.0)
+    assert np.all(xs <= 1.0)
+
+    # Y values should be non-negative
+    assert np.all(ys >= 0.0)
+
+
+def test_pdf_with_scaling(make_params_array):
+    """Test PDF calculation with minimum/maximum scaling"""
+    params = make_params_array(1)
+    params["minimum"] = 1.0
+    params["maximum"] = 4.0
+
+    # Test with specific points
+    test_points = np.array([1.5, 2.5, 3.5])
+    xs, ys = BetaUncertainty.pdf(params, test_points)
+
+    assert np.allclose(xs, test_points)
+    assert len(ys) == 3
+    assert np.all(ys >= 0.0)
+
+
+# ===== STATISTICS TESTS =====
 
 def test_statistics(make_params_array):
     """Test statistics calculation"""
@@ -150,205 +381,7 @@ def test_statistics_with_scaling(make_params_array):
     assert np.isclose(stats["mode"], expected_mode)
 
 
-def test_pdf_no_xs(make_params_array):
-    """Test PDF calculation without providing xs parameter"""
-    params = make_params_array(1)
-    xs, ys = BetaUncertainty.pdf(params)
-
-    # Should return default number of points
-    assert len(xs) == BetaUncertainty.default_number_points_in_pdf
-    assert len(ys) == BetaUncertainty.default_number_points_in_pdf
-    assert len(xs) == len(ys)
-
-    # X values should be in range [0, 1] for standard Beta distribution
-    assert np.all(xs >= 0.0)
-    assert np.all(xs <= 1.0)
-
-    # Y values should be non-negative
-    assert np.all(ys >= 0.0)
-
-
-def test_pdf_with_scaling(make_params_array):
-    """Test PDF calculation with minimum/maximum scaling"""
-    params = make_params_array(1)
-    params["minimum"] = 1.0
-    params["maximum"] = 4.0
-
-    # Test with specific points
-    test_points = np.array([1.5, 2.5, 3.5])
-    xs, ys = BetaUncertainty.pdf(params, test_points)
-
-    assert np.allclose(xs, test_points)
-    assert len(ys) == 3
-    assert np.all(ys >= 0.0)
-
-
-def test_random_variables_with_scaling(make_params_array):
-    """Test random variable generation with scaling"""
-    params = make_params_array(1)
-    params["minimum"] = 2.0
-    params["maximum"] = 5.0
-
-    results = BetaUncertainty.random_variables(params, 1000)
-    assert results.shape == (1, 1000)
-
-    # Values should be within the scaled range [2, 5]
-    assert np.all(results >= 2.0)
-    assert np.all(results <= 5.0)
-
-    # Mean should be approximately the expected scaled mean
-    # For alpha=3.3, beta=2.2, mean = 0.6, so scaled mean = 0.6 * 3 + 2 = 3.8
-    expected_mean = (ALPHA / (ALPHA + BETA)) * 3.0 + 2.0  # 3.8
-    assert 3.6 < np.average(results) < 4.0
-
-
-def test_cdf_with_scaling(make_params_array):
-    """Test CDF calculation with scaling"""
-    params = make_params_array(1)
-    params["minimum"] = 1.0
-    params["maximum"] = 3.0
-
-    # Test points in the scaled range
-    test_points = np.array([[1.2, 2.0, 2.8]])
-    cdf_values = BetaUncertainty.cdf(params, test_points)
-
-    assert cdf_values.shape == (1, 3)
-    # CDF should be monotonically increasing
-    assert cdf_values[0, 0] < cdf_values[0, 1] < cdf_values[0, 2]
-    # CDF should be between 0 and 1
-    assert np.all(cdf_values >= 0.0)
-    assert np.all(cdf_values <= 1.0)
-
-
-def test_ppf_with_scaling(make_params_array):
-    """Test PPF calculation with scaling"""
-    params = make_params_array(1)
-    params["minimum"] = 1.0
-    params["maximum"] = 3.0
-
-    # Test percentiles
-    percentiles = np.array([[0.0, 0.5, 1.0]])
-    ppf_values = BetaUncertainty.ppf(params, percentiles)
-
-    assert ppf_values.shape == (1, 3)
-    # PPF should return values in the scaled range [1, 3]
-    assert np.all(ppf_values >= 1.0)
-    assert np.all(ppf_values <= 3.0)
-    # PPF should be monotonically increasing
-    assert ppf_values[0, 0] < ppf_values[0, 1] < ppf_values[0, 2]
-
-
-def test_cdf_ppf_roundtrip(make_params_array):
-    """Test that CDF and PPF are inverse functions"""
-    params = make_params_array(1)
-    test_points = np.array([[0.2, 0.5, 0.8]])
-
-    # CDF -> PPF roundtrip
-    cdf_values = BetaUncertainty.cdf(params, test_points)
-    ppf_values = BetaUncertainty.ppf(params, cdf_values)
-
-    assert np.allclose(test_points, ppf_values, atol=1e-6)
-
-
-def test_cdf_ppf_roundtrip_with_scaling(make_params_array):
-    """Test CDF-PPF roundtrip with scaling"""
-    params = make_params_array(1)
-    params["minimum"] = 1.0
-    params["maximum"] = 4.0
-
-    test_points = np.array([[1.5, 2.5, 3.5]])
-
-    # CDF -> PPF roundtrip
-    cdf_values = BetaUncertainty.cdf(params, test_points)
-    ppf_values = BetaUncertainty.ppf(params, cdf_values)
-
-    assert np.allclose(test_points, ppf_values, atol=1e-6)
-
-
-def test_validation_min_max_inconsistency(make_params_array):
-    """Test validation for min/max inconsistency"""
-    params = make_params_array(1)
-    params["minimum"] = 5.0
-    params["maximum"] = 3.0  # maximum < minimum
-
-    with pytest.raises(ImproperBoundsError):
-        BetaUncertainty.validate(params)
-
-
-def test_validation_min_equals_max(make_params_array):
-    """Test validation when minimum equals maximum"""
-    params = make_params_array(1)
-    params["minimum"] = 3.0
-    params["maximum"] = 3.0  # minimum = maximum
-
-    with pytest.raises(ImproperBoundsError):
-        BetaUncertainty.validate(params)
-
-
-def test_validation_nan_values(make_params_array):
-    """Test validation with NaN values"""
-    params = make_params_array(1)
-    params["loc"] = np.nan
-
-    with pytest.raises(InvalidParamsError):
-        BetaUncertainty.validate(params)
-
-    params = make_params_array(1)
-    params["shape"] = np.nan
-
-    with pytest.raises(InvalidParamsError):
-        BetaUncertainty.validate(params)
-
-
-def test_validation_negative_values(make_params_array):
-    """Test validation with negative values"""
-    params = make_params_array(1)
-    params["loc"] = -1.0
-
-    with pytest.raises(InvalidParamsError):
-        BetaUncertainty.validate(params)
-
-    params = make_params_array(1)
-    params["shape"] = -2.0
-
-    with pytest.raises(InvalidParamsError):
-        BetaUncertainty.validate(params)
-
-
-def test_validation_zero_values(make_params_array):
-    """Test validation with zero values"""
-    params = make_params_array(1)
-    params["loc"] = 0.0
-
-    with pytest.raises(InvalidParamsError):
-        BetaUncertainty.validate(params)
-
-    params = make_params_array(1)
-    params["shape"] = 0.0
-
-    with pytest.raises(InvalidParamsError):
-        BetaUncertainty.validate(params)
-
-
-def test_random_variables_broadcasting_with_scaling(make_params_array):
-    """Test random variable generation with broadcasting and scaling"""
-    params = make_params_array(2)
-    params[0]["minimum"] = 1.0
-    params[0]["maximum"] = 3.0
-    params[1]["minimum"] = 2.0
-    params[1]["maximum"] = 6.0
-
-    results = BetaUncertainty.random_variables(params, 1000)
-    assert results.shape == (2, 1000)
-
-    # First row should be in [1, 3]
-    assert np.all(results[0, :] >= 1.0)
-    assert np.all(results[0, :] <= 3.0)
-
-    # Second row should be in [2, 6]
-    assert np.all(results[1, :] >= 2.0)
-    assert np.all(results[1, :] <= 6.0)
-
+# ===== EDGE CASES TESTS =====
 
 def test_edge_case_alpha_beta_one(make_params_array):
     """Test edge case where alpha = beta = 1 (uniform distribution)"""

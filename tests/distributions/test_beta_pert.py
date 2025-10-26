@@ -271,6 +271,36 @@ def test_cdf(make_params_array):
     assert 0.6 < cdf_values[0, 3] < 1.0  # CDF at 2.5 should be high
 
 
+def test_cdf_broadcasting(pert_params_2d):
+    """Test CDF with multiple rows (broadcasting)"""
+    test_points = np.array([[1.5, 2.0, 2.5], [1.8, 2.2, 2.7]])
+    cdf_values = BetaPERTUncertainty.cdf(pert_params_2d, test_points)
+    
+    assert cdf_values.shape == (2, 3)
+    # CDF should be between 0 and 1
+    assert np.all(cdf_values >= 0.0)
+    assert np.all(cdf_values <= 1.0)
+    # CDF should be monotonically increasing for each row
+    assert cdf_values[0, 0] <= cdf_values[0, 1] <= cdf_values[0, 2]
+    assert cdf_values[1, 0] <= cdf_values[1, 1] <= cdf_values[1, 2]
+
+
+def test_cdf_with_custom_lambda(make_params_array):
+    """Test CDF with custom lambda"""
+    params = make_params_array(1)
+    params["minimum"] = 1.0
+    params["loc"] = 2.0
+    params["maximum"] = 3.0
+    params["scale"] = 6.0  # lambda
+    
+    test_points = np.array([[1.5, 2.0, 2.5]])
+    cdf_values = BetaPERTUncertainty.cdf(params, test_points, default_lambda=6.0)
+    
+    assert cdf_values.shape == (1, 3)
+    assert np.all(cdf_values >= 0.0)
+    assert np.all(cdf_values <= 1.0)
+
+
 def test_ppf(pert_params_1d):
     """Test PPF (percent point function) calculation"""
     # Test percentiles
@@ -283,6 +313,36 @@ def test_ppf(pert_params_1d):
     assert np.isclose(ppf_values[0, 2], 3.0, atol=1e-6)
     # PPF at 50% should be close to the mean (2.0)
     assert 1.9 < ppf_values[0, 1] < 2.1
+
+
+def test_ppf_broadcasting(pert_params_2d):
+    """Test PPF with multiple rows (broadcasting)"""
+    percentiles = np.array([[0.1, 0.5, 0.9], [0.2, 0.6, 0.95]])
+    ppf_values = BetaPERTUncertainty.ppf(pert_params_2d, percentiles)
+    
+    assert ppf_values.shape == (2, 3)
+    # PPF should be within bounds [1, 3]
+    assert np.all(ppf_values >= 1.0)
+    assert np.all(ppf_values <= 3.0)
+    # PPF should be monotonically increasing for each row
+    assert ppf_values[0, 0] <= ppf_values[0, 1] <= ppf_values[0, 2]
+    assert ppf_values[1, 0] <= ppf_values[1, 1] <= ppf_values[1, 2]
+
+
+def test_ppf_with_custom_lambda(make_params_array):
+    """Test PPF with custom lambda"""
+    params = make_params_array(1)
+    params["minimum"] = 1.0
+    params["loc"] = 2.0
+    params["maximum"] = 3.0
+    params["scale"] = 6.0  # lambda
+    
+    percentiles = np.array([[0.0, 0.5, 1.0]])
+    ppf_values = BetaPERTUncertainty.ppf(params, percentiles, default_lambda=6.0)
+    
+    assert ppf_values.shape == (1, 3)
+    assert np.all(ppf_values >= 1.0)
+    assert np.all(ppf_values <= 3.0)
 
 
 def test_cdf_ppf_roundtrip(pert_params_1d):
@@ -354,6 +414,21 @@ def test_seeded_random(pert_params_1d):
     # Values should be within bounds
     assert np.all(result >= 1.0)
     assert np.all(result <= 3.0)
+
+
+def test_seeded_random_with_custom_lambda(pert_params_1d):
+    """Test seeded random with custom lambda"""
+    sr = np.random.RandomState(222222)
+    # Use custom lambda to ensure it's passed through correctly
+    result1 = BetaPERTUncertainty.random_variables(
+        pert_params_1d, 4, seeded_random=sr, default_lambda=6.0
+    )
+    sr2 = np.random.RandomState(222222)
+    result2 = BetaPERTUncertainty.random_variables(
+        pert_params_1d, 4, seeded_random=sr2, default_lambda=6.0
+    )
+    # Results should be identical with same seed
+    assert np.allclose(result1, result2)
 
 
 def test_default_lambda_parameter():
