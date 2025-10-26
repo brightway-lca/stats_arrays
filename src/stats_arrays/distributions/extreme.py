@@ -1,9 +1,11 @@
-from __future__ import division
+from typing import Optional
 
 import numpy as np
+import numpy.typing as npt
 
-from stats_arrays.errors import InvalidParamsError
 from stats_arrays.distributions.base import UncertaintyBase
+from stats_arrays.errors import InvalidParamsError
+from stats_arrays.utils import ParamsArray
 
 
 class GeneralizedExtremeValueUncertainty(UncertaintyBase):
@@ -18,7 +20,7 @@ class GeneralizedExtremeValueUncertainty(UncertaintyBase):
     description = "Generalized extreme value uncertainty"
 
     @classmethod
-    def validate(cls, params):
+    def validate(cls, params: ParamsArray) -> None:
         if np.isnan(params["loc"]).sum():
             raise InvalidParamsError(
                 "Real ``mu`` values needed for generalized extreme value."
@@ -31,9 +33,15 @@ class GeneralizedExtremeValueUncertainty(UncertaintyBase):
             raise InvalidParamsError("Non-zero ``xi`` values are not yet supported.")
 
     @classmethod
-    def random_variables(cls, params, size, seeded_random=None, **kwargs):
+    def random_variables(
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+        **kwargs,
+    ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random
+            seeded_random = np.random.RandomState()
         data = seeded_random.gumbel(
             loc=params["loc"], scale=params["scale"], size=(size, params.shape[0])
         ).T

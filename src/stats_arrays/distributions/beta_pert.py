@@ -1,8 +1,11 @@
 from typing import Optional
-from numpy import isnan, ndarray, nan, random
+
+import numpy as np
+import numpy.typing as npt
+from numpy import isnan, nan
 
 from stats_arrays.distributions.beta import BetaUncertainty
-from stats_arrays.errors import InvalidParamsError, ImproperBoundsError
+from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
 from stats_arrays.utils import one_row_params_array
 
 
@@ -24,7 +27,7 @@ class BetaPERTUncertainty(BetaUncertainty):
     description = "Beta PERT uncertainty"
 
     @classmethod
-    def validate(cls, params):
+    def validate(cls, params: npt.NDArray) -> None:
         if isnan(params["minimum"]).sum():
             raise InvalidParamsError(
                 "Real, positive `A` values are required for Beta PERT uncertainties."
@@ -49,7 +52,7 @@ class BetaPERTUncertainty(BetaUncertainty):
             raise InvalidParamsError("Lambda values must be greater than zero.")
 
     @classmethod
-    def _as_beta(cls, params: ndarray, default_lambda: float = 4.0) -> ndarray:
+    def _as_beta(cls, params: npt.NDArray, default_lambda: float = 4.0) -> npt.NDArray:
         """Calculate α and β values for Beta distribution from PERT A/B/C inputs."""
         beta = params.copy()
         # Use provided lambda values or default
@@ -70,12 +73,12 @@ class BetaPERTUncertainty(BetaUncertainty):
     @classmethod
     def random_variables(
         cls,
-        params: ndarray,
+        params: npt.NDArray,
         size: int,
-        seeded_random: Optional[random.RandomState] = None,
+        seeded_random: Optional[np.random.RandomState] = None,
         transform: bool = False,
         default_lambda: float = 4.0,
-    ):
+    ) -> npt.NDArray:
         return BetaUncertainty.random_variables(
             params=cls._as_beta(params=params, default_lambda=default_lambda),
             size=size,
@@ -84,14 +87,18 @@ class BetaPERTUncertainty(BetaUncertainty):
         )
 
     @classmethod
-    def cdf(cls, params: ndarray, vector: ndarray, default_lambda: float = 4.0):
+    def cdf(
+        cls, params: npt.NDArray, vector: npt.NDArray, default_lambda: float = 4.0
+    ) -> npt.NDArray:
         return BetaUncertainty.cdf(
             params=cls._as_beta(params=params, default_lambda=default_lambda),
             vector=vector,
         )
 
     @classmethod
-    def ppf(cls, params: ndarray, percentages: ndarray, default_lambda: float = 4.0):
+    def ppf(
+        cls, params: npt.NDArray, percentages: npt.NDArray, default_lambda: float = 4.0
+    ) -> npt.NDArray:
         return BetaUncertainty.ppf(
             params=cls._as_beta(params=params, default_lambda=default_lambda),
             percentages=percentages,
@@ -99,7 +106,7 @@ class BetaPERTUncertainty(BetaUncertainty):
 
     @classmethod
     @one_row_params_array
-    def statistics(cls, params: ndarray, default_lambda: float = 4.0):
+    def statistics(cls, params: npt.NDArray, default_lambda: float = 4.0) -> dict:
         return BetaUncertainty.statistics(
             params=cls._as_beta(params=params, default_lambda=default_lambda)
         )
@@ -107,8 +114,11 @@ class BetaPERTUncertainty(BetaUncertainty):
     @classmethod
     @one_row_params_array
     def pdf(
-        cls, params: ndarray, xs: Optional[ndarray] = None, default_lambda: float = 4.0
-    ):
+        cls,
+        params: npt.NDArray,
+        xs: Optional[npt.NDArray] = None,
+        default_lambda: float = 4.0,
+    ) -> tuple[npt.NDArray, npt.NDArray]:
         return BetaUncertainty.pdf(
             params=cls._as_beta(params=params, default_lambda=default_lambda), xs=xs
         )

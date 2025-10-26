@@ -33,8 +33,8 @@ __all__ = (
 
 from stats_arrays.distributions import (
     BernoulliUncertainty,
-    BetaUncertainty,
     BetaPERTUncertainty,
+    BetaUncertainty,
     BoundedUncertaintyBase,
     DiscreteUniform,
     GammaUncertainty,
@@ -59,5 +59,9 @@ from stats_arrays.errors import (
     UnknownUncertaintyType,
     UnreasonableBoundsError,
 )
-from stats_arrays.random import LatinHypercubeRNG, MCRandomNumberGenerator, RandomNumberGenerator
+from stats_arrays.random import (
+    LatinHypercubeRNG,
+    MCRandomNumberGenerator,
+    RandomNumberGenerator,
+)
 from stats_arrays.uncertainty_choices import uncertainty_choices

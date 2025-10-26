@@ -1,9 +1,11 @@
-from __future__ import division
+from typing import Optional
 
 import numpy as np
+import numpy.typing as npt
 
-from stats_arrays.errors import InvalidParamsError
 from stats_arrays.distributions.base import UncertaintyBase
+from stats_arrays.errors import InvalidParamsError
+from stats_arrays.utils import ParamsArray
 
 
 class GammaUncertainty(UncertaintyBase):
@@ -21,7 +23,7 @@ class GammaUncertainty(UncertaintyBase):
     description = "Gamma uncertainty"
 
     @classmethod
-    def validate(cls, params, transform=False):
+    def validate(cls, params: ParamsArray, transform: bool = False) -> None:
         if (params["shape"] <= 0).sum() or np.isnan(params["shape"]).sum():
             raise InvalidParamsError(
                 "Positive shape (k) values required for Gamma distribution."
@@ -32,9 +34,15 @@ class GammaUncertainty(UncertaintyBase):
             )
 
     @classmethod
-    def random_variables(cls, params, size, seeded_random=None, **kwargs):
+    def random_variables(
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+        **kwargs,
+    ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random
+            seeded_random = np.random.RandomState()
         offset = params["loc"].copy()
         offset[np.isnan(offset)] = 0
         data = (

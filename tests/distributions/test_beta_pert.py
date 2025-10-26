@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from stats_arrays.distributions import BetaPERTUncertainty
-from stats_arrays.errors import InvalidParamsError, ImproperBoundsError
+from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
 
 
 @pytest.fixture()
@@ -248,7 +248,7 @@ def test_cdf(make_params_array):
     params["loc"] = 1.5  # B (closer to minimum, creating left skew)
     params["maximum"] = 3.0  # C
     params["scale"] = 4.0  # lambda
-    
+
     # Test points within the range [1, 3]
     test_points = np.array([[1.0, 1.5, 2.0, 2.5, 3.0]])
     cdf_values = BetaPERTUncertainty.cdf(params, test_points)
@@ -257,15 +257,15 @@ def test_cdf(make_params_array):
     # CDF should be 0 at minimum, 1 at maximum
     assert np.isclose(cdf_values[0, 0], 0.0, atol=1e-6)
     assert np.isclose(cdf_values[0, 4], 1.0, atol=1e-6)
-    
+
     # For left-skewed distribution, CDF at mode (1.5) should be less than 0.5
     # because more probability mass is concentrated on the left side
     assert cdf_values[0, 1] < 0.5  # CDF at mode (1.5)
-    
+
     # CDF should be monotonically increasing
     for i in range(4):
         assert cdf_values[0, i] <= cdf_values[0, i + 1]
-    
+
     # Test that CDF values are reasonable for the asymmetric distribution
     assert 0.0 < cdf_values[0, 1] < 0.4  # CDF at mode should be low due to left skew
     assert 0.6 < cdf_values[0, 3] < 1.0  # CDF at 2.5 should be high

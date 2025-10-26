@@ -1,23 +1,23 @@
-import numpy as np
+from collections.abc import Iterable
+from typing import Iterator, Optional, Type
 
+import numpy as np
+import numpy.typing as npt
+
+from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import UnknownUncertaintyType
 from stats_arrays.uncertainty_choices import uncertainty_choices
-
-try:
-    from collections.abc import Iterable
-except ImportError:
-    from collections import Iterable
+from stats_arrays.utils import ParamsArray
 
 
 class RandomNumberGenerator(Iterable):
-
     def __init__(
         self,
-        uncertainty_type,
-        params,
-        size=1,
-        maximum_iterations=100,
-        seed=None,
+        uncertainty_type: Type[UncertaintyBase],
+        params: ParamsArray,
+        size: int = 1,
+        maximum_iterations: int = 100,
+        seed: Optional[int] = None,
         **kwargs,
     ):
         """
@@ -28,7 +28,7 @@ class RandomNumberGenerator(Iterable):
         * The ``minimum`` and ``maximum`` bounds, if any, are reasonable
         * The given uncertainty type can be used
 
-        ``uncertainty_type`` is not required to be a subclass of :ref:`UncertaintyBase`, but needs to have the method ``bounded_random_variables``.
+        ``uncertainty_type`` is a subclass of :ref:`UncertaintyBase`.
 
         The returned class instance can be called directly::
 
@@ -70,7 +70,11 @@ class RandomNumberGenerator(Iterable):
         self.verify_uncertainty_type()
         self.verify_params()
 
-    def verify_params(self, params=None, uncertainty_type=None):
+    def verify_params(
+        self,
+        params: Optional[ParamsArray] = None,
+        uncertainty_type: Optional[Type[UncertaintyBase]] = None,
+    ) -> None:
         """Verify that parameters are within bounds. Mean is not restricted to bounds, unless the distribution requires it (e.g. triangular)."""
         if params is None:  # Can't convert array to boolean
             params = self.params
@@ -78,7 +82,9 @@ class RandomNumberGenerator(Iterable):
             uncertainty_type = self.uncertainty_type
         uncertainty_type.validate(params)
 
-    def verify_uncertainty_type(self, uncertainty_type=None):
+    def verify_uncertainty_type(
+        self, uncertainty_type: Optional[Type[UncertaintyBase]] = None
+    ) -> None:
         """Make sure the given uncertainty type provides the method ``bounded_random_variables``."""
         if not uncertainty_type:
             uncertainty_type = self.uncertainty_type
@@ -88,7 +94,12 @@ class RandomNumberGenerator(Iterable):
                 "`bounded_random_variables` method."
             )
 
-    def generate_random_numbers(self, uncertainty_type=None, params=None, size=None):
+    def generate_random_numbers(
+        self,
+        uncertainty_type: Optional[Type[UncertaintyBase]] = None,
+        params: Optional[ParamsArray] = None,
+        size=None,
+    ) -> npt.NDArray:
         if not uncertainty_type:
             uncertainty_type = self.uncertainty_type
         if params is None:  # Can't convert array to boolean
@@ -99,13 +110,13 @@ class RandomNumberGenerator(Iterable):
             params, size, self.random, self.maximum_iterations
         )
 
-    def next(self):
+    def next(self) -> npt.NDArray:
         return self.generate_random_numbers()
 
-    def __next__(self):
+    def __next__(self) -> npt.NDArray:
         return self.next()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[npt.NDArray]:
         return self
 
 
@@ -140,7 +151,13 @@ class MCRandomNumberGenerator(Iterable):
 
     """
 
-    def __init__(self, params, maximum_iterations=50, seed=None, **kwargs):
+    def __init__(
+        self,
+        params: ParamsArray,
+        maximum_iterations: int = 50,
+        seed: Optional[int] = None,
+        **kwargs,
+    ):
         self.params = params.copy()
         self.length = self.params.shape[0]
         self.maximum_iterations = maximum_iterations
@@ -152,7 +169,7 @@ class MCRandomNumberGenerator(Iterable):
         self.params = self.params[self.ordering]
         self.positions = self.get_positions()
 
-    def get_positions(self):
+    def get_positions(self) -> dict:
         """Construct dictionary of where each distribution starts and stops in the sorted parameter array"""
         return dict(
             [
@@ -161,7 +178,7 @@ class MCRandomNumberGenerator(Iterable):
             ]
         )
 
-    def verify_params(self):
+    def verify_params(self) -> None:
         """Verify that all uncertainty types are allowed, and parameter validate using distribution class methods"""
         ids = set(np.unique(self.params["uncertainty_type"]))
         extra_ids = ids.difference(set([x.id for x in self.choices]))
@@ -175,7 +192,7 @@ class MCRandomNumberGenerator(Iterable):
             if mask.sum():
                 uncertainty_type.validate(self.params[mask])
 
-    def generate(self, samples=1):
+    def generate(self, samples: int = 1) -> npt.NDArray:
         """Generate random samples.
 
         If ``samples`` is one, return a one-dimensional array. Otherwise returns a ``num_parameters, samples`` array.
@@ -207,14 +224,14 @@ class MCRandomNumberGenerator(Iterable):
         self.random_data = self.random_data[self.reverse_ordering]
         return self.random_data
 
-    def next(self):
+    def next(self) -> npt.NDArray:
         """Generate a new vector of random numbers"""
         return self.generate()
 
-    def __next__(self):
+    def __next__(self) -> npt.NDArray:
         return self.next()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[npt.NDArray]:
         return self
 
 
@@ -229,7 +246,13 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
     * samples : An integer number of samples to construct for each distribution.
     """
 
-    def __init__(self, params, seed=None, samples=10, **kwargs):
+    def __init__(
+        self,
+        params: ParamsArray,
+        seed: Optional[int] = None,
+        samples: int = 10,
+        **kwargs,
+    ):
         self.params = params
         self.length = self.params.shape[0]
         self.row_index = np.arange(self.length)
@@ -242,7 +265,7 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
         self.verify_params()
         self.build_hypercube()
 
-    def build_hypercube(self):
+    def build_hypercube(self) -> None:
         """Build an array, of shape `self.length` rows by `self.samples` columns, which contains the sample space to be drawn from when doing Latin Hypercubic sampling.
 
         Each row represents a different data point and distribution. The final sample space is `self.hypercube`. All distributions from `uncertainty_choices` are usable, and bounded distributions are also fine.
@@ -312,7 +335,7 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
             -1 * self.hypercube[self.params["negative"], :]
         )
 
-    def next(self):
+    def next(self) -> npt.NDArray:
         """Draw directly from pre-computed sample space."""
         return self.hypercube[
             self.row_index, self.random.randint(self.samples, size=self.length)

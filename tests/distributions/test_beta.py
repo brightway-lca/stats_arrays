@@ -2,8 +2,7 @@ import numpy as np
 import pytest
 
 from stats_arrays.distributions import BetaUncertainty
-from stats_arrays.errors import InvalidParamsError, ImproperBoundsError
-
+from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
 
 ALPHA = 3.3
 BETA = 2.2

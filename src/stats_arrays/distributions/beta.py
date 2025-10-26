@@ -1,11 +1,12 @@
-from __future__ import division
+from typing import Optional
 
-from numpy import isnan, linspace, random, zeros, newaxis
+import numpy as np
+import numpy.typing as npt
 from scipy import stats
 
-from stats_arrays.errors import InvalidParamsError, ImproperBoundsError
-from stats_arrays.utils import one_row_params_array
 from stats_arrays.distributions.base import UncertaintyBase
+from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
+from stats_arrays.utils import ParamsArray, one_row_params_array
 
 
 class BetaUncertainty(UncertaintyBase):
@@ -27,7 +28,7 @@ class BetaUncertainty(UncertaintyBase):
     description = "Beta uncertainty"
 
     @classmethod
-    def validate(cls, params):
+    def validate(cls, params: ParamsArray) -> None:
         if (params["loc"] > 0).sum() != params.shape[0]:
             raise InvalidParamsError(
                 "Real, positive alpha values are" + " required for Beta uncertainties."
@@ -42,7 +43,7 @@ class BetaUncertainty(UncertaintyBase):
             raise ImproperBoundsError("Min/max inconsistency.")
 
     @classmethod
-    def _rescale(cls, params, results):
+    def _rescale(cls, params: ParamsArray, results: npt.NDArray) -> npt.NDArray:
         """Rescale results from [0, 1] to [minimum, maximum] range.
 
         The correct scaling formula is: results = results * scale + minimum
@@ -53,7 +54,7 @@ class BetaUncertainty(UncertaintyBase):
         # Handle broadcasting for multiple rows
         if results.ndim == 2 and minimum.ndim == 1:
             # results shape: (n_rows, n_samples), minimum/scale shape: (n_rows,)
-            results = results * scale[:, newaxis] + minimum[:, newaxis]
+            results = results * scale[:, np.newaxis] + minimum[:, np.newaxis]
         else:
             # Single row case or matching dimensions
             results = results * scale + minimum
@@ -61,18 +62,24 @@ class BetaUncertainty(UncertaintyBase):
         return results
 
     @classmethod
-    def _minimum_scale(cls, params):
+    def _minimum_scale(cls, params: ParamsArray) -> tuple[npt.NDArray, npt.NDArray]:
         minimum = params["minimum"].copy()
-        minimum[isnan(minimum)] = 0
+        minimum[np.isnan(minimum)] = 0
         scale = params["maximum"].copy()
-        scale[isnan(scale)] = 1
+        scale[np.isnan(scale)] = 1
         scale -= minimum
         return minimum, scale
 
     @classmethod
-    def random_variables(cls, params, size, seeded_random=None, transform=False):
+    def random_variables(
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+        transform: bool = False,
+    ) -> npt.NDArray:
         if not seeded_random:
-            seeded_random = random
+            seeded_random = np.random.RandomState()
         return cls._rescale(
             params,
             seeded_random.beta(
@@ -81,9 +88,9 @@ class BetaUncertainty(UncertaintyBase):
         )
 
     @classmethod
-    def cdf(cls, params, vector):
+    def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         vector = cls.check_2d_inputs(params, vector)
-        results = zeros(vector.shape)
+        results = np.zeros(vector.shape)
         loc, scale = cls._minimum_scale(params)
         for row in range(params.shape[0]):
             results[row, :] = stats.beta.cdf(
@@ -96,9 +103,9 @@ class BetaUncertainty(UncertaintyBase):
         return results
 
     @classmethod
-    def ppf(cls, params, percentages):
+    def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         percentages = cls.check_2d_inputs(params, percentages)
-        results = zeros(percentages.shape)
+        results = np.zeros(percentages.shape)
         loc, scale = cls._minimum_scale(params)
         for row in range(percentages.shape[0]):
             results[row, :] = stats.beta.ppf(
@@ -112,7 +119,7 @@ class BetaUncertainty(UncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def statistics(cls, params):
+    def statistics(cls, params: ParamsArray) -> dict:
         alpha = float(params["loc"][0][0])
         beta = float(params["shape"][0][0])
 
@@ -134,12 +141,14 @@ class BetaUncertainty(UncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def pdf(cls, params, xs=None):
+    def pdf(
+        cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
+    ) -> tuple[npt.NDArray, npt.NDArray]:
         loc, scale = cls._minimum_scale(params)
         loc = float(loc[0][0])
         scale = float(scale[0][0])
 
         if xs is None:
-            xs = linspace(loc, loc + scale, cls.default_number_points_in_pdf)
+            xs = np.linspace(loc, loc + scale, cls.default_number_points_in_pdf)
         ys = stats.beta.pdf(xs, params["loc"], params["shape"], loc=loc, scale=scale)
         return xs, ys.reshape(ys.shape[1])

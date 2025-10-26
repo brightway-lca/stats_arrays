@@ -1,9 +1,11 @@
-from __future__ import division
+from typing import Optional
 
 import numpy as np
+import numpy.typing as npt
 
-from stats_arrays.errors import InvalidParamsError
 from stats_arrays.distributions.base import UncertaintyBase
+from stats_arrays.errors import InvalidParamsError
+from stats_arrays.utils import ParamsArray
 
 
 class WeibullUncertainty(UncertaintyBase):
@@ -21,7 +23,7 @@ class WeibullUncertainty(UncertaintyBase):
     description = "Weibull uncertainty"
 
     @classmethod
-    def validate(cls, params):
+    def validate(cls, params: ParamsArray) -> None:
         if (params["shape"] <= 0).sum():
             raise InvalidParamsError("Real, positive ``k`` values need for Weibull.")
         if (params["scale"] <= 0).sum():
@@ -30,9 +32,15 @@ class WeibullUncertainty(UncertaintyBase):
             )
 
     @classmethod
-    def random_variables(cls, params, size, seeded_random=None, transform=False):
+    def random_variables(
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+        transform: bool = False,
+    ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random
+            seeded_random = np.random.RandomState()
         offset = params["loc"].copy()
         offset[np.isnan(offset)] = 0
         data = (

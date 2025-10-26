@@ -1,6 +1,7 @@
-from __future__ import division
+from typing import Optional, Tuple
 
 import numpy as np
+import numpy.typing as npt
 
 from stats_arrays.errors import (
     ImproperBoundsError,
@@ -8,7 +9,7 @@ from stats_arrays.errors import (
     MaximumIterationsError,
     UnreasonableBoundsError,
 )
-from stats_arrays.utils import construct_params_array, one_row_params_array
+from stats_arrays.utils import ParamsArray, construct_params_array, one_row_params_array
 
 np.seterr(invalid="ignore")
 
@@ -26,12 +27,13 @@ class UncertaintyBase:
 
     """
 
+    id = None
     default_number_points_in_pdf = 200
     standard_deviations_in_default_range = 2.2
 
     # Conversion utilities ###
     @classmethod
-    def from_tuples(cls, *data):
+    def from_tuples(cls, *data: tuple) -> ParamsArray:
         """
         Construct a :ref:`hpa` from parameter tuples.
 
@@ -76,7 +78,7 @@ class UncertaintyBase:
         return params
 
     @classmethod
-    def from_dicts(cls, *dicts):
+    def from_dicts(cls, *dicts: dict) -> ParamsArray:
         """
         Construct a :ref:`hpa` from parameter dictionaries.
 
@@ -124,7 +126,7 @@ class UncertaintyBase:
 
     # Utility methods ###
     @classmethod
-    def validate(cls, params):
+    def validate(cls, params: ParamsArray) -> None:
         """
         Validate the parameter array for uncertainty distribution.
 
@@ -141,7 +143,7 @@ class UncertaintyBase:
             raise ImproperBoundsError
 
     @classmethod
-    def check_2d_inputs(cls, params, vector):
+    def check_2d_inputs(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         """Convert ``vector`` to 2 dimensions if not already, and raise ``stats_arrays.InvalidParamsError`` if ``vector`` and ``params`` dimensions don't match."""
         if len(vector.shape) == 1:
             # Slices from structured arrays can't always be resized
@@ -157,7 +159,9 @@ class UncertaintyBase:
 
     @classmethod
     @one_row_params_array
-    def check_bounds_reasonableness(cls, params, threshold=0.1):
+    def check_bounds_reasonableness(
+        cls, params: ParamsArray, threshold: float = 0.1
+    ) -> None:
         """
         Test if there is at least a ``threshold`` percent chance of generating random numbers within the provided bounds.
 
@@ -182,9 +186,13 @@ class UncertaintyBase:
     # Used for Monte Carlo ###
     @classmethod
     def bounded_random_variables(
-        cls, params, size, seeded_random=None, maximum_iterations=50
-    ):
-        """Generate random variables repeatedly until all varaibles are within the bounds of each distribution. Raise MaximumIterationsError if this takes more that `maximum_iterations`. Uses `random_variables` for random number generation.
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+        maximum_iterations: int = 50,
+    ) -> npt.NDArray:
+        """Generate random variables repeatedly until all variables are within the bounds of each distribution. Raise MaximumIterationsError if this takes more that `maximum_iterations`. Uses `random_variables` for random number generation.
 
         .. rubric:: Inputs
 
@@ -228,7 +236,12 @@ class UncertaintyBase:
         return data
 
     @classmethod
-    def random_variables(cls, params, size, seeded_random=None):
+    def random_variables(
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+    ) -> npt.NDArray:
         """Generate random variables for the given uncertainty. Should **not check** to ensure that random samples are with the (minimum, maximum bounds). Bounds checking is provided by the `bounded_random_variables` class method.
 
         .. rubric:: Inputs
@@ -242,9 +255,8 @@ class UncertaintyBase:
         An array of random values, with dimensions `params` rows by `size`."""
         raise NotImplementedError
 
-    # Used for Latin Hypercube Monte Carlo ###
     @classmethod
-    def ppf(cls, params, percentages):
+    def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         """Return percent point function (inverse of CDF, e.g. value in distribution where x percent of the distribution is less than value) for various distributions.
 
         .. rubric:: Inputs
@@ -256,11 +268,10 @@ class UncertaintyBase:
 
         An array of values within the ranges of each distribtion, with `params` rows and `percentages` columns.
         """
-        percentages = cls.check_ppf_inputs(params, percentages)
         raise NotImplementedError
 
     @classmethod
-    def cdf(cls, params, vector):
+    def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         """Used when a distribution is bounded, to determine where to begin or end the percentages used in calculating hypercube sampling space.
 
         .. rubric:: Inputs
@@ -272,13 +283,12 @@ class UncertaintyBase:
 
         An array of cumulative densities, bounded on (0,1), with `params` rows and `vector` columns.
         """
-        vector = cls.check_cdf_inputs(params, vector)
         raise NotImplementedError
 
     # Used for graphing ###
     @classmethod
     @one_row_params_array
-    def statistics(cls, params):
+    def statistics(cls, params: ParamsArray) -> dict:
         """Build a dictionary of mean, mode, median, and 95% confidence interval upper and lower values.
 
         .. rubric:: Inputs
@@ -299,7 +309,7 @@ class UncertaintyBase:
 
     @classmethod
     @one_row_params_array
-    def pdf(cls, params, xs=None):
+    def pdf(cls, params: ParamsArray, xs: Optional[npt.NDArray] = None) -> npt.NDArray:
         """Provide a standard interface to calculate the probability distribution function of a uncertainty distribution. Default is `cls.default_number_points_in_pdf` points between min to max range if bounds are present, or `cls.standard_deviations_in_default_range` standard distributions.
 
         .. rubric:: Inputs
@@ -320,7 +330,7 @@ class BoundedUncertaintyBase(UncertaintyBase):
     """An uncertainty distribution where minimum and maximum bounds are required. No bounds checking is required for these distributions, as bounds are integral inputs into the sample space generator."""
 
     @classmethod
-    def validate(cls, params):
+    def validate(cls, params: ParamsArray) -> None:
         super(BoundedUncertaintyBase, cls).validate(params)
         if np.isnan(params["minimum"]).sum() or np.isnan(params["maximum"]).sum():
             raise ImproperBoundsError(
@@ -328,7 +338,7 @@ class BoundedUncertaintyBase(UncertaintyBase):
             )
 
     @classmethod
-    def rescale(cls, params):
+    def rescale(cls, params: ParamsArray) -> Tuple[npt.NDArray, npt.NDArray]:
         """Rescale params to a (0,1) interval. Return adjusted_means and scale. Needed because SciPy assumes a (0,1) interval for many distributions."""
         scale = params["maximum"] - params["minimum"]
         adjusted_means = (params["loc"] - params["minimum"]) / scale
@@ -336,13 +346,17 @@ class BoundedUncertaintyBase(UncertaintyBase):
 
     @classmethod
     def bounded_random_variables(
-        cls, params, size, seeded_random=None, maximum_iterations=None
-    ):
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+        maximum_iterations: Optional[int] = None,
+    ) -> npt.NDArray:
         """No bounds checking because the bounds do not exclude any of the distribution."""
         return cls.random_variables(params, size, seeded_random)
 
     @classmethod
     @one_row_params_array
-    def check_bounds_reasonableness(cls, params):
+    def check_bounds_reasonableness(cls, params: ParamsArray) -> None:
         """Always true because the bounds do not exclude any of the distribution."""
         return

@@ -1,9 +1,11 @@
-from __future__ import division
+from typing import Optional
 
 import numpy as np
+import numpy.typing as npt
 
-from stats_arrays.errors import InvalidParamsError
 from stats_arrays.distributions.base import UncertaintyBase
+from stats_arrays.errors import InvalidParamsError
+from stats_arrays.utils import ParamsArray
 
 
 class StudentsTUncertainty(UncertaintyBase):
@@ -25,7 +27,7 @@ class StudentsTUncertainty(UncertaintyBase):
     description = "Student's T uncertainty"
 
     @classmethod
-    def validate(cls, params):
+    def validate(cls, params: ParamsArray) -> None:
         if (params["shape"] <= 0).sum() or np.isnan(params["shape"]).sum():
             raise InvalidParamsError(
                 "Positive ``nu`` (degrees of freedom) values are required for"
@@ -38,9 +40,15 @@ class StudentsTUncertainty(UncertaintyBase):
             )
 
     @classmethod
-    def random_variables(cls, params, size, seeded_random=None, **kwargs):
+    def random_variables(
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+        **kwargs,
+    ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random
+            seeded_random = np.random.RandomState()
         scale = params["scale"].copy()
         scale[np.isnan(scale)] = 1
         location = params["loc"].copy()

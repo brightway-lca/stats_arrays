@@ -17,7 +17,6 @@ def test_invalid_uncertainty_type():
 
 def test_uncertainty_not_subclass():
     class Foo(object):
-
         @classmethod
         def bounded_random_variables():
             pass

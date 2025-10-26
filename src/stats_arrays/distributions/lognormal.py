@@ -1,11 +1,12 @@
-from __future__ import division
+from typing import Optional
 
 import numpy as np
+import numpy.typing as npt
 from scipy import stats
 
-from stats_arrays.errors import InvalidParamsError
-from stats_arrays.utils import one_row_params_array
 from stats_arrays.distributions.base import UncertaintyBase
+from stats_arrays.errors import InvalidParamsError
+from stats_arrays.utils import ParamsArray, one_row_params_array
 
 
 class LognormalUncertainty(UncertaintyBase):
@@ -13,7 +14,7 @@ class LognormalUncertainty(UncertaintyBase):
     description = "Lognormal uncertainty"
 
     @classmethod
-    def validate(cls, params):
+    def validate(cls, params: ParamsArray) -> None:
         """Custom validation because mean gets log-transformed"""
         if np.isnan(params["loc"]).sum():
             raise InvalidParamsError(
@@ -26,9 +27,14 @@ class LognormalUncertainty(UncertaintyBase):
             )
 
     @classmethod
-    def random_variables(cls, params, size, seeded_random=None):
+    def random_variables(
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+    ) -> npt.NDArray:
         if not seeded_random:
-            seeded_random = np.random
+            seeded_random = np.random.RandomState()
         data = seeded_random.lognormal(
             params["loc"], params["scale"], size=(size, params.shape[0])  # Mu  # Sigma
         ).T
@@ -38,7 +44,7 @@ class LognormalUncertainty(UncertaintyBase):
         return data
 
     @classmethod
-    def cdf(cls, params, vector):
+    def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         vector[params["negative"]] = -1 * vector[params["negative"]]
         if vector.ndim == 1 or vector.shape[1] == 1:
             # Can do all at once, **much** faster
@@ -57,7 +63,7 @@ class LognormalUncertainty(UncertaintyBase):
         return results
 
     @classmethod
-    def ppf(cls, params, percentages):
+    def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         if percentages.ndim == 1 or percentages.shape[1] == 1:
             # Can do all at once, **much** faster
             results = stats.lognorm.ppf(
@@ -77,7 +83,7 @@ class LognormalUncertainty(UncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def statistics(cls, params):
+    def statistics(cls, params: ParamsArray) -> dict:
         negative = -1 if bool(params["negative"]) else 1
         geometric_mu = float(np.exp(params["loc"]))
         sigma = float(params["scale"])
@@ -99,7 +105,9 @@ class LognormalUncertainty(UncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def pdf(cls, params, xs=None):
+    def pdf(
+        cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
+    ) -> tuple[npt.NDArray, npt.NDArray]:
         """Generate probability distribution function for lognormal distribution."""
         n = params["negative"]
         if xs is None:

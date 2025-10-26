@@ -1,8 +1,10 @@
-from __future__ import division
+from typing import Optional
 
-from numpy import array, random, zeros
+import numpy as np
+import numpy.typing as npt
 
 from stats_arrays.distributions.base import BoundedUncertaintyBase
+from stats_arrays.utils import ParamsArray
 
 
 class BernoulliUncertainty(BoundedUncertaintyBase):
@@ -10,10 +12,15 @@ class BernoulliUncertainty(BoundedUncertaintyBase):
     description = "Bernoulli uncertainty"
 
     @classmethod
-    def random_variables(cls, params, size, seeded_random=None):
-        data = zeros((params.shape[0], size))
+    def random_variables(
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+    ) -> npt.NDArray:
+        data = np.zeros((params.shape[0], size))
         if not seeded_random:
-            seeded_random = random
+            seeded_random = np.random.RandomState()
         adjusted_means, scale = cls.rescale(params)
         adjusted_means.resize(params.shape[0], 1)
         # nums = seeded_random.random_sample(size * params.shape[0])
@@ -28,15 +35,15 @@ class BernoulliUncertainty(BoundedUncertaintyBase):
         return data
 
     @classmethod
-    def cdf(cls, params, vector):
+    def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         vector = cls.check_2d_inputs(params, vector)
         # Turn into column vector
-        mean = array(params["loc"])
+        mean = np.array(params["loc"])
         mean.resize(params.shape[0], 1)
         return (vector >= mean) * 1
 
     @classmethod
-    def ppf(cls, params, percentages):
+    def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         percentages = cls.check_2d_inputs(params, percentages)
         adjusted_means, scale = cls.rescale(params)
         length = params.shape[0]

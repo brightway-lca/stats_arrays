@@ -1,11 +1,12 @@
-from __future__ import division
+from typing import Optional
 
 import numpy as np
+import numpy.typing as npt
 from scipy import stats
 
-from stats_arrays.errors import InvalidParamsError
-from stats_arrays.utils import one_row_params_array
 from stats_arrays.distributions.base import UncertaintyBase
+from stats_arrays.errors import InvalidParamsError
+from stats_arrays.utils import ParamsArray, one_row_params_array
 
 
 class NormalUncertainty(UncertaintyBase):
@@ -13,7 +14,7 @@ class NormalUncertainty(UncertaintyBase):
     description = "Normal uncertainty"
 
     @classmethod
-    def validate(cls, params):
+    def validate(cls, params: ParamsArray) -> None:
         if np.isnan(params["scale"]).sum() or (params["scale"] <= 0).sum():
             raise InvalidParamsError(
                 "Real, positive scale (sigma) values are required"
@@ -25,15 +26,20 @@ class NormalUncertainty(UncertaintyBase):
             )
 
     @classmethod
-    def random_variables(cls, params, size, seeded_random=None):
+    def random_variables(
+        cls,
+        params: ParamsArray,
+        size: int,
+        seeded_random: Optional[np.random.RandomState] = None,
+    ) -> npt.NDArray:
         if not seeded_random:
-            seeded_random = np.random
+            seeded_random = np.random.RandomState()
         return seeded_random.normal(
             params["loc"], params["scale"], size=(size, params.shape[0])
         ).T
 
     @classmethod
-    def cdf(cls, params, vector):
+    def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         vector = cls.check_2d_inputs(params, vector)
         results = np.zeros(vector.shape)
         for row in range(params.shape[0]):
@@ -43,7 +49,7 @@ class NormalUncertainty(UncertaintyBase):
         return results
 
     @classmethod
-    def ppf(cls, params, percentages):
+    def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         percentages = cls.check_2d_inputs(params, percentages)
         results = np.zeros(percentages.shape)
         for row in range(percentages.shape[0]):
@@ -54,7 +60,7 @@ class NormalUncertainty(UncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def statistics(cls, params):
+    def statistics(cls, params: ParamsArray) -> dict:
         return {
             "mean": float(params["loc"].flat[0]),
             "mode": float(params["loc"].flat[0]),
@@ -65,7 +71,9 @@ class NormalUncertainty(UncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def pdf(cls, params, xs=None):
+    def pdf(
+        cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
+    ) -> tuple[npt.NDArray, npt.NDArray]:
         if xs is None:
             if np.isnan(params["minimum"]):
                 lower = (
