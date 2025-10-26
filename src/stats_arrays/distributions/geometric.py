@@ -66,7 +66,7 @@ class UniformUncertainty(BoundedUncertaintyBase):
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
     ) -> tuple[npt.NDArray, npt.NDArray]:
         if xs is None:
-            xs_array = np.array([params["minimum"], params["maximum"]])
+            xs_array = np.array([params["minimum"], params["maximum"]]).reshape(2,)
         else:
             xs_array = xs
         percentage = float((1 / (params["maximum"] - params["minimum"])).flat[0])
@@ -106,7 +106,7 @@ class TriangularUncertainty(BoundedUncertaintyBase):
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         vector = cls.check_2d_inputs(params, vector)
         # Adjust parameters to (0,1) range
-        adjusted_means, scale = cls.rescale(params)
+        adjusted_means, scale = cls.rescale_to_unitary_interval(params)
         # To be broadcasted correctly, scale and mins must be column vectors
         scale.resize(scale.shape[0], 1)
         mins = np.array(params["minimum"])
@@ -123,7 +123,7 @@ class TriangularUncertainty(BoundedUncertaintyBase):
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         percentages = cls.check_2d_inputs(params, percentages)
-        adjusted_means, scale = cls.rescale(params)
+        adjusted_means, scale = cls.rescale_to_unitary_interval(params)
         scale.resize(scale.shape[0], 1)
         adjusted_means.resize(scale.shape[0], 1)
         return cls.rescale_vector_to_params(params, stats.triang.ppf(percentages, adjusted_means))
@@ -158,7 +158,7 @@ class TriangularUncertainty(BoundedUncertaintyBase):
             xs = np.array([float(x.flat[0]) for x in (lower, mode, upper)])
             ys = np.array([0, float(((mode - lower) / (upper - lower)).flat[0]), 0])
         else:
-            adjusted_means, scale = cls.rescale(params)
+            adjusted_means, scale = cls.rescale_to_unitary_interval(params)
             adj_xs = (xs - params["minimum"]) / scale
             ys_0_1_interval = stats.triang.pdf(adj_xs, adjusted_means)
             ys = ys_0_1_interval / scale

@@ -146,14 +146,35 @@ def test_triangular_statistics(biased_params_1d):
         "mode": 3.0,
         "mean": 2.6666667461395264,
     }
-    TriangularUncertainty.statistics(biased_params_1d) == tri_stats
+    assert TriangularUncertainty.statistics(biased_params_1d) == tri_stats
 
 
-def test_triangular_pdf(biased_params_1d):
+def test_triangular_pdf_without_xs(biased_params_1d):
+    """Test PDF calculation without specifying xs."""
     xs, ys = TriangularUncertainty.pdf(biased_params_1d)
     assert np.allclose(np.array([1, 3, 4]), xs)
     assert np.allclose(np.array([0, 0.66666669, 0]), ys)
+
+
+def test_triangular_pdf_with_xs(biased_params_1d):
+    """Test PDF calculation with specified xs."""
     points = np.array([1, 2, 3, 4])
     xs, ys = TriangularUncertainty.pdf(biased_params_1d, points)
     assert np.allclose(points, xs)
-    assert np.allclose(np.array([0, 0.99999997, 1.99999994, 0]), ys)
+    assert np.allclose(np.array([0, 0.99999997 / 3, 1.99999994 / 3, 0]), ys)
+
+
+def test_triangular_pdf_with_zero_mode(make_params_array):
+    """Test PDF calculation when mode is zero (uses default midpoint)."""
+    params = make_params_array(1)
+    params["minimum"] = 0.0
+    params["maximum"] = 4.0
+    params["loc"] = 0.0  # Zero mode
+
+    xs, ys = TriangularUncertainty.pdf(params)
+
+    # Should default to midpoint when mode is 0
+    # Expected xs: [0, 2, 4] (lower, midpoint, upper)
+    assert np.allclose(np.array([0, 2, 4]), xs)
+    # PDF at endpoints should be 0, at midpoint should be 1/(upper-lower) = 1/4 = 0.25
+    assert np.allclose(np.array([0, 0.5, 0]), ys, rtol=1e-6)

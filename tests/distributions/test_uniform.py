@@ -91,11 +91,17 @@ def test_uniform_statistics(unif_params_1d):
     }
 
 
-def test_uniform_pdf(unif_params_1d):
+def test_uniform_pdf_without_xs(unif_params_1d):
+    """Test PDF calculation without specifying xs."""
     oneDparams = unif_params_1d
     xs, ys = UniformUncertainty.pdf(oneDparams)
     assert np.allclose(np.array([1, 3]), xs)
     assert np.allclose(np.array([0.5, 0.5]), ys)
+
+
+def test_uniform_pdf_with_xs(unif_params_1d):
+    """Test PDF calculation with specified xs."""
+    oneDparams = unif_params_1d
     points = np.array([1, 2, 3])
     xs, ys = UniformUncertainty.pdf(oneDparams, points)
     assert np.allclose(points, xs)
