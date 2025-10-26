@@ -2,9 +2,10 @@
 
 # 1.0 (DEV)
 
+* Added types
 * **BREAKING CHANGE**: Bernoulli distribution is now correctly strictly limited to outputting 0 or 1; `minimum` and `maximum` are ignored.
 * Fixed triangular distribution `.pdf` method which didn't account for the minimum to maximum range but gave values for a `(0, 1)` range.
-* Added types
+* Added many more tests
 
 ## 0.8 (2025-10-23)
 

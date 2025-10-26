@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Any, Callable, List, TypeVar, overload, Tuple, Optional
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -30,7 +30,6 @@ BASE_DTYPE: npt.DTypeLike = np.dtype(BASE_DTYPE_FIELDS)
 # ExtendedParamsArray = npt.NDArray[BASE_DTYPE_T]  # With uncertainty_type
 BASE_DTYPE_T = TypeVar("BASE_DTYPE_T", bound=np.generic)
 ParamsArray = npt.NDArray[BASE_DTYPE_T]
-
 
 
 @overload
@@ -77,7 +76,9 @@ def construct_params_array(length: int = 1, include_type: bool = False) -> Param
     return params
 
 
-def rescale_to_unitary_interval(params: ParamsArray, vector: Optional[npt.NDArray] = None) -> Tuple[npt.NDArray, npt.NDArray]:
+def rescale_to_unitary_interval(
+    params: ParamsArray, vector: Optional[npt.NDArray] = None
+) -> Tuple[npt.NDArray, npt.NDArray]:
     """Rescale params to a (0,1) interval. Return adjusted `loc` and scale (`minimum - maximum`).
 
     Uses default values of (0, 1) for minimum and maximum if not present.

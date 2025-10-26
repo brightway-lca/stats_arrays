@@ -466,18 +466,34 @@ def test_bernoulli():
     # Two-dimensional array check
     params = make_params_array(2)
     params["uncertainty_type"] = BernoulliUncertainty.id
-    params["loc"] = .6
+    params["loc"] = 0.6
     lhc = LatinHypercubeRNG(params)
     print(lhc.hypercube)
     assert np.allclose(
         lhc.hypercube,
-        np.array([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0,], [1, 1, 1, 1, 1, 1, 0, 0, 0, 0]]),
+        np.array(
+            [
+                [
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                [1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+            ]
+        ),
     )
 
     # One-dimensional array check
     params = make_params_array(1)
     params["uncertainty_type"] = BernoulliUncertainty.id
-    params["loc"] = .4
+    params["loc"] = 0.4
     lhc = LatinHypercubeRNG(params)
     assert np.allclose(lhc.hypercube, np.array([1, 1, 1, 1, 0, 0, 0, 0, 0, 0]))
 
@@ -510,3 +526,84 @@ def test_heterogeneous_params():
             ]
         ),
     )
+
+
+def test_lh_with_only_minimum_bound():
+    """Test LatinHypercubeRNG with only minimum bound (no maximum)"""
+    # Use Normal which doesn't require both bounds
+    params = make_params_array(1)
+    params["uncertainty_type"] = NormalUncertainty.id
+    params["loc"] = 2
+    params["scale"] = 0.5
+    params["minimum"] = 1.0
+    params["maximum"] = np.nan
+
+    lhc = LatinHypercubeRNG(params, samples=20)
+
+    assert lhc.hypercube.shape == (1, 20)
+    # Should still produce finite values
+    assert np.all(np.isfinite(lhc.hypercube))
+
+
+def test_lh_with_only_maximum_bound():
+    """Test LatinHypercubeRNG with only maximum bound (no minimum)"""
+    # Use Normal which doesn't require both bounds
+    params = make_params_array(1)
+    params["uncertainty_type"] = NormalUncertainty.id
+    params["loc"] = 2
+    params["scale"] = 0.5
+    params["minimum"] = np.nan
+    params["maximum"] = 5.0
+
+    lhc = LatinHypercubeRNG(params, samples=20)
+
+    assert lhc.hypercube.shape == (1, 20)
+    # Should still produce finite values
+    assert np.all(np.isfinite(lhc.hypercube))
+
+
+def test_lh_with_unbounded_distribution():
+    """Test LatinHypercubeRNG with unbounded distribution (no min, no max)"""
+    # Use Normal which doesn't require bounds
+    params = make_params_array(1)
+    params["uncertainty_type"] = NormalUncertainty.id
+    params["loc"] = 2
+    params["scale"] = 0.5
+    params["minimum"] = np.nan
+    params["maximum"] = np.nan
+
+    lhc = LatinHypercubeRNG(params, samples=20)
+
+    assert lhc.hypercube.shape == (1, 20)
+    assert np.all(np.isfinite(lhc.hypercube))
+
+
+def test_lh_with_large_samples():
+    """Test LatinHypercubeRNG with large number of samples"""
+    params = make_params_array(1)
+    params["uncertainty_type"] = NormalUncertainty.id
+    params["loc"] = 2
+    params["scale"] = 0.5
+
+    lhc = LatinHypercubeRNG(params, samples=100)
+
+    assert lhc.hypercube.shape == (1, 100)
+    assert np.all(np.isfinite(lhc.hypercube))
+
+
+def test_lh_all_distributions():
+    """Test LatinHypercubeRNG with all supported distributions"""
+    from stats_arrays.distributions import UniformUncertainty
+
+    # Test with uniform
+    params = make_params_array(1)
+    params["uncertainty_type"] = UniformUncertainty.id
+    params["minimum"] = 1.0
+    params["maximum"] = 2.0
+    params["loc"] = 1.5
+    params["scale"] = np.nan
+
+    lhc = LatinHypercubeRNG(params, samples=10)
+    assert lhc.hypercube.shape == (1, 10)
+    assert np.all(lhc.hypercube >= 1.0)
+    assert np.all(lhc.hypercube <= 2.0)

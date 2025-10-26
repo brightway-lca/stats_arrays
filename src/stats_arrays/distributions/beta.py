@@ -6,7 +6,11 @@ from scipy import stats
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
-from stats_arrays.utils import ParamsArray, one_row_params_array, rescale_vector_to_params
+from stats_arrays.utils import (
+    ParamsArray,
+    one_row_params_array,
+    rescale_vector_to_params,
+)
 
 
 class BetaUncertainty(UncertaintyBase):
@@ -42,7 +46,6 @@ class BetaUncertainty(UncertaintyBase):
         min_[np.isnan(min_)] = 0
         max_[np.isnan(max_)] = 1
         return max_ - min_
-
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
@@ -109,7 +112,7 @@ class BetaUncertainty(UncertaintyBase):
     @classmethod
     @one_row_params_array
     def statistics(cls, params: ParamsArray) -> dict:
-        alpha, beta= float(params["loc"][0][0]), float(params["shape"][0][0])
+        alpha, beta = float(params["loc"][0][0]), float(params["shape"][0][0])
         loc, scale = cls._safe_loc(params), cls._safe_scale(params)
         minimum = float(loc[0][0])
         scale = float(scale[0][0])

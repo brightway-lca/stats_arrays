@@ -9,7 +9,13 @@ from stats_arrays.errors import (
     MaximumIterationsError,
     UnreasonableBoundsError,
 )
-from stats_arrays.utils import ParamsArray, construct_params_array, one_row_params_array, rescale_to_unitary_interval, rescale_vector_to_params
+from stats_arrays.utils import (
+    ParamsArray,
+    construct_params_array,
+    one_row_params_array,
+    rescale_to_unitary_interval,
+    rescale_vector_to_params,
+)
 
 np.seterr(invalid="ignore")
 
@@ -338,11 +344,15 @@ class BoundedUncertaintyBase(UncertaintyBase):
             )
 
     @classmethod
-    def rescale_to_unitary_interval(cls, params: ParamsArray) -> Tuple[npt.NDArray, npt.NDArray]:
+    def rescale_to_unitary_interval(
+        cls, params: ParamsArray
+    ) -> Tuple[npt.NDArray, npt.NDArray]:
         return rescale_to_unitary_interval(params=params)
 
     @classmethod
-    def rescale_vector_to_params(cls, params: npt.NDArray, vector: npt.NDArray) -> npt.NDArray:
+    def rescale_vector_to_params(
+        cls, params: npt.NDArray, vector: npt.NDArray
+    ) -> npt.NDArray:
         return rescale_vector_to_params(params=params, vector=vector)
 
     @classmethod

@@ -66,7 +66,9 @@ class UniformUncertainty(BoundedUncertaintyBase):
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
     ) -> tuple[npt.NDArray, npt.NDArray]:
         if xs is None:
-            xs_array = np.array([params["minimum"], params["maximum"]]).reshape(2,)
+            xs_array = np.array([params["minimum"], params["maximum"]]).reshape(
+                2,
+            )
         else:
             xs_array = xs
         percentage = float((1 / (params["maximum"] - params["minimum"])).flat[0])
@@ -126,7 +128,9 @@ class TriangularUncertainty(BoundedUncertaintyBase):
         adjusted_means, scale = cls.rescale_to_unitary_interval(params)
         scale.resize(scale.shape[0], 1)
         adjusted_means.resize(scale.shape[0], 1)
-        return cls.rescale_vector_to_params(params, stats.triang.ppf(percentages, adjusted_means))
+        return cls.rescale_vector_to_params(
+            params, stats.triang.ppf(percentages, adjusted_means)
+        )
 
     @classmethod
     @one_row_params_array

@@ -34,7 +34,7 @@ class BernoulliUncertainty(UncertaintyBase):
             seeded_random.random_sample(size * params.shape[0]).reshape(
                 (params.shape[0], size)
             )
-            <= params['loc']
+            <= params["loc"]
         )
         data[mask] = 1
         return data
@@ -42,9 +42,9 @@ class BernoulliUncertainty(UncertaintyBase):
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         vector = cls.check_2d_inputs(params, vector)
-        return (vector <= params["loc"].reshape(-1, 1)) * 1.
+        return (vector <= params["loc"].reshape(-1, 1)) * 1.0
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         percentages = cls.check_2d_inputs(params, percentages)
-        return (percentages <= params['loc'].reshape(-1, 1)) * 1.
+        return (percentages <= params["loc"].reshape(-1, 1)) * 1.0

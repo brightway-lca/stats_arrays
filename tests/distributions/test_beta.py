@@ -106,6 +106,7 @@ def test_validation_min_equals_max(make_params_array):
 
 # ===== RANDOM VARIABLES TESTS =====
 
+
 def test_random_variables_single_row(make_params_array):
     params = make_params_array(1)
     results = BetaUncertainty.random_variables(params, 1000)
@@ -171,6 +172,7 @@ def test_random_variables_broadcasting_with_scaling(make_params_array):
 
 # ===== CDF TESTS =====
 
+
 def test_cdf(make_params_array):
     """Test basic CDF calculation without scaling"""
     params = make_params_array(1)
@@ -184,7 +186,7 @@ def test_cdf_broadcasting(make_params_array):
     params = make_params_array(2)
     test_points = np.array([[0.2, 0.5, 0.8], [0.3, 0.6, 0.9]])
     cdf_values = BetaUncertainty.cdf(params, test_points)
-    
+
     assert cdf_values.shape == (2, 3)
     # CDF should be between 0 and 1
     assert np.all(cdf_values >= 0.0)
@@ -214,12 +216,13 @@ def test_cdf_with_scaling(make_params_array):
 
 # ===== PPF TESTS =====
 
+
 def test_ppf_broadcasting(make_params_array):
     """Test PPF with multiple rows"""
     params = make_params_array(2)
     percentiles = np.array([[0.1, 0.5, 0.9], [0.2, 0.6, 0.95]])
     ppf_values = BetaUncertainty.ppf(params, percentiles)
-    
+
     assert ppf_values.shape == (2, 3)
     # PPF should be between 0 and 1 for standard Beta
     assert np.all(ppf_values >= 0.0)
@@ -256,6 +259,7 @@ def test_ppf_with_scaling(make_params_array):
 
 # ===== CDF/PPF ROUNDTRIP TESTS =====
 
+
 def test_cdf_ppf_roundtrip(make_params_array):
     """Test that CDF and PPF are inverse functions"""
     params = make_params_array(1)
@@ -284,6 +288,7 @@ def test_cdf_ppf_roundtrip_with_scaling(make_params_array):
 
 
 # ===== PDF TESTS =====
+
 
 def test_pdf(make_params_array):
     params = make_params_array(1)
@@ -326,6 +331,7 @@ def test_pdf_with_scaling(make_params_array):
 
 
 # ===== STATISTICS TESTS =====
+
 
 def test_statistics(make_params_array):
     """Test statistics calculation"""
@@ -382,6 +388,7 @@ def test_statistics_with_scaling(make_params_array):
 
 
 # ===== EDGE CASES TESTS =====
+
 
 def test_edge_case_alpha_beta_one(make_params_array):
     """Test edge case where alpha = beta = 1 (uniform distribution)"""
