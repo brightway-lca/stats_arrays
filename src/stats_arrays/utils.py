@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, overload
+from typing import Any, Callable, List, Tuple, TypeVar, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -76,17 +76,12 @@ def construct_params_array(length: int = 1, include_type: bool = False) -> Param
     return params
 
 
-def rescale_to_unitary_interval(
-    params: ParamsArray, vector: Optional[npt.NDArray] = None
-) -> Tuple[npt.NDArray, npt.NDArray]:
+def rescale_to_unitary_interval(params: ParamsArray) -> Tuple[npt.NDArray, npt.NDArray]:
     """Rescale params to a (0,1) interval. Return adjusted `loc` and scale (`minimum - maximum`).
 
     Uses default values of (0, 1) for minimum and maximum if not present.
 
     Needed because SciPy assumes a (0,1) interval for many distributions."""
-    if vector is None:
-        vector = params["loc"]
-
     minimum = params["minimum"].copy()
     maximum = params["maximum"].copy()
 
@@ -94,7 +89,7 @@ def rescale_to_unitary_interval(
     maximum[np.isnan(maximum)] = 1
 
     scale = maximum - minimum
-    adjusted_loc = (vector - minimum) / scale
+    adjusted_loc = (params["loc"] - minimum) / scale
     return adjusted_loc, scale
 
 

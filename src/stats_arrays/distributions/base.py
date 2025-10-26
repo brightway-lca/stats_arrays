@@ -80,7 +80,12 @@ class UncertaintyBase:
         """
         params = construct_params_array(len(data), True)
         for index, row in enumerate(data):
+            # Check if uncertainty_type is valid (must be < 256)
+            uncertainty_type = row[6]  # uncertainty_type is the 7th element (index 6)
+            if uncertainty_type >= 256:
+                raise InvalidParamsError("`uncertainty_type` must be less than 256")
             params[index] = row
+
         return params
 
     @classmethod
@@ -127,6 +132,10 @@ class UncertaintyBase:
             data = [obj.get(key, default) for key, default in LABELS]
             if "uncertainty type" in obj and "uncertainty_type" not in obj:
                 data[-1] = obj["uncertainty type"]
+            # Check if uncertainty_type is valid (must be < 256)
+            uncertainty_type = data[6]  # uncertainty_type is the last element
+            if uncertainty_type >= 256:
+                raise InvalidParamsError("`uncertainty_type` must be less than 256")
             params[index] = tuple(data)
         return params
 

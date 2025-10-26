@@ -202,3 +202,73 @@ def test_rescale_to_unitary_interval_nan_values():
     # Second row: normal case, location in middle
     assert np.allclose(adjusted_loc[1], 0.5)
     assert np.allclose(scale[1], 10.0)
+
+
+def test_from_tuples_overflow_error():
+    """Test that from_tuples raises InvalidParamsError for uncertainty_type >= 256."""
+    # Test with uncertainty_type = 256 - should raise error
+    with pytest.raises(InvalidParamsError, match="must be less than 256"):
+        UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, 256))
+
+    # Test with valid value (255 should work)
+    params = UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, 255))
+    assert params["uncertainty_type"][0] == 255
+
+    # Test with larger value (1000 should raise error)
+    with pytest.raises(InvalidParamsError, match="must be less than 256"):
+        UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, 1000))
+
+
+def test_from_dicts_overflow_error():
+    """Test that from_dicts raises InvalidParamsError for uncertainty_type >= 256."""
+    # Test with uncertainty_type = 256 - should raise error
+    with pytest.raises(InvalidParamsError, match="must be less than 256"):
+        UncertaintyBase.from_dicts({"loc": 2, "scale": 3, "uncertainty_type": 256})
+
+    # Test with valid value (255 should work)
+    params = UncertaintyBase.from_dicts({"loc": 2, "scale": 3, "uncertainty_type": 255})
+    assert params["uncertainty_type"][0] == 255
+
+    # Test with larger value (1000 should raise error)
+    with pytest.raises(InvalidParamsError, match="must be less than 256"):
+        UncertaintyBase.from_dicts({"loc": 2, "scale": 3, "uncertainty_type": 1000})
+
+
+def test_from_dicts_uncertainty_type_key():
+    """Test from_dicts with 'uncertainty type' (space instead of underscore)."""
+    # Should accept both 'uncertainty_type' and 'uncertainty type'
+    params1 = UncertaintyBase.from_dicts({"uncertainty_type": 3, "loc": 2, "scale": 3})
+    params2 = UncertaintyBase.from_dicts({"uncertainty type": 3, "loc": 2, "scale": 3})
+
+    assert params1["uncertainty_type"][0] == 3
+    assert params2["uncertainty_type"][0] == 3
+
+
+def test_from_dicts_default_values():
+    """Test from_dicts with missing values uses defaults."""
+    params = UncertaintyBase.from_dicts({"loc": 5})
+
+    assert params["loc"][0] == 5.0
+    assert np.isnan(params["scale"][0])
+    assert np.isnan(params["shape"][0])
+    assert np.isnan(params["minimum"][0])
+    assert np.isnan(params["maximum"][0])
+    assert params["negative"][0] == False
+    assert params["uncertainty_type"][0] == 0
+
+
+def test_from_dicts_multiple_rows():
+    """Test from_dicts with multiple dictionaries."""
+    params = UncertaintyBase.from_dicts(
+        {"loc": 2, "scale": 3, "uncertainty_type": 3},
+        {"loc": 5, "minimum": 3, "maximum": 10, "uncertainty_type": 5},
+    )
+
+    assert params.shape[0] == 2
+    assert params["loc"][0] == 2.0
+    assert params["scale"][0] == 3.0
+    assert params["uncertainty_type"][0] == 3
+    assert params["loc"][1] == 5.0
+    assert params["minimum"][1] == 3.0
+    assert params["maximum"][1] == 10.0
+    assert params["uncertainty_type"][1] == 5

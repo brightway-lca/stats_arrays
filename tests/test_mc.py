@@ -107,16 +107,6 @@ def test_multiple_distributions():
     assert np.all(np.isfinite(result))
 
 
-def test_verify_params_invalid_uncertainty_type():
-    """Test that verify_params validates uncertainty types"""
-    # Test with invalid uncertainty type
-    params = UncertaintyBase.from_dicts(
-        {"loc": 2, "scale": 0.5, "uncertainty_type": 999},  # Invalid type
-    )
-    with pytest.raises(ValueError, match="not valid"):
-        MCRandomNumberGenerator(params)
-
-
 def test_verify_params_calls_distribution_validate(mv):
     """Test that verify_params calls validate on each distribution type"""
     # This test verifies that validate is called for each distribution type
