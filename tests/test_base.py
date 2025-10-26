@@ -125,3 +125,80 @@ def test_undefined_uncertainty():
     assert np.allclose(
         np.ones((2, 10)) * 9, UndefinedUncertainty.ppf(params, random_percentages)
     )
+
+
+def test_rescale_to_unitary_interval_single_row():
+    """Test rescale_to_unitary_interval with a single row of parameters."""
+    params = make_params_array(1)
+    params["minimum"] = 0.0
+    params["maximum"] = 10.0
+    params["loc"] = 5.0
+    
+    adjusted_loc, scale = BoundedUncertaintyBase.rescale_to_unitary_interval(params)
+    
+    # Location is at the middle, so should be 0.5 in (0,1) interval
+    assert np.allclose(adjusted_loc, 0.5)
+    # Scale should be the difference between max and min
+    assert np.allclose(scale, 10.0)
+
+
+def test_rescale_to_unitary_interval_minimum_location():
+    """Test rescale_to_unitary_interval when location is at the minimum."""
+    params = make_params_array(1)
+    params["minimum"] = 2.0
+    params["maximum"] = 8.0
+    params["loc"] = 2.0
+    
+    adjusted_loc, scale = BoundedUncertaintyBase.rescale_to_unitary_interval(params)
+    
+    # Location at minimum should map to 0
+    assert np.allclose(adjusted_loc, 0.0)
+    assert np.allclose(scale, 6.0)
+
+
+def test_rescale_to_unitary_interval_maximum_location():
+    """Test rescale_to_unitary_interval when location is at the maximum."""
+    params = make_params_array(1)
+    params["minimum"] = 1.0
+    params["maximum"] = 5.0
+    params["loc"] = 5.0
+    
+    adjusted_loc, scale = BoundedUncertaintyBase.rescale_to_unitary_interval(params)
+    
+    # Location at maximum should map to 1
+    assert np.allclose(adjusted_loc, 1.0)
+    assert np.allclose(scale, 4.0)
+
+
+def test_rescale_to_unitary_interval_multiple_rows():
+    """Test rescale_to_unitary_interval with multiple rows of parameters."""
+    params = make_params_array(3)
+    params["minimum"] = [0.0, 5.0, 10.0]
+    params["maximum"] = [10.0, 15.0, 20.0]
+    params["loc"] = [5.0, 10.0, 15.0]
+    
+    adjusted_loc, scale = BoundedUncertaintyBase.rescale_to_unitary_interval(params)
+    
+    # All locations are at the middle
+    assert np.allclose(adjusted_loc, [0.5, 0.5, 0.5])
+    # Scales should be 10, 10, 10
+    assert np.allclose(scale, [10.0, 10.0, 10.0])
+
+
+def test_rescale_to_unitary_interval_nan_values():
+    """Test rescale_to_unitary_interval with NaN values using defaults."""
+    params = make_params_array(2)
+    params["minimum"][0] = np.nan
+    params["minimum"][1] = 5.0
+    params["maximum"][0] = np.nan
+    params["maximum"][1] = 15.0
+    params["loc"] = [2.0, 10.0]
+    
+    adjusted_loc, scale = BoundedUncertaintyBase.rescale_to_unitary_interval(params)
+    
+    # First row: NaN should default to 0 and 1, location 2 should map to 2
+    assert np.allclose(adjusted_loc[0], 2.0)
+    assert np.allclose(scale[0], 1.0)
+    # Second row: normal case, location in middle
+    assert np.allclose(adjusted_loc[1], 0.5)
+    assert np.allclose(scale[1], 10.0)

@@ -338,11 +338,34 @@ class BoundedUncertaintyBase(UncertaintyBase):
             )
 
     @classmethod
-    def rescale(cls, params: ParamsArray) -> Tuple[npt.NDArray, npt.NDArray]:
-        """Rescale params to a (0,1) interval. Return adjusted_means and scale. Needed because SciPy assumes a (0,1) interval for many distributions."""
+    def rescale_to_unitary_interval(cls, params: ParamsArray) -> Tuple[npt.NDArray, npt.NDArray]:
+        """Rescale params to a (0,1) interval. Return adjusted `loc` and scale (`minimum - maximum`).
+
+        Uses default values of (0, 1) for minimum and maximum if not present.
+
+        Needed because SciPy assumes a (0,1) interval for many distributions."""
+        minimum = params["minimum"].copy()
+        maximum = params["maximum"].copy()
+
+        minimum[np.isnan(minimum)] = 0
+        maximum[np.isnan(maximum)] = 1
+
+        scale = maximum - minimum
+        adjusted_loc = (params["loc"] - minimum) / scale
+        return adjusted_loc, scale
+
+    @classmethod
+    def rescale_vector_to_params(cls, params: npt.NDArray, vector: npt.NDArray) -> npt.NDArray:
+        """Unscale `vector` from a (0,1) interval to the `(params["maximum"] - params["minimum"])`."""
         scale = params["maximum"] - params["minimum"]
-        adjusted_means = (params["loc"] - params["minimum"]) / scale
-        return adjusted_means, scale
+
+        # Handle broadcasting for multiple rows
+        if vector.ndim == 2 and scale.ndim == 1:
+            # vector shape: (n_rows, n_samples), scale/minimum shape: (n_rows,)
+            return vector * scale[:, np.newaxis] + params["minimum"][:, np.newaxis]
+        else:
+            # Single row case or matching dimensions
+            return vector * scale + params["minimum"]
 
     @classmethod
     def bounded_random_variables(

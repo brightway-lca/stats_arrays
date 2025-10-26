@@ -80,7 +80,7 @@ class BetaUncertainty(UncertaintyBase):
     ) -> npt.NDArray:
         if not seeded_random:
             seeded_random = np.random.RandomState()
-        return cls._rescale(
+        return cls.rescale_vector_to_params(
             params,
             seeded_random.beta(
                 params["loc"], params["shape"], size=(size, params.shape[0])

@@ -126,7 +126,7 @@ class TriangularUncertainty(BoundedUncertaintyBase):
         adjusted_means, scale = cls.rescale(params)
         scale.resize(scale.shape[0], 1)
         adjusted_means.resize(scale.shape[0], 1)
-        return cls.unscale(params, stats.triang.ppf(percentages, adjusted_means))
+        return cls.rescale_vector_to_params(params, stats.triang.ppf(percentages, adjusted_means))
 
     @classmethod
     @one_row_params_array
