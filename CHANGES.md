@@ -1,6 +1,6 @@
 # stats_arrays Changelog
 
-# 1.0 (DEV)
+# 1.0 (2025-10-27)
 
 * Added types
 * **BREAKING CHANGE**: Bernoulli distribution is now correctly strictly limited to outputting 0 or 1; `minimum` and `maximum` are ignored.
