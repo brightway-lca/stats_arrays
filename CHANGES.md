@@ -1,5 +1,9 @@
 # stats_arrays Changelog
 
+# 1.0.1 (2025-11-12)
+
+* Added `BetaPERTUncertainty` to `uncertainty_choices`
+
 # 1.0 (2025-10-27)
 
 * Added types
