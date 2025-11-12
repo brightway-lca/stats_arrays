@@ -5,6 +5,7 @@ from typing import Iterator, Type, TypeVar
 from stats_arrays.distributions import (
     BernoulliUncertainty,
     BetaUncertainty,
+    BetaPERTUncertainty,
     DiscreteUniform,
     GammaUncertainty,
     GeneralizedExtremeValueUncertainty,
@@ -22,6 +23,7 @@ from stats_arrays.distributions import (
 DISTRIBUTIONS = (
     BernoulliUncertainty,
     BetaUncertainty,
+    BetaPERTUncertainty,
     DiscreteUniform,
     GammaUncertainty,
     GeneralizedExtremeValueUncertainty,
