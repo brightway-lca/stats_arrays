@@ -24,9 +24,9 @@ class WeibullUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
-        if (params["shape"] <= 0).sum():
+        if (params["shape"] <= 0).sum() or np.isnan(params["shape"]).sum():
             raise InvalidParamsError("Real, positive ``k`` values need for Weibull.")
-        if (params["scale"] <= 0).sum():
+        if (params["scale"] <= 0).sum() or np.isnan(params["scale"]).sum():
             raise InvalidParamsError(
                 "Real, positive ``lambda`` values need for Weibull."
             )

@@ -25,7 +25,7 @@ class GeneralizedExtremeValueUncertainty(UncertaintyBase):
             raise InvalidParamsError(
                 "Real ``mu`` values needed for generalized extreme value."
             )
-        if (params["scale"] <= 0).sum():
+        if (params["scale"] <= 0).sum() or np.isnan(params["scale"]).sum():
             raise InvalidParamsError(
                 "Real, positive ``sigma`` values need for generalized extreme value."
             )
