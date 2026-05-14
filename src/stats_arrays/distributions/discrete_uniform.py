@@ -65,8 +65,8 @@ class DiscreteUniform(UncertaintyBase):
         for row in range(params.shape[0]):
             results[row, :] = stats.randint.cdf(
                 vector[row, :],
-                loc=params[row]["minimum"],
-                scale=params[row]["maximum"] - params[row]["minimum"],
+                params[row]["minimum"],  # low (shape param)
+                params[row]["maximum"],  # high (shape param)
             )
         return results
 
