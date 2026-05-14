@@ -114,12 +114,12 @@ class LognormalUncertainty(UncertaintyBase):
             # Find nice range to graph
             lower = (
                 (-1 if n else 1)
-                * params["loc"]
+                * np.exp(params["loc"])
                 / (np.exp(params["scale"]) ** cls.standard_deviations_in_default_range)
             )[0, 0]
             upper = (
                 (-1 if n else 1)
-                * params["loc"]
+                * np.exp(params["loc"])
                 * (np.exp(params["scale"]) ** cls.standard_deviations_in_default_range)
             )[0, 0]
             if n:
