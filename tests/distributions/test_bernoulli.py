@@ -50,39 +50,39 @@ def bernoulli_params_2d():
 
 
 def test_bernoulli_ppf(bernoulli_params_1d, bernoulli_params_2d):
-    """PPF returns 1/0 based on if percentage <= loc threshold."""
-    # For loc=0.3, percentages <= 0.3 should be 1, percentages > 0.3 should be 0
+    """PPF returns 1 when q > 1-p, else 0."""
+    # For loc=0.3: threshold is 1-0.3=0.7; q > 0.7 → 1, q <= 0.7 → 0
     result = BernoulliUncertainty.ppf(
         bernoulli_params_1d, np.array([[0, 0.25, 0.5, 0.75, 1]])
     )
-    expected = np.array(
-        [[1.0, 1.0, 0.0, 0.0, 0.0]]
-    )  # 0, 0.25 <= 0.3 → 1; 0.5, 0.75, 1 > 0.3 → 0
+    expected = np.array([[0.0, 0.0, 0.0, 1.0, 1.0]])
     assert np.allclose(result, expected)
 
-    # For loc=[0.3, 0.7] - percentages per row compared to respective loc
+    # For loc=[0.3, 0.7]: thresholds are 0.7 and 0.3 respectively
     result = BernoulliUncertainty.ppf(
         bernoulli_params_2d, np.array([[0.2, 0.5], [0.2, 0.5]])
     )
-    # First row: 0.2 <= 0.3 → 1, 0.5 > 0.3 → 0
-    # Second row: 0.2 <= 0.7 → 1, 0.5 <= 0.7 → 1
-    expected = np.array([[1.0, 0.0], [1.0, 1.0]])
+    # Row 0 (p=0.3, threshold=0.7): 0.2 <= 0.7 → 0, 0.5 <= 0.7 → 0
+    # Row 1 (p=0.7, threshold=0.3): 0.2 <= 0.3 → 0, 0.5 > 0.3 → 1
+    expected = np.array([[0.0, 0.0], [0.0, 1.0]])
     assert np.allclose(result, expected)
 
 
 def test_bernoulli_cdf(bernoulli_params_1d, bernoulli_params_2d):
-    """CDF returns 1 if vector <= loc, else 0."""
-    # For loc=0.3, values <= 0.3 should return 1
+    """CDF is 0 for x<0, (1-p) for 0<=x<1, 1 for x>=1."""
+    # For loc=0.3: CDF is 0 below 0, 0.7 in [0,1), 1 at and above 1
     assert np.allclose(
         BernoulliUncertainty.cdf(
-            bernoulli_params_1d, np.array([[0, 0.2, 0.3, 0.5, 1]])
+            bernoulli_params_1d, np.array([[-1, 0, 0.5, 1]])
         ),
-        np.array([[1, 1, 1, 0, 0]]),  # 0, 0.2, 0.3 <= 0.3 → 1; 0.5, 1 > 0.3 → 0
+        np.array([[0.0, 0.7, 0.7, 1.0]]),
     )
-    # For loc=[0.3, 0.7]
+    # For loc=[0.3, 0.7]: each row evaluated at x=0.5 (which is in [0,1))
+    # Row 0 (p=0.3): CDF(0.2) = 1-0.3 = 0.7
+    # Row 1 (p=0.7): CDF(0.5) = 1-0.7 = 0.3
     assert np.allclose(
         BernoulliUncertainty.cdf(bernoulli_params_2d, np.array([0.2, 0.5])),
-        np.array([[1], [1]]),  # 0.2 <= 0.3 → 1; 0.5 <= 0.7 → 1
+        np.array([[0.7], [0.3]]),
     )
 
 
