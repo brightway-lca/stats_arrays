@@ -150,10 +150,15 @@ def test_triangular_statistics(biased_params_1d):
 
 
 def test_triangular_pdf_without_xs(biased_params_1d):
-    """Test PDF calculation without specifying xs."""
-    xs, ys = TriangularUncertainty.pdf(biased_params_1d)
-    assert np.allclose(np.array([1, 3, 4]), xs)
-    assert np.allclose(np.array([0, 0.66666669, 0]), ys)
+    """Test PDF calculation without specifying xs returns 200 correct points."""
+    xs, _ = TriangularUncertainty.pdf(biased_params_1d)
+    assert len(xs) == 200
+    assert xs[0] == pytest.approx(1.0)
+    assert xs[-1] == pytest.approx(4.0)
+    # Verify correct values at specific interior points using explicit xs
+    xs_check = np.array([1.0, 2.0, 3.0, 4.0])
+    _, ys_check = TriangularUncertainty.pdf(biased_params_1d, xs_check)
+    assert np.allclose(ys_check, np.array([0.0, 1 / 3, 2 / 3, 0.0]))
 
 
 def test_triangular_pdf_with_xs(biased_params_1d):
@@ -165,16 +170,17 @@ def test_triangular_pdf_with_xs(biased_params_1d):
 
 
 def test_triangular_pdf_with_zero_mode(make_params_array):
-    """Test PDF calculation when mode is zero (uses default midpoint)."""
+    """Test PDF calculation when mode is zero is handled correctly."""
     params = make_params_array(1)
     params["minimum"] = 0.0
     params["maximum"] = 4.0
-    params["loc"] = 0.0  # Zero mode
+    params["loc"] = 0.0  # Zero mode — degenerate triangle, peaks at the left
 
     xs, ys = TriangularUncertainty.pdf(params)
 
-    # Should default to midpoint when mode is 0
-    # Expected xs: [0, 2, 4] (lower, midpoint, upper)
-    assert np.allclose(np.array([0, 2, 4]), xs)
-    # PDF at endpoints should be 0, at midpoint should be 1/(upper-lower) = 1/4 = 0.25
-    assert np.allclose(np.array([0, 0.5, 0]), ys, rtol=1e-6)
+    assert len(xs) == 200
+    assert xs[0] == pytest.approx(0.0)
+    assert xs[-1] == pytest.approx(4.0)
+    # c=0: right-angled triangle peaking at minimum; peak height = 2/(upper-lower) = 0.5
+    assert ys[0] == pytest.approx(0.5, rel=1e-5)
+    assert ys[-1] == pytest.approx(0.0, abs=1e-10)

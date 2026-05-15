@@ -153,17 +153,13 @@ class TriangularUncertainty(BoundedUncertaintyBase):
     def pdf(
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
     ) -> tuple[npt.NDArray, npt.NDArray]:
+        adjusted_means, scale = cls.rescale_to_unitary_interval(params)
         if xs is None:
-            lower = params["minimum"]
-            upper = params["maximum"]
-            mode = params["loc"]
-            if not mode:
-                mode = (upper + lower) / 2
-            xs = np.array([float(x.flat[0]) for x in (lower, mode, upper)])
-            ys = np.array([0, float(((mode - lower) / (upper - lower)).flat[0]), 0])
-        else:
-            adjusted_means, scale = cls.rescale_to_unitary_interval(params)
-            adj_xs = (xs - params["minimum"]) / scale
-            ys_0_1_interval = stats.triang.pdf(adj_xs, adjusted_means)
-            ys = ys_0_1_interval / scale
-        return xs, ys
+            xs = np.linspace(
+                float(params["minimum"].flat[0]),
+                float(params["maximum"].flat[0]),
+                cls.default_number_points_in_pdf,
+            )
+        adj_xs = (xs - params["minimum"]) / scale
+        ys = stats.triang.pdf(adj_xs, adjusted_means) / scale
+        return xs, ys.ravel()
