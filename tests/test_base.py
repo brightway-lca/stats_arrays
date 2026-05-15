@@ -204,6 +204,43 @@ def test_rescale_to_unitary_interval_nan_values():
     assert np.allclose(scale[1], 10.0)
 
 
+def test_fmt_bad_rows_singular():
+    mask = np.array([False, True, False])
+    assert UncertaintyBase._fmt_bad_rows(mask) == "Failing row: [1]"
+
+
+def test_fmt_bad_rows_plural():
+    mask = np.array([True, False, True])
+    assert UncertaintyBase._fmt_bad_rows(mask) == "Failing rows: [0, 2]"
+
+
+def test_fmt_bad_rows_all():
+    mask = np.array([True, True, True])
+    assert UncertaintyBase._fmt_bad_rows(mask) == "Failing rows: [0, 1, 2]"
+
+
+def test_fmt_bad_rows_first_only():
+    mask = np.array([True, False, False, False])
+    assert UncertaintyBase._fmt_bad_rows(mask) == "Failing row: [0]"
+
+
+def test_validate_error_includes_row_indices():
+    """Row indices in the error message let the caller pinpoint bad params."""
+    params = make_params_array(3)
+    params["minimum"] = [0, 5, 0]
+    params["maximum"] = [10, 2, 8]  # row 1 has min > max
+    with pytest.raises(ImproperBoundsError, match=r"Failing row: \[1\]"):
+        UncertaintyBase.validate(params)
+
+
+def test_validate_error_includes_multiple_row_indices():
+    params = make_params_array(4)
+    params["minimum"] = [0, 5, 0, 7]
+    params["maximum"] = [10, 2, 8, 3]  # rows 1 and 3 have min > max
+    with pytest.raises(ImproperBoundsError, match=r"Failing rows: \[1, 3\]"):
+        UncertaintyBase.validate(params)
+
+
 def test_from_tuples_overflow_error():
     """Test that from_tuples raises InvalidParamsError for uncertainty_type >= 256."""
     # Test with uncertainty_type = 256 - should raise error
