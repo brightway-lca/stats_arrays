@@ -473,19 +473,8 @@ def test_bernoulli():
         lhc.hypercube,
         np.array(
             [
-                [
-                    1,
-                    1,
-                    1,
-                    1,
-                    1,
-                    1,
-                    0,
-                    0,
-                    0,
-                    0,
-                ],
-                [1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+                [0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
             ]
         ),
     )
@@ -495,7 +484,7 @@ def test_bernoulli():
     params["uncertainty_type"] = BernoulliUncertainty.id
     params["loc"] = 0.4
     lhc = LatinHypercubeRNG(params)
-    assert np.allclose(lhc.hypercube, np.array([1, 1, 1, 1, 0, 0, 0, 0, 0, 0]))
+    assert np.allclose(lhc.hypercube, np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1]))
 
 
 def test_heterogeneous_params():

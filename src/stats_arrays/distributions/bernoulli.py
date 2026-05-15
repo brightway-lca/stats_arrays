@@ -42,9 +42,10 @@ class BernoulliUncertainty(UncertaintyBase):
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         vector = cls.check_2d_inputs(params, vector)
-        return (vector <= params["loc"].reshape(-1, 1)) * 1.0
+        p = params["loc"].reshape(-1, 1)
+        return np.where(vector < 0, 0.0, np.where(vector < 1, 1 - p, 1.0))
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         percentages = cls.check_2d_inputs(params, percentages)
-        return (percentages <= params["loc"].reshape(-1, 1)) * 1.0
+        return (percentages > 1 - params["loc"].reshape(-1, 1)) * 1.0
