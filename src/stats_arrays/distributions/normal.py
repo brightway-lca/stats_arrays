@@ -15,14 +15,17 @@ class NormalUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
-        if np.isnan(params["scale"]).sum() or (params["scale"] <= 0).sum():
+        bad = np.isnan(params["scale"]) | (params["scale"] <= 0)
+        if bad.any():
             raise InvalidParamsError(
-                "Real, positive scale (sigma) values are required"
-                " for normal uncertainties."
+                f"Real, positive scale (sigma) values are required for normal uncertainties. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
-        if np.isnan(params["loc"]).sum():
+        bad = np.isnan(params["loc"])
+        if bad.any():
             raise InvalidParamsError(
-                "Real loc (mu) values are required for normal uncertainties."
+                f"Real loc (mu) values are required for normal uncertainties. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
 
     @classmethod

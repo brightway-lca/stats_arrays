@@ -15,9 +15,11 @@ class BernoulliUncertainty(UncertaintyBase):
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
         """Validate that loc is between 0 and 1 (inclusive)."""
-        if (params["loc"] < 0).sum() or (params["loc"] > 1).sum():
+        bad = (params["loc"] < 0) | (params["loc"] > 1)
+        if bad.any():
             raise InvalidParamsError(
-                "Bernoulli uncertainty requires loc values between 0 and 1 (inclusive)."
+                f"Bernoulli uncertainty requires loc values between 0 and 1 (inclusive). "
+                f"{cls._fmt_bad_rows(bad)}"
             )
 
     @classmethod

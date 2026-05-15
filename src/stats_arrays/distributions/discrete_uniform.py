@@ -21,12 +21,16 @@ class DiscreteUniform(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
-        # No mean value
-        if np.isnan(params["maximum"]).sum():
-            raise InvalidParamsError("Maximum values must always be defined.")
-        # Minimum <= Maximum
-        if (params["minimum"] >= params["maximum"]).sum():
-            raise ImproperBoundsError
+        bad = np.isnan(params["maximum"])
+        if bad.any():
+            raise InvalidParamsError(
+                f"Maximum values must always be defined. {cls._fmt_bad_rows(bad)}"
+            )
+        bad = params["minimum"] >= params["maximum"]
+        if bad.any():
+            raise ImproperBoundsError(
+                f"minimum >= maximum. {cls._fmt_bad_rows(bad)}"
+            )
 
     @classmethod
     def fix_nan_minimum(cls, params: ParamsArray) -> ParamsArray:

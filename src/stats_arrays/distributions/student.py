@@ -28,15 +28,17 @@ class StudentsTUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
-        if (params["shape"] <= 0).sum() or np.isnan(params["shape"]).sum():
+        bad = np.isnan(params["shape"]) | (params["shape"] <= 0)
+        if bad.any():
             raise InvalidParamsError(
-                "Positive ``nu`` (degrees of freedom) values are required for"
-                " Student's T."
+                f"Positive ``nu`` (degrees of freedom) values are required for Student's T. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
-        if (params["scale"] <= 0).sum():
+        bad = params["scale"] <= 0
+        if bad.any():
             raise InvalidParamsError(
-                "Scale values, if specified, must be greater than zero for"
-                " Student's T."
+                f"Scale values, if specified, must be greater than zero for Student's T. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
 
     @classmethod
