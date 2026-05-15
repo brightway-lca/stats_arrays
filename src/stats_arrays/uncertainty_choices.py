@@ -42,7 +42,14 @@ DistributionType = TypeVar("DistributionType", bound=UncertaintyBase, covariant=
 
 
 class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
-    """An container for uncertainty distributions."""
+    """A container for uncertainty distributions, keyed by integer ID.
+
+    Use :class:`stats_arrays.UncertaintyType` for named constants instead of
+    raw integer IDs::
+
+        uncertainty_choices[UncertaintyType.normal]   # NormalUncertainty
+        uncertainty_choices[3]                        # same thing
+    """
 
     def __init__(self):
         # Sorted by id

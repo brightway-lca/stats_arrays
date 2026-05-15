@@ -2,6 +2,7 @@ __version__ = "1.0.1"
 
 __all__ = (
     "BernoulliUncertainty",
+    "UncertaintyType",
     "BetaUncertainty",
     "BetaPERTUncertainty",
     "BoundedUncertaintyBase",
@@ -65,3 +66,4 @@ from stats_arrays.random import (
     RandomNumberGenerator,
 )
 from stats_arrays.uncertainty_choices import uncertainty_choices
+from stats_arrays.uncertainty_types import UncertaintyType
