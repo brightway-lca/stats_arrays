@@ -49,18 +49,23 @@ class BetaUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
-        if (params["loc"] > 0).sum() != params.shape[0]:
+        bad = ~(params["loc"] > 0)
+        if bad.any():
             raise InvalidParamsError(
-                "Real, positive alpha values are" + " required for Beta uncertainties."
+                f"Real, positive alpha values are required for Beta uncertainties. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
-        if (params["shape"] > 0).sum() != params.shape[0]:
+        bad = ~(params["shape"] > 0)
+        if bad.any():
             raise InvalidParamsError(
-                "Real, positive beta values are" + " required for Beta uncertainties."
+                f"Real, positive beta values are required for Beta uncertainties. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
-        if (params["minimum"] >= params["maximum"]).sum() or (
-            params["maximum"] <= params["minimum"]
-        ).sum():
-            raise ImproperBoundsError("Min/max inconsistency.")
+        bad = params["minimum"] >= params["maximum"]
+        if bad.any():
+            raise ImproperBoundsError(
+                f"Min/max inconsistency. {cls._fmt_bad_rows(bad)}"
+            )
 
     @classmethod
     def random_variables(

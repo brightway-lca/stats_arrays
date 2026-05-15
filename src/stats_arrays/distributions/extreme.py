@@ -21,16 +21,24 @@ class GeneralizedExtremeValueUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
-        if np.isnan(params["loc"]).sum():
+        bad = np.isnan(params["loc"])
+        if bad.any():
             raise InvalidParamsError(
-                "Real ``mu`` values needed for generalized extreme value."
+                f"Real ``mu`` values required for generalized extreme value. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
-        if (params["scale"] <= 0).sum() or np.isnan(params["scale"]).sum():
+        bad = np.isnan(params["scale"]) | (params["scale"] <= 0)
+        if bad.any():
             raise InvalidParamsError(
-                "Real, positive ``sigma`` values need for generalized extreme value."
+                f"Real, positive ``sigma`` values required for generalized extreme value. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
-        if (params["shape"] != 0).sum():
-            raise InvalidParamsError("Non-zero ``xi`` values are not yet supported.")
+        bad = params["shape"] != 0
+        if bad.any():
+            raise InvalidParamsError(
+                f"Non-zero ``xi`` values are not yet supported. "
+                f"{cls._fmt_bad_rows(bad)}"
+            )
 
     @classmethod
     def random_variables(

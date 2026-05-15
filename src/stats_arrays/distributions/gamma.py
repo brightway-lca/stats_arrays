@@ -24,13 +24,17 @@ class GammaUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray, transform: bool = False) -> None:
-        if (params["shape"] <= 0).sum() or np.isnan(params["shape"]).sum():
+        bad = np.isnan(params["shape"]) | (params["shape"] <= 0)
+        if bad.any():
             raise InvalidParamsError(
-                "Positive shape (k) values required for Gamma distribution."
+                f"Positive shape (k) values required for Gamma distribution. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
-        if (params["scale"] <= 0).sum() or np.isnan(params["scale"]).sum():
+        bad = np.isnan(params["scale"]) | (params["scale"] <= 0)
+        if bad.any():
             raise InvalidParamsError(
-                "Positive scale (theta) values required for Gamma distribution."
+                f"Positive scale (theta) values required for Gamma distribution. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
 
     @classmethod

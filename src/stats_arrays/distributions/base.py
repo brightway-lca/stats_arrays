@@ -37,6 +37,12 @@ class UncertaintyBase:
     default_number_points_in_pdf = 200
     standard_deviations_in_default_range = 2.2
 
+    @staticmethod
+    def _fmt_bad_rows(mask: npt.NDArray) -> str:
+        indices = np.where(mask)[0].tolist()
+        noun = "rows" if len(indices) != 1 else "row"
+        return f"Failing {noun}: {indices}"
+
     # Conversion utilities ###
     @classmethod
     def from_tuples(cls, *data: tuple) -> ParamsArray:
@@ -154,8 +160,11 @@ class UncertaintyBase:
 
         """
         # Minimum <= Maximum
-        if (params["minimum"] >= params["maximum"]).sum():
-            raise ImproperBoundsError
+        bad = params["minimum"] >= params["maximum"]
+        if bad.any():
+            raise ImproperBoundsError(
+                f"minimum >= maximum. {cls._fmt_bad_rows(bad)}"
+            )
 
     @classmethod
     def check_2d_inputs(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
@@ -365,9 +374,10 @@ class BoundedUncertaintyBase(UncertaintyBase):
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
         super(BoundedUncertaintyBase, cls).validate(params)
-        if np.isnan(params["minimum"]).sum() or np.isnan(params["maximum"]).sum():
+        bad = np.isnan(params["minimum"]) | np.isnan(params["maximum"])
+        if bad.any():
             raise ImproperBoundsError(
-                "This distribution require minimum and maximum values."
+                f"This distribution requires minimum and maximum values. {cls._fmt_bad_rows(bad)}"
             )
 
     @classmethod

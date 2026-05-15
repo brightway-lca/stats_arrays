@@ -83,10 +83,11 @@ class TriangularUncertainty(BoundedUncertaintyBase):
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
         super(TriangularUncertainty, cls).validate(params)
-        if (params["loc"] > params["maximum"]).sum() or (
-            params["loc"] < params["minimum"]
-        ).sum():
-            raise ImproperBoundsError("Most likely value outside the given bounds.")
+        bad = (params["loc"] > params["maximum"]) | (params["loc"] < params["minimum"])
+        if bad.any():
+            raise ImproperBoundsError(
+                f"Most likely value outside the given bounds. {cls._fmt_bad_rows(bad)}"
+            )
 
     @classmethod
     def random_variables(

@@ -28,28 +28,39 @@ class BetaPERTUncertainty(BetaUncertainty):
 
     @classmethod
     def validate(cls, params: npt.NDArray) -> None:
-        if isnan(params["minimum"]).sum():
+        bad = isnan(params["minimum"])
+        if bad.any():
             raise InvalidParamsError(
-                "Real, positive `A` values are required for Beta PERT uncertainties."
+                f"Real, positive `A` values are required for Beta PERT uncertainties. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
-        if isnan(params["loc"]).sum():
+        bad = isnan(params["loc"])
+        if bad.any():
             raise InvalidParamsError(
-                "Real, positive `B` values are required for Beta PERT uncertainties."
+                f"Real, positive `B` values are required for Beta PERT uncertainties. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
-        if isnan(params["maximum"]).sum():
+        bad = isnan(params["maximum"])
+        if bad.any():
             raise InvalidParamsError(
-                "Real, positive `C` values are required for Beta PERT uncertainties."
+                f"Real, positive `C` values are required for Beta PERT uncertainties. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
-        if (params["minimum"] > params["loc"]).sum() or (
-            params["loc"] > params["maximum"]
-        ).sum():
-            raise ImproperBoundsError("`A <= B <= C` not respected.")
-        if (params["minimum"] == params["maximum"]).sum():
-            raise ImproperBoundsError("`A` and `C` have the same values.")
-        # Check lambda values where they are provided (not NaN)
-        provided_lambda = params[~isnan(params["scale"])]
-        if (provided_lambda["scale"] <= 0).sum():
-            raise InvalidParamsError("Lambda values must be greater than zero.")
+        bad = (params["minimum"] > params["loc"]) | (params["loc"] > params["maximum"])
+        if bad.any():
+            raise ImproperBoundsError(
+                f"`A <= B <= C` not respected. {cls._fmt_bad_rows(bad)}"
+            )
+        bad = params["minimum"] == params["maximum"]
+        if bad.any():
+            raise ImproperBoundsError(
+                f"`A` and `C` have the same values. {cls._fmt_bad_rows(bad)}"
+            )
+        bad = ~isnan(params["scale"]) & (params["scale"] <= 0)
+        if bad.any():
+            raise InvalidParamsError(
+                f"Lambda values must be greater than zero. {cls._fmt_bad_rows(bad)}"
+            )
 
     @classmethod
     def _as_beta(cls, params: npt.NDArray, default_lambda: float = 4.0) -> npt.NDArray:
