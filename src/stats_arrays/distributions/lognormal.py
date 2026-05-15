@@ -33,7 +33,7 @@ class LognormalUncertainty(UncertaintyBase):
         size: int,
         seeded_random: Optional[np.random.RandomState] = None,
     ) -> npt.NDArray:
-        if not seeded_random:
+        if seeded_random is None:
             seeded_random = np.random.RandomState()
         data = seeded_random.lognormal(
             params["loc"], params["scale"], size=(size, params.shape[0])  # Mu  # Sigma

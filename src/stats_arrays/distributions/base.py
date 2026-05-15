@@ -198,6 +198,23 @@ class UncertaintyBase:
                 % coverage
             )
 
+    @staticmethod
+    def _check_seeded_random(seeded_random) -> None:
+        """Raise TypeError if seeded_random is not None or a numpy RandomState.
+
+        Integers are rejected here because the public API for seeded sampling is
+        numpy.random.RandomState(seed), which is what MCRandomNumberGenerator and
+        the other RNG classes create before calling down to random_variables.
+        """
+        if seeded_random is not None and not isinstance(
+            seeded_random, np.random.RandomState
+        ):
+            raise TypeError(
+                f"`seeded_random` must be a `numpy.random.RandomState` instance or "
+                f"None, got {type(seeded_random).__name__}. "
+                f"To seed the generator, pass `numpy.random.RandomState(seed)` instead."
+            )
+
     # Used for Monte Carlo ###
     @classmethod
     def bounded_random_variables(
@@ -213,12 +230,13 @@ class UncertaintyBase:
 
         * params : A :ref:`params-array`.
         * size : Integer. The number of values to draw from each distribution in `params`.
-        * seeded_random : Integer. Optional. Random seed to get repeatable samples.
+        * seeded_random : A ``numpy.random.RandomState`` instance, or ``None`` for an unseeded generator.
         * maximum_iterations : Integer. Optional. Maximum iterations to try to fit the given bounds before an error is raised.
 
         .. rubric:: Output
 
         An array of random values, with dimensions `params` rows by `size`."""
+        cls._check_seeded_random(seeded_random)
         data = cls.random_variables(params, size, seeded_random)
         min_array = params["minimum"].reshape(params.shape[0], 1)
         max_array = params["maximum"].reshape(params.shape[0], 1)
@@ -373,6 +391,7 @@ class BoundedUncertaintyBase(UncertaintyBase):
         maximum_iterations: Optional[int] = None,
     ) -> npt.NDArray:
         """No bounds checking because the bounds do not exclude any of the distribution."""
+        cls._check_seeded_random(seeded_random)
         return cls.random_variables(params, size, seeded_random)
 
     @classmethod
