@@ -1,5 +1,25 @@
 # stats_arrays Changelog
 
+# 2.0 (2026-05-15)
+
+### Breaking changes
+
+* `seeded_random` arguments to `random_variables` and `bounded_random_variables` no longer accept plain integers. Pass `np.random.RandomState(seed)` explicitly, or omit the argument entirely. Passing an `int` now raises `TypeError` with a clear message. Note: the high-level RNG classes (`MCRandomNumberGenerator`, `LatinHypercubeRNG`, `RandomNumberGenerator`) are unaffected — they accept an integer `seed` as always.
+
+### New features
+
+* Added `UncertaintyType` IntEnum mapping distribution names to their integer IDs (`UncertaintyType.normal`, `UncertaintyType.lognormal`, etc.). Fully backwards-compatible — members compare equal to plain ints.
+* `validate()` error messages now include the specific row indices that failed (e.g. `Failing rows: [1, 3]`), making it much easier to diagnose problems in large parameter arrays.
+* Added `notebooks/stats_arrays_demo.ipynb`, a runnable example notebook covering params array construction, all RNG classes, PDF/CDF/PPF inspection, and a worked Monte Carlo propagation example.
+
+### Bug fixes
+
+* **Lognormal** — `pdf()` default x-axis was computed using μ instead of exp(μ), producing a wildly incorrect range.
+* **Bernoulli** — `cdf()` and `ppf()` were logically inverted: `P(X=0)` and `P(X=1)` were swapped.
+* **DiscreteUniform** — `cdf()` called `scipy.stats.randint` with `loc`/`scale` keyword arguments instead of the required positional `low`/`high` shape parameters, returning wrong probabilities.
+* **Weibull** and **GeneralizedExtremeValue** — `validate()` did not check for `NaN` scale/shape values; `NaN <= 0` is `False` so invalid params silently passed.
+* **TriangularUncertainty.pdf()** — three bugs in the default (no `xs`) branch: `if not mode` treated `mode=0.0` as falsy and replaced it with the midpoint; the peak height formula returned the normalised mode position instead of `2/(upper-lower)`; and `mode==minimum` or `mode==maximum` produced duplicate x-coordinates and an all-zero y array.
+
 # 1.0.1 (2025-11-12)
 
 * Added `BetaPERTUncertainty` to `uncertainty_choices`
