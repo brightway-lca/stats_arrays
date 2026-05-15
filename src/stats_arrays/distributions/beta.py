@@ -70,7 +70,7 @@ class BetaUncertainty(UncertaintyBase):
         seeded_random: Optional[np.random.RandomState] = None,
         transform: bool = False,
     ) -> npt.NDArray:
-        if not seeded_random:
+        if seeded_random is None:
             seeded_random = np.random.RandomState()
         return rescale_vector_to_params(
             params=params,

@@ -41,7 +41,7 @@ class DiscreteUniform(UncertaintyBase):
         size: int,
         seeded_random: Optional[np.random.RandomState] = None,
     ) -> npt.NDArray:
-        if not seeded_random:
+        if seeded_random is None:
             seeded_random = np.random.RandomState()
         params = cls.fix_nan_minimum(params)
         # randint has different behaviour than e.g. uniform. We can't pass in
