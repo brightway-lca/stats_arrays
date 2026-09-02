@@ -85,13 +85,21 @@ class DiscreteUniform(UncertaintyBase):
     @one_row_params_array
     def statistics(cls, params: ParamsArray) -> dict:
         params = cls.fix_nan_minimum(params)
-        mean = float(((params["maximum"] + params["minimum"]) / 2).flat[0])
+        minimum = float(params["minimum"].flat[0])
+        maximum = float(params["maximum"].flat[0])
+        # The support is {minimum, ..., maximum - 1}, i.e. scipy's `randint(low, high)`
+        # with `high` excluded. For the integers a..b inclusive, mean and median are
+        # both (a + b) / 2, see
+        # https://en.wikipedia.org/wiki/Discrete_uniform_distribution. With
+        # b = maximum - 1 that is (minimum + maximum - 1) / 2. For an even count the
+        # median is the midpoint of the two middle values, as `numpy.median` defines it.
+        centre = (minimum + maximum - 1) / 2
         return {
-            "mean": mean,
+            "mean": centre,
             "mode": None,
-            "median": int(round(mean)),
-            "lower": float(params["minimum"].flat[0]),
-            "upper": float(params["maximum"].flat[0]),
+            "median": centre,
+            "lower": minimum,
+            "upper": maximum,
         }
 
     @classmethod
