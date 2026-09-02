@@ -91,7 +91,7 @@ def test_normal_bounded_pdf(biased_params_1d):
     assert ys.shape == (200,)
     assert xs.min() == 1
     assert 3.98 < xs.max() <= 4
-    assert ys.min() == 0.021910377331033407
+    assert ys.min() == pytest.approx(0.02191037561696067)
     assert np.allclose(ys.max(), 0.498668095951)
 
 

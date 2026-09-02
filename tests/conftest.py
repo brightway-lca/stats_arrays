@@ -9,12 +9,12 @@ def _make_params_array(length: int = 1):
         dtype=[
             ("input", "u4"),
             ("output", "u4"),
-            ("loc", "f4"),
+            ("loc", "f8"),
             ("negative", "b1"),
-            ("scale", "f4"),
-            ("shape", "f4"),
-            ("minimum", "f4"),
-            ("maximum", "f4"),
+            ("scale", "f8"),
+            ("shape", "f8"),
+            ("minimum", "f8"),
+            ("maximum", "f8"),
         ],
     )
     params["minimum"] = params["maximum"] = np.nan
