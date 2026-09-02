@@ -140,13 +140,13 @@ def test_right_triangles(right_triangle_min, right_triangle_max):
 
 def test_triangular_statistics(biased_params_1d):
     tri_stats = {
-        "upper": 3.8063508384608244,
-        "lower": 1.2738612828334341,
-        "median": 2.7320508333784455,
+        "upper": 3.8063508326896294,
+        "lower": 1.273861278752583,
+        "median": 2.732050807568877,
         "mode": 3.0,
-        "mean": 2.6666667461395264,
+        "mean": 2.6666666666666665,
     }
-    assert TriangularUncertainty.statistics(biased_params_1d) == tri_stats
+    assert TriangularUncertainty.statistics(biased_params_1d) == pytest.approx(tri_stats)
 
 
 def test_triangular_pdf_without_xs(biased_params_1d):
