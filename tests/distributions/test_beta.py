@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from scipy import stats as scipy_stats
 
 from stats_arrays.distributions import BetaUncertainty
 from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
@@ -346,26 +347,40 @@ def test_statistics(make_params_array):
     expected_mode = (ALPHA - 1) / (ALPHA + BETA - 2)
     assert np.isclose(stats["mode"], expected_mode)
 
-    # Check that median, lower, upper are "Not Implemented"
-    assert stats["median"] == "Not Implemented"
-    assert stats["lower"] == "Not Implemented"
-    assert stats["upper"] == "Not Implemented"
+    # Median and 95% interval come from the ppf
+    expected = scipy_stats.beta.ppf([0.025, 0.5, 0.975], ALPHA, BETA)
+    assert np.isclose(stats["lower"], expected[0])
+    assert np.isclose(stats["median"], expected[1])
+    assert np.isclose(stats["upper"], expected[2])
+    assert all(isinstance(stats[k], float) for k in stats)
 
 
 def test_statistics_edge_cases(make_params_array):
-    """Test statistics for edge cases where mode is undefined"""
-    # Test alpha = 1 (mode undefined)
+    """Test statistics for edge cases where the mode sits on a bound or is undefined"""
+    # alpha <= 1 < beta: density is maximal at the lower bound
     params = make_params_array(1)
     params["loc"] = 1.0
     params["shape"] = 2.0
     stats = BetaUncertainty.statistics(params)
-    assert stats["mode"] == "Undefined"
+    assert stats["mode"] == 0.0
 
-    # Test beta = 1 (mode undefined)
+    # beta <= 1 < alpha: density is maximal at the upper bound
     params["loc"] = 2.0
     params["shape"] = 1.0
     stats = BetaUncertainty.statistics(params)
-    assert stats["mode"] == "Undefined"
+    assert stats["mode"] == 1.0
+
+    # Bounds are respected
+    params["minimum"] = 2.0
+    params["maximum"] = 5.0
+    stats = BetaUncertainty.statistics(params)
+    assert stats["mode"] == 5.0
+
+    # alpha, beta < 1: bimodal at both bounds, so no single mode
+    params["loc"] = 0.5
+    params["shape"] = 0.5
+    stats = BetaUncertainty.statistics(params)
+    assert stats["mode"] is None
 
 
 def test_statistics_with_scaling(make_params_array):
@@ -411,7 +426,7 @@ def test_edge_case_alpha_beta_one(make_params_array):
     # Test statistics
     stats = BetaUncertainty.statistics(params)
     assert np.isclose(stats["mean"], 0.5)
-    assert stats["mode"] == "Undefined"  # alpha = beta = 1
+    assert stats["mode"] is None  # alpha = beta = 1 is flat
 
 
 def test_edge_case_alpha_beta_large(make_params_array):

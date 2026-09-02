@@ -364,14 +364,11 @@ def test_statistics(pert_params_1d):
     assert np.isclose(stats["mean"], 2.0)
     # Mode should equal loc for symmetric distribution
     assert np.isclose(stats["mode"], 2.0)
-    # Median should be close to mean for symmetric distribution (if implemented)
-    if isinstance(stats["median"], (int, float)):
-        assert 1.9 < stats["median"] < 2.1
-    # Lower and upper bounds should match minimum and maximum (if implemented)
-    if isinstance(stats["lower"], (int, float)):
-        assert np.isclose(stats["lower"], 1.0)
-    if isinstance(stats["upper"], (int, float)):
-        assert np.isclose(stats["upper"], 3.0)
+    # Median equals mean for a symmetric distribution
+    assert np.isclose(stats["median"], 2.0)
+    # 95% interval sits strictly inside [A, C], symmetric about B
+    assert 1.0 < stats["lower"] < 2.0 < stats["upper"] < 3.0
+    assert np.isclose(stats["lower"] + stats["upper"], 4.0)
 
 
 def test_pdf(pert_params_1d):
@@ -475,9 +472,8 @@ def test_edge_case_minimum_equals_loc(make_params_array):
     stats = BetaPERTUncertainty.statistics(params)
     # For left-skewed distribution (A=B), mean should be closer to minimum
     assert np.isclose(stats["mean"], 1.333, atol=0.01)
-    # Mode might be undefined for edge cases
-    if isinstance(stats["mode"], (int, float)):
-        assert np.isclose(stats["mode"], 1.0)
+    # alpha = 1, so the density peaks at the lower bound
+    assert np.isclose(stats["mode"], 1.0)
 
 
 def test_edge_case_loc_equals_maximum(make_params_array):
@@ -495,6 +491,5 @@ def test_edge_case_loc_equals_maximum(make_params_array):
     stats = BetaPERTUncertainty.statistics(params)
     # For right-skewed distribution (B=C), mean should be closer to maximum
     assert np.isclose(stats["mean"], 2.667, atol=0.01)
-    # Mode might be undefined for edge cases
-    if isinstance(stats["mode"], (int, float)):
-        assert np.isclose(stats["mode"], 3.0)
+    # beta = 1, so the density peaks at the upper bound
+    assert np.isclose(stats["mode"], 3.0)

@@ -6,8 +6,11 @@
 
 * `statistics()` now returns Python floats throughout. Several distributions previously returned single-element numpy arrays, so callers relying on `result["mean"]` being an array, or on `result["mean"] == x` evaluating to `array([True])` rather than a bool, will see the difference. The base class has always documented the intended behaviour: "All values should be floats (not single-element arrays)."
 
+* `statistics()` no longer returns placeholder strings. **Beta** returned `"Not Implemented"` for `median`, `lower` and `upper`, and `"Undefined"` for `mode` when alpha or beta was at most 1; **DiscreteUniform** returned `"Undefined"` for `mode`. Undefined values are now `None`, as the base class has always documented.
+
 ### Bug fixes
 
+* **Beta** and **BetaPERT** — `statistics()` now reports `median`, `lower` and `upper` (the 2.5th and 97.5th percentiles), all from the `ppf`. The mode is now placed on the lower bound when alpha ≤ 1 < beta and on the upper bound when beta ≤ 1 < alpha, rather than being called undefined; it is `None` only for the flat (alpha = beta = 1) and bimodal (alpha, beta < 1) cases.
 * **Lognormal** and **DiscreteUniform** — `statistics()` raised `TypeError: only 0-dimensional arrays can be converted to Python scalars` on numpy 2, since both called `float()` on a one-element array. Normal and Triangular already used `.flat[0]`; the others now do too.
 * **UncertaintyBase** — the inherited `statistics()` returned `params["loc"]` as an array, so every distribution that did not override it (Undefined, NoUncertainty, Bernoulli, Weibull, Gamma, GeneralizedExtremeValue, StudentsT) reported an array `mean`.
 * **Uniform** — `statistics()` returned all five values as arrays.
@@ -24,8 +27,11 @@
 * `validate()` error messages now include the specific row indices that failed (e.g. `Failing rows: [1, 3]`), making it much easier to diagnose problems in large parameter arrays.
 * Added `notebooks/stats_arrays_demo.ipynb`, a runnable example notebook covering params array construction, all RNG classes, PDF/CDF/PPF inspection, and a worked Monte Carlo propagation example.
 
+* `statistics()` no longer returns placeholder strings. **Beta** returned `"Not Implemented"` for `median`, `lower` and `upper`, and `"Undefined"` for `mode` when alpha or beta was at most 1; **DiscreteUniform** returned `"Undefined"` for `mode`. Undefined values are now `None`, as the base class has always documented.
+
 ### Bug fixes
 
+* **Beta** and **BetaPERT** — `statistics()` now reports `median`, `lower` and `upper` (the 2.5th and 97.5th percentiles), all from the `ppf`. The mode is now placed on the lower bound when alpha ≤ 1 < beta and on the upper bound when beta ≤ 1 < alpha, rather than being called undefined; it is `None` only for the flat (alpha = beta = 1) and bimodal (alpha, beta < 1) cases.
 * **Lognormal** — `pdf()` default x-axis was computed using μ instead of exp(μ), producing a wildly incorrect range.
 * **Bernoulli** — `cdf()` and `ppf()` were logically inverted: `P(X=0)` and `P(X=1)` were swapped.
 * **DiscreteUniform** — `cdf()` called `scipy.stats.randint` with `loc`/`scale` keyword arguments instead of the required positional `low`/`high` shape parameters, returning wrong probabilities.
