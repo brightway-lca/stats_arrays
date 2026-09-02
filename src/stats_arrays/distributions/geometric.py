@@ -51,13 +51,13 @@ class UniformUncertainty(BoundedUncertaintyBase):
     @classmethod
     @one_row_params_array
     def statistics(cls, params: ParamsArray) -> dict:
-        mean = (params["maximum"] + params["minimum"]) / 2
+        mean = float(((params["maximum"] + params["minimum"]) / 2).flat[0])
         return {
             "mean": mean,
             "mode": mean,
             "median": mean,
-            "lower": params["minimum"],
-            "upper": params["maximum"],
+            "lower": float(params["minimum"].flat[0]),
+            "upper": float(params["maximum"].flat[0]),
         }
 
     @classmethod

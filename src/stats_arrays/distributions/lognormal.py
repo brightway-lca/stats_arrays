@@ -87,13 +87,13 @@ class LognormalUncertainty(UncertaintyBase):
     @classmethod
     @one_row_params_array
     def statistics(cls, params: ParamsArray) -> dict:
-        negative = -1 if bool(params["negative"]) else 1
-        geometric_mu = float(np.exp(params["loc"]))
-        sigma = float(params["scale"])
-        mu = float(params["loc"])
+        negative = -1 if bool(params["negative"].flat[0]) else 1
+        mu = float(params["loc"].flat[0])
+        sigma = float(params["scale"].flat[0])
+        geometric_mu = float(np.exp(mu))
         geometric_sigma = float(np.exp(sigma))
-        mean = np.exp(mu + (sigma**2) / 2)
-        mode = np.exp(mu - sigma**2)
+        mean = float(np.exp(mu + (sigma**2) / 2))
+        mode = float(np.exp(mu - sigma**2))
         ci_95_lower = geometric_mu / (geometric_sigma**2)
         ci_95_upper = geometric_mu * (geometric_sigma**2)
         if negative == -1:

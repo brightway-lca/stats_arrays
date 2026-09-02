@@ -342,7 +342,7 @@ class UncertaintyBase:
         {'mean': mean value, 'mode': mode value, 'median': median value, 'upper': upper limit value, 'lower': lower limit value}. All values should be floats (not single-element arrays). Parameters that are not defined should be returned `None`, not omitted.
         """
         return {
-            "mean": params["loc"],
+            "mean": float(params["loc"].flat[0]),
             "mode": None,
             "median": None,
             "upper": None,
