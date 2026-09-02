@@ -43,9 +43,10 @@ def test_statistics_returns_no_arrays(cls):
 
 
 @pytest.mark.parametrize("cls", KINDS, ids=lambda cls: cls.__name__)
-def test_statistics_are_json_friendly(cls):
+def test_statistics_are_numbers_or_none(cls):
+    """Undefined values are `None`, never a placeholder string."""
     for key, value in cls.statistics(one_row(cls)).items():
-        assert isinstance(value, (float, int, str, type(None))), f"{cls.__name__}[{key}]"
+        assert isinstance(value, (float, int, type(None))), f"{cls.__name__}[{key}]"
 
 
 def test_a_lognormal_reports_its_median():

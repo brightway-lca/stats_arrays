@@ -117,21 +117,27 @@ class BetaUncertainty(UncertaintyBase):
     @classmethod
     @one_row_params_array
     def statistics(cls, params: ParamsArray) -> dict:
-        alpha, beta = float(params["loc"][0][0]), float(params["shape"][0][0])
-        loc, scale = cls._safe_loc(params), cls._safe_scale(params)
-        minimum = float(loc[0][0])
-        scale = float(scale[0][0])
+        alpha, beta = float(params["loc"].flat[0]), float(params["shape"].flat[0])
+        minimum = float(cls._safe_loc(params).flat[0])
+        scale = float(cls._safe_scale(params).flat[0])
 
-        if alpha <= 1 or beta <= 1:
-            mode = "Undefined"
-        else:
+        if alpha > 1 and beta > 1:
             mode = ((alpha - 1) / (alpha + beta - 2)) * scale + minimum
+        elif alpha <= 1 < beta:
+            mode = minimum
+        elif beta <= 1 < alpha:
+            mode = minimum + scale
+        else:
+            # alpha = beta = 1 is flat; alpha, beta < 1 is bimodal at the bounds
+            mode = None
+
+        lower, median, upper = cls.ppf(params, np.array([[0.025, 0.5, 0.975]])).ravel()
         return {
             "mean": (alpha / (alpha + beta)) * scale + minimum,
             "mode": mode,
-            "median": "Not Implemented",
-            "lower": "Not Implemented",
-            "upper": "Not Implemented",
+            "median": float(median),
+            "lower": float(lower),
+            "upper": float(upper),
         }
 
     @classmethod

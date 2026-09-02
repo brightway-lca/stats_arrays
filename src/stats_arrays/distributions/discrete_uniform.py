@@ -88,7 +88,7 @@ class DiscreteUniform(UncertaintyBase):
         mean = float(((params["maximum"] + params["minimum"]) / 2).flat[0])
         return {
             "mean": mean,
-            "mode": "Undefined",
+            "mode": None,
             "median": int(round(mean)),
             "lower": float(params["minimum"].flat[0]),
             "upper": float(params["maximum"].flat[0]),
