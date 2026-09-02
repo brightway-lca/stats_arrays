@@ -10,6 +10,7 @@
 
 ### Bug fixes
 
+* **DiscreteUniform** — `statistics()` reported a `mean` of `(minimum + maximum) / 2` and a `median` of that value rounded to an integer. The support excludes `maximum`, so both were off by one half: for the values 5 to 9 the mean was 7.5 and the median 8, where both are 7. Both now equal `(minimum + maximum - 1) / 2`, matching `scipy.stats.randint`, and the median is a float that lands on a half-integer for an even count of values.
 * **Beta** and **BetaPERT** — `statistics()` now reports `median`, `lower` and `upper` (the 2.5th and 97.5th percentiles), all from the `ppf`. The mode is now placed on the lower bound when alpha ≤ 1 < beta and on the upper bound when beta ≤ 1 < alpha, rather than being called undefined; it is `None` only for the flat (alpha = beta = 1) and bimodal (alpha, beta < 1) cases.
 * **Lognormal** and **DiscreteUniform** — `statistics()` raised `TypeError: only 0-dimensional arrays can be converted to Python scalars` on numpy 2, since both called `float()` on a one-element array. Normal and Triangular already used `.flat[0]`; the others now do too.
 * **UncertaintyBase** — the inherited `statistics()` returned `params["loc"]` as an array, so every distribution that did not override it (Undefined, NoUncertainty, Bernoulli, Weibull, Gamma, GeneralizedExtremeValue, StudentsT) reported an array `mean`.
