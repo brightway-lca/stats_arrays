@@ -9,22 +9,17 @@ name: Python 🐍 CI/CD tests
 on:
   push:
     branches: [main, develop]
-    paths-ignore: # prevents workflow execution when only these types of files are modified
-      - "**.md" # wildcards prevent file in any repo dir from trigering workflow
-      - "**.bib"
-      - "**.ya?ml" # captures both .yml and .yaml
-      - "LICENSE"
-      - ".gitignore"
   pull_request:
     branches: [main, develop]
-    types: [opened, reopened, synchronize]
-    paths-ignore:
-      - "**.md"
-      - "**.bib"
-      - "**.ya?ml"
-      - "LICENSE"
-      - ".gitignore"
+    # `ready_for_review` is not in the default set, so a draft marked ready
+    # would otherwise keep the checks from its last draft push.
+    types: [opened, reopened, synchronize, ready_for_review]
   workflow_dispatch: # also allow manual trigger, for testing purposes
+
+# A new push to the same branch or PR supersedes the run in progress.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
