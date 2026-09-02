@@ -1,5 +1,17 @@
 # stats_arrays Changelog
 
+# Unreleased
+
+### Breaking changes
+
+* `statistics()` now returns Python floats throughout. Several distributions previously returned single-element numpy arrays, so callers relying on `result["mean"]` being an array, or on `result["mean"] == x` evaluating to `array([True])` rather than a bool, will see the difference. The base class has always documented the intended behaviour: "All values should be floats (not single-element arrays)."
+
+### Bug fixes
+
+* **Lognormal** and **DiscreteUniform** — `statistics()` raised `TypeError: only 0-dimensional arrays can be converted to Python scalars` on numpy 2, since both called `float()` on a one-element array. Normal and Triangular already used `.flat[0]`; the others now do too.
+* **UncertaintyBase** — the inherited `statistics()` returned `params["loc"]` as an array, so every distribution that did not override it (Undefined, NoUncertainty, Bernoulli, Weibull, Gamma, GeneralizedExtremeValue, StudentsT) reported an array `mean`.
+* **Uniform** — `statistics()` returned all five values as arrays.
+
 # 2.0 (2026-05-15)
 
 ### Breaking changes
