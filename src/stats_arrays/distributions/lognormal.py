@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -6,7 +6,7 @@ from scipy import stats
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import InvalidParamsError
-from stats_arrays.utils import ParamsArray, one_row_params_array
+from stats_arrays.utils import ParamsArray, StatisticsResult, one_row_params_array
 
 
 class LognormalUncertainty(UncertaintyBase):
@@ -86,7 +86,7 @@ class LognormalUncertainty(UncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def statistics(cls, params: ParamsArray) -> dict:
+    def statistics(cls, params: ParamsArray) -> StatisticsResult:
         negative = -1 if bool(params["negative"].flat[0]) else 1
         mu = float(params["loc"].flat[0])
         sigma = float(params["scale"].flat[0])
@@ -110,7 +110,7 @@ class LognormalUncertainty(UncertaintyBase):
     @one_row_params_array
     def pdf(
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
-    ) -> tuple[npt.NDArray, npt.NDArray]:
+    ) -> Tuple[npt.NDArray, npt.NDArray]:
         """Generate probability distribution function for lognormal distribution."""
         n = params["negative"]
         if xs is None:

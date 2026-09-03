@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -43,7 +43,7 @@ class GammaUncertainty(UncertaintyBase):
         params: ParamsArray,
         size: int,
         seeded_random: Optional[np.random.RandomState] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> npt.NDArray:
         if seeded_random is None:
             seeded_random = np.random.RandomState()

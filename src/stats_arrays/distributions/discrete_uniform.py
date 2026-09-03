@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -6,7 +6,7 @@ from scipy import stats
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
-from stats_arrays.utils import ParamsArray, one_row_params_array
+from stats_arrays.utils import ParamsArray, StatisticsResult, one_row_params_array
 
 
 class DiscreteUniform(UncertaintyBase):
@@ -28,9 +28,7 @@ class DiscreteUniform(UncertaintyBase):
             )
         bad = params["minimum"] >= params["maximum"]
         if bad.any():
-            raise ImproperBoundsError(
-                f"minimum >= maximum. {cls._fmt_bad_rows(bad)}"
-            )
+            raise ImproperBoundsError(f"minimum >= maximum. {cls._fmt_bad_rows(bad)}")
 
     @classmethod
     def fix_nan_minimum(cls, params: ParamsArray) -> ParamsArray:
@@ -83,7 +81,7 @@ class DiscreteUniform(UncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def statistics(cls, params: ParamsArray) -> dict:
+    def statistics(cls, params: ParamsArray) -> StatisticsResult:
         params = cls.fix_nan_minimum(params)
         minimum = float(params["minimum"].flat[0])
         maximum = float(params["maximum"].flat[0])
@@ -106,7 +104,7 @@ class DiscreteUniform(UncertaintyBase):
     @one_row_params_array
     def pdf(
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
-    ) -> tuple[npt.NDArray, npt.NDArray]:
+    ) -> Tuple[npt.NDArray, npt.NDArray]:
         params = cls.fix_nan_minimum(params)
         if xs is None:
             xs = np.array([params["minimum"], params["maximum"]])

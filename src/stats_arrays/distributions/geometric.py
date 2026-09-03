@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -6,7 +6,7 @@ from scipy import stats
 
 from stats_arrays.distributions.base import BoundedUncertaintyBase
 from stats_arrays.errors import ImproperBoundsError
-from stats_arrays.utils import ParamsArray, one_row_params_array
+from stats_arrays.utils import ParamsArray, StatisticsResult, one_row_params_array
 
 
 class UniformUncertainty(BoundedUncertaintyBase):
@@ -50,7 +50,7 @@ class UniformUncertainty(BoundedUncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def statistics(cls, params: ParamsArray) -> dict:
+    def statistics(cls, params: ParamsArray) -> StatisticsResult:
         mean = float(((params["maximum"] + params["minimum"]) / 2).flat[0])
         return {
             "mean": mean,
@@ -64,7 +64,7 @@ class UniformUncertainty(BoundedUncertaintyBase):
     @one_row_params_array
     def pdf(
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
-    ) -> tuple[npt.NDArray, npt.NDArray]:
+    ) -> Tuple[npt.NDArray, npt.NDArray]:
         if xs is None:
             xs_array = np.array([params["minimum"], params["maximum"]]).reshape(
                 2,
@@ -135,7 +135,7 @@ class TriangularUncertainty(BoundedUncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def statistics(cls, params: ParamsArray) -> dict:
+    def statistics(cls, params: ParamsArray) -> StatisticsResult:
         mode = float(params["loc"].flat[0])
         mean = float(((params["minimum"] + params["maximum"] + mode) / 3).flat[0])
         lower, median, upper = cls.ppf(
@@ -153,7 +153,7 @@ class TriangularUncertainty(BoundedUncertaintyBase):
     @one_row_params_array
     def pdf(
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
-    ) -> tuple[npt.NDArray, npt.NDArray]:
+    ) -> Tuple[npt.NDArray, npt.NDArray]:
         adjusted_means, scale = cls.rescale_to_unitary_interval(params)
         if xs is None:
             xs = np.linspace(

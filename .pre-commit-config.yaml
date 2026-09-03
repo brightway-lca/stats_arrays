@@ -61,6 +61,16 @@ repos:
   # You can add flake8 plugins via `additional_dependencies`:
   #  additional_dependencies: [flake8-bugbear]
 
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v2.3.1
+  hooks:
+    - id: mypy
+      # `numpy` ships its own stubs and they are needed to check this package.
+      additional_dependencies: [numpy]
+      # Check the whole package via the `files` setting in pyproject.toml rather
+      # than only the staged files, which would hide cross-module breakage.
+      pass_filenames: false
+
 - repo: local
   hooks:
     - id: pylint

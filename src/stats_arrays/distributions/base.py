@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -11,6 +11,7 @@ from stats_arrays.errors import (
 )
 from stats_arrays.utils import (
     ParamsArray,
+    StatisticsResult,
     construct_params_array,
     one_row_params_array,
     rescale_to_unitary_interval,
@@ -33,9 +34,14 @@ class UncertaintyBase:
 
     """
 
-    id = None
-    default_number_points_in_pdf = 200
-    standard_deviations_in_default_range = 2.2
+    #: Integer distribution id, unique across ``uncertainty_choices``. Declared but
+    #: deliberately unset here: ``UncertaintyBase`` is abstract, and every concrete
+    #: subclass must supply its own id. See :class:`stats_arrays.UncertaintyType`.
+    id: ClassVar[int]
+    #: Human-readable name of the distribution. Set by each concrete subclass.
+    description: ClassVar[str]
+    default_number_points_in_pdf: ClassVar[int] = 200
+    standard_deviations_in_default_range: ClassVar[float] = 2.2
 
     @staticmethod
     def _fmt_bad_rows(mask: npt.NDArray) -> str:
@@ -45,7 +51,7 @@ class UncertaintyBase:
 
     # Conversion utilities ###
     @classmethod
-    def from_tuples(cls, *data: tuple) -> ParamsArray:
+    def from_tuples(cls, *data: Tuple[Any, ...]) -> ParamsArray:
         """
         Construct a :ref:`hpa` from parameter tuples.
 
@@ -95,7 +101,7 @@ class UncertaintyBase:
         return params
 
     @classmethod
-    def from_dicts(cls, *dicts: dict) -> ParamsArray:
+    def from_dicts(cls, *dicts: Dict[str, Any]) -> ParamsArray:
         """
         Construct a :ref:`hpa` from parameter dictionaries.
 
@@ -124,7 +130,7 @@ class UncertaintyBase:
             A :ref:`hpa`
 
         """
-        LABELS = [
+        LABELS: List[Tuple[str, Any]] = [
             ("loc", np.nan),
             ("scale", np.nan),
             ("shape", np.nan),
@@ -162,9 +168,7 @@ class UncertaintyBase:
         # Minimum <= Maximum
         bad = params["minimum"] >= params["maximum"]
         if bad.any():
-            raise ImproperBoundsError(
-                f"minimum >= maximum. {cls._fmt_bad_rows(bad)}"
-            )
+            raise ImproperBoundsError(f"minimum >= maximum. {cls._fmt_bad_rows(bad)}")
 
     @classmethod
     def check_2d_inputs(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
@@ -208,7 +212,7 @@ class UncertaintyBase:
             )
 
     @staticmethod
-    def _check_seeded_random(seeded_random) -> None:
+    def _check_seeded_random(seeded_random: Any) -> None:
         """Raise TypeError if seeded_random is not None or a numpy RandomState.
 
         Integers are rejected here because the public API for seeded sampling is
@@ -330,7 +334,7 @@ class UncertaintyBase:
     # Used for graphing ###
     @classmethod
     @one_row_params_array
-    def statistics(cls, params: ParamsArray) -> dict:
+    def statistics(cls, params: ParamsArray) -> StatisticsResult:
         """Build a dictionary of mean, mode, median, and 95% confidence interval upper and lower values.
 
         .. rubric:: Inputs
@@ -351,7 +355,9 @@ class UncertaintyBase:
 
     @classmethod
     @one_row_params_array
-    def pdf(cls, params: ParamsArray, xs: Optional[npt.NDArray] = None) -> npt.NDArray:
+    def pdf(
+        cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
+    ) -> Tuple[npt.NDArray, npt.NDArray]:
         """Provide a standard interface to calculate the probability distribution function of a uncertainty distribution. Default is `cls.default_number_points_in_pdf` points between min to max range if bounds are present, or `cls.standard_deviations_in_default_range` standard distributions.
 
         .. rubric:: Inputs
@@ -406,6 +412,8 @@ class BoundedUncertaintyBase(UncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def check_bounds_reasonableness(cls, params: ParamsArray) -> None:
+    def check_bounds_reasonableness(
+        cls, params: ParamsArray, threshold: float = 0.1
+    ) -> None:
         """Always true because the bounds do not exclude any of the distribution."""
         return

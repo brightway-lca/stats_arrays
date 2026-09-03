@@ -43,6 +43,28 @@ array([ 2.74414022,  3.54748507])
 
 ```
 
+# Type checking
+
+`stats_arrays` is a typed library. It ships a `py.typed` marker (PEP 561), so `mypy`,
+`pyright` and friends will use its inline annotations rather than treating the package
+as untyped. Two aliases are exported for annotating your own code:
+
+```python
+from typing import Optional
+
+from stats_arrays import NormalUncertainty, ParamsArray, StatisticsResult
+
+params: ParamsArray = NormalUncertainty.from_dicts({"loc": 2.0, "scale": 0.5})
+stats: StatisticsResult = NormalUncertainty.statistics(params)
+mean: Optional[float] = stats["mean"]
+```
+
+`StatisticsResult` is a `TypedDict` with the keys `mean`, `mode`, `median`, `lower` and
+`upper`; a statistic that is undefined for a given distribution is `None`, never absent.
+
+Note that the field layout of a params array is not expressible in NumPy's typing system,
+so `ParamsArray` documents intent and field access (`params["loc"]`) stays untyped.
+
 # More
 
 * Source code: https://github.com/brightway-lca/stats_arrays

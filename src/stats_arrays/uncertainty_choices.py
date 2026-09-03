@@ -1,11 +1,11 @@
 import warnings
 from collections.abc import Iterable as IterableABC
-from typing import Iterator, Type, TypeVar
+from typing import Dict, Iterator, List, Type
 
 from stats_arrays.distributions import (
     BernoulliUncertainty,
-    BetaUncertainty,
     BetaPERTUncertainty,
+    BetaUncertainty,
     DiscreteUniform,
     GammaUncertainty,
     GeneralizedExtremeValueUncertainty,
@@ -38,9 +38,6 @@ DISTRIBUTIONS = (
 )
 
 
-DistributionType = TypeVar("DistributionType", bound=UncertaintyBase, covariant=True)
-
-
 class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
     """A container for uncertainty distributions, keyed by integer ID.
 
@@ -51,9 +48,14 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
         uncertainty_choices[3]                        # same thing
     """
 
-    def __init__(self):
+    #: Distributions in this container, sorted by ``id``.
+    choices: List[Type[UncertaintyBase]]
+    #: Lookup from integer ``id`` to distribution class.
+    id_dict: Dict[int, Type[UncertaintyBase]]
+
+    def __init__(self) -> None:
         # Sorted by id
-        self.choices: list = sorted(DISTRIBUTIONS, key=lambda x: x.id)
+        self.choices = sorted(DISTRIBUTIONS, key=lambda x: x.id)
         self.check_id_uniqueness()
 
     def check_id_uniqueness(self) -> None:
@@ -61,8 +63,8 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
         for dist in self.choices:
             if dist.id in self.id_dict:
                 raise ValueError(
-                    "Uncertainty id {:d} is already in use by {:d}".format(
-                        dist.id, self.id_dict[dist.id]
+                    "Uncertainty id {} is already in use by {}".format(
+                        dist.id, self.id_dict[dist.id].__name__
                     )
                 )
             self.id_dict[dist.id] = dist
@@ -80,13 +82,13 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
         return choice in self.choices
 
     def add(self, distribution: Type[UncertaintyBase]) -> None:
-        if not hasattr(distribution, "id") and isinstance(distribution.id, int):
+        if not isinstance(getattr(distribution, "id", None), int):
             raise ValueError(
                 "Uncertainty distributions must have integer `id` attribute."
             )
         if distribution.id in self.id_dict:
             warnings.warn(
-                "ERROR: This distribution (id {:d}) is already present!".format(
+                "ERROR: This distribution (id {}) is already present!".format(
                     distribution.id
                 )
             )
