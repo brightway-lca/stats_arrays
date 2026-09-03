@@ -1,11 +1,11 @@
 import warnings
 from collections.abc import Iterable as IterableABC
-from typing import Iterator, Type, TypeVar
+from typing import Dict, Iterator, List, Type
 
 from stats_arrays.distributions import (
     BernoulliUncertainty,
-    BetaUncertainty,
     BetaPERTUncertainty,
+    BetaUncertainty,
     DiscreteUniform,
     GammaUncertainty,
     GeneralizedExtremeValueUncertainty,
@@ -38,9 +38,6 @@ DISTRIBUTIONS = (
 )
 
 
-DistributionType = TypeVar("DistributionType", bound=UncertaintyBase, covariant=True)
-
-
 class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
     """A container for uncertainty distributions, keyed by integer ID.
 
@@ -51,9 +48,14 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
         uncertainty_choices[3]                        # same thing
     """
 
-    def __init__(self):
+    #: Distributions in this container, sorted by ``id``.
+    choices: List[Type[UncertaintyBase]]
+    #: Lookup from integer ``id`` to distribution class.
+    id_dict: Dict[int, Type[UncertaintyBase]]
+
+    def __init__(self) -> None:
         # Sorted by id
-        self.choices: list = sorted(DISTRIBUTIONS, key=lambda x: x.id)
+        self.choices = sorted(DISTRIBUTIONS, key=lambda x: x.id)
         self.check_id_uniqueness()
 
     def check_id_uniqueness(self) -> None:
