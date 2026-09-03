@@ -1,5 +1,24 @@
 # stats_arrays Changelog
 
+# Unreleased
+
+### New features
+
+* `stats_arrays` is now a **typed library** (PEP 561). The package ships a `py.typed` marker, so type checkers use the inline annotations in downstream code instead of treating every import as `Any`. The whole package passes `mypy` with `disallow_untyped_defs` and `check_untyped_defs`, and that check runs in CI and as a pre-commit hook.
+* Two public type aliases are now exported for annotating your own code:
+  * `ParamsArray` — a :ref:`params-array`.
+  * `StatisticsResult` — a `TypedDict` for the return value of `statistics()`, with keys `mean`, `mode`, `median`, `lower` and `upper`, each `Optional[float]`. Misspelled keys are now a type error at check time.
+
+### Breaking changes
+
+* `UncertaintyBase.id` and `UncertaintyBase.description` are now declared but unset on the abstract base class, rather than defaulting to `None`. Every concrete distribution sets both, so `NormalUncertainty.id` is unchanged; only reading `id`/`description` directly off `UncertaintyBase` is affected, and that now raises `AttributeError` instead of returning `None`. This lets `id` be typed as `int` rather than `Optional[int]`, and makes the `hasattr(distribution, "id")` guard in `uncertainty_choices.add()` meaningful.
+
+### Bug fixes
+
+* **UncertaintyChoices.add()** — the guard rejecting distributions without an integer `id` could never fire: `hasattr(distribution, "id")` was always true because the base class supplied `None`, and the two conditions were combined with `and` rather than `or`. It now checks `isinstance(getattr(distribution, "id", None), int)`.
+* **UncertaintyChoices** — the duplicate-id `ValueError` and the already-present `UserWarning` both formatted a class object with `{:d}`, which would itself raise `TypeError` instead of reporting the actual problem.
+* **UncertaintyBase.pdf()** — the base class declared a return type of `NDArray`, but every implementation returns a `(xs, ys)` tuple, as its own docstring describes. The annotation now says `Tuple[NDArray, NDArray]`.
+
 # 3.0 (2026-09-02)
 
 ### Breaking changes
