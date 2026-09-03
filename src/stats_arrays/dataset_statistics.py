@@ -1,3 +1,6 @@
+from typing import Any
+
+import numpy as np
 import numpy.typing as npt
 from numpy import array
 
@@ -8,23 +11,27 @@ from numpy import array
 # http://pygsl.sourceforge.net/reference/pygsl/node36.html
 
 
-def weighted_mean(values: npt.NDArray, weights: npt.NDArray) -> npt.NDArray:
+def weighted_mean(values: npt.NDArray, weights: npt.NDArray) -> np.floating[Any]:
     assert values.shape == weights.shape
     return (values * weights).sum() / weights.sum()
 
 
-def weighted_sample_variance(values: npt.NDArray, weights: npt.NDArray) -> npt.NDArray:
+def weighted_sample_variance(
+    values: npt.NDArray, weights: npt.NDArray
+) -> np.floating[Any]:
     assert values.shape == weights.shape
     return (
         (weights * values**2).sum() * weights.sum() - ((weights * values).sum()) ** 2
     ) / ((weights.sum()) ** 2 - (weights**2).sum())
 
 
-def weighted_sample_stddev(values: npt.NDArray, weights: npt.NDArray) -> npt.NDArray:
+def weighted_sample_stddev(
+    values: npt.NDArray, weights: npt.NDArray
+) -> np.floating[Any]:
     return weighted_sample_variance(values, weights) ** 0.5
 
 
-def test():
+def test() -> None:
     a = array((1, 2, 3, 4))
     print(a**2)
     b = array((0.5, 0.5, 1, 1))

@@ -1,5 +1,4 @@
-from collections.abc import Iterable
-from typing import Iterator, Optional, Type
+from typing import Any, Dict, Iterable, Iterator, Optional, Type
 
 import numpy as np
 import numpy.typing as npt
@@ -10,7 +9,7 @@ from stats_arrays.uncertainty_choices import uncertainty_choices
 from stats_arrays.utils import ParamsArray
 
 
-class RandomNumberGenerator(Iterable):
+class RandomNumberGenerator(Iterable[npt.NDArray]):
     def __init__(
         self,
         uncertainty_type: Type[UncertaintyBase],
@@ -18,8 +17,8 @@ class RandomNumberGenerator(Iterable):
         size: int = 1,
         maximum_iterations: int = 100,
         seed: Optional[int] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """
         Create a random number generator from a :ref:`params-array` and an uncertainty distribution.
 
@@ -98,7 +97,7 @@ class RandomNumberGenerator(Iterable):
         self,
         uncertainty_type: Optional[Type[UncertaintyBase]] = None,
         params: Optional[ParamsArray] = None,
-        size=None,
+        size: Optional[int] = None,
     ) -> npt.NDArray:
         if not uncertainty_type:
             uncertainty_type = self.uncertainty_type
@@ -120,7 +119,7 @@ class RandomNumberGenerator(Iterable):
         return self
 
 
-class MCRandomNumberGenerator(Iterable):
+class MCRandomNumberGenerator(Iterable[npt.NDArray]):
     """
     A Monte Carlo random number generator that operates on a :ref:`hpa`.
 
@@ -156,8 +155,8 @@ class MCRandomNumberGenerator(Iterable):
         params: ParamsArray,
         maximum_iterations: int = 50,
         seed: Optional[int] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         self.params = params.copy()
         self.length = self.params.shape[0]
         self.maximum_iterations = maximum_iterations
@@ -169,7 +168,7 @@ class MCRandomNumberGenerator(Iterable):
         self.params = self.params[self.ordering]
         self.positions = self.get_positions()
 
-    def get_positions(self) -> dict:
+    def get_positions(self) -> Dict[Type[UncertaintyBase], int]:
         """Construct dictionary of where each distribution starts and stops in the sorted parameter array"""
         return dict(
             [
@@ -251,8 +250,8 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
         params: ParamsArray,
         seed: Optional[int] = None,
         samples: int = 10,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         self.params = params
         self.length = self.params.shape[0]
         self.row_index = np.arange(self.length)
