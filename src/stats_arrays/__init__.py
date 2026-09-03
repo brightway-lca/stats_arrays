@@ -18,7 +18,9 @@ __all__ = (
     "MultipleRowParamsArrayError",
     "NormalUncertainty",
     "NoUncertainty",
+    "ParamsArray",
     "RandomNumberGenerator",
+    "StatisticsResult",
     "StatsArraysError",
     "StudentsTUncertainty",
     "TriangularUncertainty",
@@ -67,3 +69,4 @@ from stats_arrays.random import (
 )
 from stats_arrays.uncertainty_choices import uncertainty_choices
 from stats_arrays.uncertainty_types import UncertaintyType
+from stats_arrays.utils import ParamsArray, StatisticsResult

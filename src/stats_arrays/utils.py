@@ -1,12 +1,22 @@
 from functools import wraps
-from typing import Any, Callable, List, Tuple, TypeVar, overload
+from typing import (
+    Any,
+    Callable,
+    List,
+    Optional,
+    Tuple,
+    TypedDict,
+    TypeVar,
+    cast,
+    overload,
+)
 
 import numpy as np
 import numpy.typing as npt
 
 from stats_arrays.errors import MultipleRowParamsArrayError
 
-BASE_DTYPE_FIELDS: List[tuple] = [
+BASE_DTYPE_FIELDS: List[Tuple[str, type]] = [
     ("loc", np.float64),
     ("scale", np.float64),
     ("shape", np.float64),
@@ -14,43 +24,59 @@ BASE_DTYPE_FIELDS: List[tuple] = [
     ("maximum", np.float64),
     ("negative", bool),
 ]
-BASE_DTYPE: npt.DTypeLike = np.dtype(BASE_DTYPE_FIELDS)
+BASE_DTYPE: np.dtype = np.dtype(BASE_DTYPE_FIELDS)
 
-# Numpy typing isn't great, use this basic approach for now.
-# Also consider nptyping: https://stackoverflow.com/questions/71109838/numpy-typing-with-specific-shape-and-datatype
-# TODO: Decide if we need separate types for when "uncertainty_type is included"
-# @overload
-# def construct_params_array(length: int = 1, include_type: bool = False) -> BaseParamsArray:
-#     ...
-# @overload
-# def construct_params_array(length: int = 1, include_type: bool = True) -> ExtendedParamsArray:
-#     ...
-# More specific types for different parameter array structures
-# BaseParamsArray = npt.NDArray[BASE_DTYPE_T]  # Without uncertainty_type
-# ExtendedParamsArray = npt.NDArray[BASE_DTYPE_T]  # With uncertainty_type
-BASE_DTYPE_T = TypeVar("BASE_DTYPE_T", bound=np.generic)
-ParamsArray = npt.NDArray[BASE_DTYPE_T]
+ParamsArray = npt.NDArray[np.void]
+"""A :ref:`params-array`: a structured NumPy array whose fields are ``loc``, ``scale``,
+``shape``, ``minimum``, ``maximum``, ``negative``, and — for a :ref:`hpa` — the
+``uncertainty_type`` distribution id.
+
+Structured arrays all share the ``numpy.void`` scalar type, so this alias documents
+intent rather than pinning an exact dtype; the field layout is not expressible in the
+NumPy typing system today. Field access (``params["loc"]``) is therefore untyped.
+"""
+
+
+class StatisticsResult(TypedDict):
+    """Summary statistics returned by :meth:`UncertaintyBase.statistics`.
+
+    Every key is always present. A statistic that is undefined for a given
+    distribution and parameter set is ``None`` rather than omitted.
+    """
+
+    mean: Optional[float]
+    mode: Optional[float]
+    median: Optional[float]
+    lower: Optional[float]
+    upper: Optional[float]
+
+
+AnyCallable = TypeVar("AnyCallable", bound=Callable[..., Any])
 
 
 @overload
-def flatten_numpy_array(obj: npt.NDArray) -> npt.NDArray:
-    ...
+def flatten_numpy_array(obj: npt.NDArray) -> npt.NDArray: ...
 
 
 @overload
+def flatten_numpy_array(obj: Any) -> Any: ...
+
+
 def flatten_numpy_array(obj: Any) -> Any:
-    ...
-
-
-def flatten_numpy_array(obj):
     if not isinstance(obj, np.ndarray):
         return obj
     return obj.ravel()
 
 
-def one_row_params_array(function: Callable) -> Callable:
+def one_row_params_array(function: AnyCallable) -> AnyCallable:
+    """Reshape ``params`` to a single row, and flatten any other array arguments.
+
+    Raises ``stats_arrays.MultipleRowParamsArrayError`` if ``params`` has more than one
+    row. The wrapped callable keeps the signature of ``function``.
+    """
+
     @wraps(function)
-    def wrapper(cls, params: ParamsArray, *args, **kwargs) -> Callable:
+    def wrapper(cls: Any, params: ParamsArray, *args: Any, **kwargs: Any) -> Any:
         if len(params.shape) == 1:
             params = params.reshape(params.shape[0], 1)
         else:
@@ -58,14 +84,17 @@ def one_row_params_array(function: Callable) -> Callable:
                 raise MultipleRowParamsArrayError
         # Flatten any additional inputs to one dimension
         # Needed for PDF optional xs input
-        args = [flatten_numpy_array(x) for x in args]
-        kwargs = {key: flatten_numpy_array(obj) for key, obj in kwargs.items()}
-        return function(cls, params, *args, **kwargs)
+        flattened_args = [flatten_numpy_array(x) for x in args]
+        flattened_kwargs = {
+            key: flatten_numpy_array(obj) for key, obj in kwargs.items()
+        }
+        return function(cls, params, *flattened_args, **flattened_kwargs)
 
-    return wrapper
+    return cast(AnyCallable, wrapper)
 
 
 def construct_params_array(length: int = 1, include_type: bool = False) -> ParamsArray:
+    dtype: np.dtype
     if include_type:
         dtype = np.dtype(BASE_DTYPE_FIELDS + [("uncertainty_type", np.uint8)])
     else:
