@@ -2,4 +2,5 @@ include *.md
 include *.txt
 include LICENSE
 recursive-include stats_arrays *.py
+include src/stats_arrays/py.typed
 recursive-include docs *.rst
