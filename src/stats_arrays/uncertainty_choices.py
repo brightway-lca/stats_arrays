@@ -61,8 +61,8 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
         for dist in self.choices:
             if dist.id in self.id_dict:
                 raise ValueError(
-                    "Uncertainty id {:d} is already in use by {:d}".format(
-                        dist.id, self.id_dict[dist.id]
+                    "Uncertainty id {} is already in use by {}".format(
+                        dist.id, self.id_dict[dist.id].__name__
                     )
                 )
             self.id_dict[dist.id] = dist
@@ -80,13 +80,13 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
         return choice in self.choices
 
     def add(self, distribution: Type[UncertaintyBase]) -> None:
-        if not hasattr(distribution, "id") and isinstance(distribution.id, int):
+        if not isinstance(getattr(distribution, "id", None), int):
             raise ValueError(
                 "Uncertainty distributions must have integer `id` attribute."
             )
         if distribution.id in self.id_dict:
             warnings.warn(
-                "ERROR: This distribution (id {:d}) is already present!".format(
+                "ERROR: This distribution (id {}) is already present!".format(
                     distribution.id
                 )
             )
