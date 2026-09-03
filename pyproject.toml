@@ -27,7 +27,8 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Natural Language :: English",
     "Operating System :: OS Independent",
-    "Topic :: Scientific/Engineering"
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed"
 ]
 requires-python = ">=3.9"
 dependencies = [
@@ -67,6 +68,10 @@ packages = [
     "stats_arrays",
     "stats_arrays.distributions",
 ]
+
+[tool.setuptools.package-data]
+# PEP 561 marker: tells type checkers the inline annotations are to be trusted.
+stats_arrays = ["py.typed"]
 
 [tool.setuptools.dynamic]
 version = {attr = "stats_arrays.__version__"}
