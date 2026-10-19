@@ -2,7 +2,6 @@ from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
-from scipy import stats
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import InvalidParamsError
@@ -48,6 +47,7 @@ class LognormalUncertainty(UncertaintyBase):
 
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         vector[params["negative"]] = -1 * vector[params["negative"]]
         if vector.ndim == 1 or vector.shape[1] == 1:
             # Can do all at once, **much** faster
@@ -67,6 +67,7 @@ class LognormalUncertainty(UncertaintyBase):
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         if percentages.ndim == 1 or percentages.shape[1] == 1:
             # Can do all at once, **much** faster
             results = stats.lognorm.ppf(
@@ -112,6 +113,7 @@ class LognormalUncertainty(UncertaintyBase):
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
     ) -> tuple[npt.NDArray, npt.NDArray]:
         """Generate probability distribution function for lognormal distribution."""
+        from scipy import stats
         n = params["negative"]
         if xs is None:
             # Find nice range to graph

@@ -2,7 +2,6 @@ from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
-from scipy import stats
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
@@ -86,6 +85,7 @@ class BetaUncertainty(UncertaintyBase):
 
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         vector = cls.check_2d_inputs(params, vector)
         results = np.zeros(vector.shape)
         loc, scale = cls._safe_loc(params), cls._safe_scale(params)
@@ -101,6 +101,7 @@ class BetaUncertainty(UncertaintyBase):
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         percentages = cls.check_2d_inputs(params, percentages)
         results = np.zeros(percentages.shape)
         loc, scale = cls._safe_loc(params), cls._safe_scale(params)
@@ -145,6 +146,7 @@ class BetaUncertainty(UncertaintyBase):
     def pdf(
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
     ) -> tuple[npt.NDArray, npt.NDArray]:
+        from scipy import stats
         loc, scale = cls._safe_loc(params), cls._safe_scale(params)
         loc = float(loc[0][0])
         scale = float(scale[0][0])

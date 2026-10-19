@@ -2,7 +2,6 @@ from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
-from scipy import stats
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import InvalidParamsError
@@ -43,6 +42,7 @@ class NormalUncertainty(UncertaintyBase):
 
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         vector = cls.check_2d_inputs(params, vector)
         results = np.zeros(vector.shape)
         for row in range(params.shape[0]):
@@ -53,6 +53,7 @@ class NormalUncertainty(UncertaintyBase):
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         percentages = cls.check_2d_inputs(params, percentages)
         results = np.zeros(percentages.shape)
         for row in range(percentages.shape[0]):
@@ -77,6 +78,7 @@ class NormalUncertainty(UncertaintyBase):
     def pdf(
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
     ) -> tuple[npt.NDArray, npt.NDArray]:
+        from scipy import stats
         if xs is None:
             if np.isnan(params["minimum"]):
                 lower = (
