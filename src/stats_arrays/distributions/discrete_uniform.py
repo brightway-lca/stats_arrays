@@ -74,10 +74,17 @@ class DiscreteUniform(UncertaintyBase):
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         percentages = cls.check_2d_inputs(params, percentages)
+        results = np.zeros(percentages.shape)
         params = cls.fix_nan_minimum(params)
-        scale = (params["maximum"] - params["minimum"]).reshape(params.shape[0], 1)
-        return percentages * scale + params["minimum"].reshape(params.shape[0], 1)
+        for row in range(params.shape[0]):
+            results[row, :] = stats.randint.ppf(
+                percentages[row, :],
+                params[row]["minimum"],
+                params[row]["maximum"],
+            )
+        return results
 
     @classmethod
     @one_row_params_array
