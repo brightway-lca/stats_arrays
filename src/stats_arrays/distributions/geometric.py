@@ -2,7 +2,6 @@ from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
-from scipy import stats
 
 from stats_arrays.distributions.base import BoundedUncertaintyBase
 from stats_arrays.errors import ImproperBoundsError
@@ -32,6 +31,7 @@ class UniformUncertainty(BoundedUncertaintyBase):
 
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         vector = cls.check_2d_inputs(params, vector)
         results = np.zeros(vector.shape)
         for row in range(params.shape[0]):
@@ -107,6 +107,7 @@ class TriangularUncertainty(BoundedUncertaintyBase):
 
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         vector = cls.check_2d_inputs(params, vector)
         # Adjust parameters to (0,1) range
         adjusted_means, scale = cls.rescale_to_unitary_interval(params)
@@ -125,6 +126,7 @@ class TriangularUncertainty(BoundedUncertaintyBase):
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         percentages = cls.check_2d_inputs(params, percentages)
         adjusted_means, scale = cls.rescale_to_unitary_interval(params)
         scale.resize(scale.shape[0], 1)
@@ -154,6 +156,7 @@ class TriangularUncertainty(BoundedUncertaintyBase):
     def pdf(
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
     ) -> tuple[npt.NDArray, npt.NDArray]:
+        from scipy import stats
         adjusted_means, scale = cls.rescale_to_unitary_interval(params)
         if xs is None:
             xs = np.linspace(

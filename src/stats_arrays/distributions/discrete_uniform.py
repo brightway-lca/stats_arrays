@@ -2,7 +2,6 @@ from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
-from scipy import stats
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
@@ -63,6 +62,7 @@ class DiscreteUniform(UncertaintyBase):
 
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
         vector = cls.check_2d_inputs(params, vector)
         results = np.zeros(vector.shape)
         params = cls.fix_nan_minimum(params)
