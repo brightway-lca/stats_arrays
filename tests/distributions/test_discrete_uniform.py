@@ -76,3 +76,21 @@ def test_statistics_nan_minimum_defaults_to_zero(make_params_array):
     stats = DiscreteUniform.statistics(params)
     assert stats["lower"] == 0.0
     assert stats["mean"] == stats["median"] == 1.5
+
+
+def test_cdf(make_params_array):
+    params = make_params_array(length=1)
+    params["minimum"] = 2
+    params["maximum"] = 6
+    result = DiscreteUniform.cdf(params, np.array([[1, 2, 3, 4, 5, 6]]))
+    assert np.allclose(result, [[0, 0.25, 0.5, 0.75, 1, 1]])
+
+
+def test_ppf_stays_on_support(make_params_array):
+    params = make_params_array(length=2)
+    params["minimum"] = [2, 0]
+    params["maximum"] = [6, 3]
+    percentages = np.array([[0.01, 0.25, 0.5, 0.99], [0.01, 0.34, 0.67, 0.99]])
+    result = DiscreteUniform.ppf(params, percentages)
+    assert np.array_equal(result, [[2, 2, 3, 5], [0, 1, 2, 2]])
+    assert np.allclose(DiscreteUniform.cdf(params, result) >= percentages, True)
