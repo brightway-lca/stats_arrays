@@ -1,17 +1,18 @@
 # stats_arrays Changelog
 
-# Unreleased
+# 4.0 (2026-10-20)
+
+### Breaking changes
+
+* `UncertaintyBase.id` and `UncertaintyBase.description` are now declared but unset on the abstract base class, rather than defaulting to `None`. Every concrete distribution sets both, so `NormalUncertainty.id` is unchanged; only reading `id`/`description` directly off `UncertaintyBase` is affected, and that now raises `AttributeError` instead of returning `None`. This lets `id` be typed as `int` rather than `Optional[int]`, and lets `uncertainty_choices.add()` reject distributions without an integer `id` (see Bug fixes).
+* The **Normal**, **Lognormal**, **Geometric**, **Beta** and **DiscreteUniform** modules no longer have a `stats` attribute, because `scipy.stats` is now imported on first use (see Performance). Code that reached `scipy.stats` through, for example, `stats_arrays.distributions.normal.stats` should import `scipy.stats` directly.
 
 ### New features
 
 * `stats_arrays` is now a **typed library** (PEP 561). The package ships a `py.typed` marker, so type checkers use the inline annotations in downstream code instead of treating every import as `Any`. The whole package passes `mypy` with `disallow_untyped_defs` and `check_untyped_defs`, and that check runs in CI and as a pre-commit hook.
 * Two public type aliases are now exported for annotating your own code:
-  * `ParamsArray` — a :ref:`params-array`.
+  * `ParamsArray` — the structured NumPy array of uncertainty parameters used throughout the library.
   * `StatisticsResult` — a `TypedDict` for the return value of `statistics()`, with keys `mean`, `mode`, `median`, `lower` and `upper`, each `Optional[float]`. Misspelled keys are now a type error at check time.
-
-### Breaking changes
-
-* `UncertaintyBase.id` and `UncertaintyBase.description` are now declared but unset on the abstract base class, rather than defaulting to `None`. Every concrete distribution sets both, so `NormalUncertainty.id` is unchanged; only reading `id`/`description` directly off `UncertaintyBase` is affected, and that now raises `AttributeError` instead of returning `None`. This lets `id` be typed as `int` rather than `Optional[int]`, and makes the `hasattr(distribution, "id")` guard in `uncertainty_choices.add()` meaningful.
 
 ### Bug fixes
 
@@ -21,7 +22,7 @@
 
 ### Performance
 
-* `import stats_arrays` no longer imports `scipy.stats`, which took most of its import time (about 400 ms down to 45 ms). The `cdf`, `ppf` and `pdf` methods of **Normal**, **Lognormal**, **Geometric**, **Beta** and **DiscreteUniform** import it on first use. As a side effect, these five modules no longer have a `stats` attribute; import `scipy.stats` directly instead.
+* `import stats_arrays` no longer imports `scipy.stats`, which took most of its import time (about 400 ms down to 45 ms). The `cdf`, `ppf` and `pdf` methods of **Normal**, **Lognormal**, **Geometric**, **Beta** and **DiscreteUniform** import it on first use.
 
 # 3.0 (2026-09-02)
 
