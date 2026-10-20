@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -7,6 +7,7 @@ from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
 from stats_arrays.utils import (
     ParamsArray,
+    StatisticsResult,
     one_row_params_array,
     rescale_vector_to_params,
 )
@@ -117,7 +118,7 @@ class BetaUncertainty(UncertaintyBase):
 
     @classmethod
     @one_row_params_array
-    def statistics(cls, params: ParamsArray) -> dict:
+    def statistics(cls, params: ParamsArray) -> StatisticsResult:
         alpha, beta = float(params["loc"].flat[0]), float(params["shape"].flat[0])
         minimum = float(cls._safe_loc(params).flat[0])
         scale = float(cls._safe_scale(params).flat[0])
@@ -145,11 +146,10 @@ class BetaUncertainty(UncertaintyBase):
     @one_row_params_array
     def pdf(
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
-    ) -> tuple[npt.NDArray, npt.NDArray]:
+    ) -> Tuple[npt.NDArray, npt.NDArray]:
         from scipy import stats
-        loc, scale = cls._safe_loc(params), cls._safe_scale(params)
-        loc = float(loc[0][0])
-        scale = float(scale[0][0])
+        loc = float(cls._safe_loc(params)[0][0])
+        scale = float(cls._safe_scale(params)[0][0])
 
         if xs is None:
             xs = np.linspace(loc, loc + scale, cls.default_number_points_in_pdf)
