@@ -1,5 +1,11 @@
 # stats_arrays Changelog
 
+# Unreleased
+
+### Performance
+
+* `import stats_arrays` no longer imports `scipy.stats`, which took most of its import time (about 400 ms down to 45 ms). The `cdf`, `ppf` and `pdf` methods of **Normal**, **Lognormal**, **Geometric**, **Beta** and **DiscreteUniform** import it on first use. As a side effect, these five modules no longer have a `stats` attribute; import `scipy.stats` directly instead.
+
 # 3.0 (2026-09-02)
 
 ### Breaking changes
