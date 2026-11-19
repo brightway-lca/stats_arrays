@@ -330,6 +330,8 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
 
         .. rubric:: Builds
 
+        self.percentages : Numpy array with dimensions `self.length` by `self.samples`. The percentages passed to each distribution's ``ppf``. They refer to the unsigned distribution: for a lognormal with ``negative`` set, ``ppf`` negates its result, so percentage ``p`` gives the ``1 - p`` quantile of the signed values and the row of ``self.hypercube`` descends.
+
         self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
         self._check_distributions_supported()
         # The range of percentages to sample from for each row: the whole
@@ -372,9 +374,9 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
             self.hypercube[mask, :] = uncertainty_type.ppf(
                 params=self.params[mask], percentages=self.percentages[mask, :]
             )
-        self.hypercube[self.params["negative"], :] = (
-            -1 * self.hypercube[self.params["negative"], :]
-        )
+        # The sign of rows with ``negative`` set is left to each distribution's
+        # ``ppf``, as Monte Carlo leaves it to ``random_variables``. Of the
+        # distributions with a ``ppf``, only the lognormal applies it.
 
     def _check_distributions_supported(self) -> None:
         """Raise ``NotImplementedError`` naming the distributions in ``params``
