@@ -23,7 +23,7 @@
 ### Performance
 
 * Lognormal and normal samples are drawn with `Generator.standard_normal` and scaled, shifted and exponentiated in place. For 626,306 lognormal parameters (ecoinvent 3.13 scale), `MCRandomNumberGenerator.generate(out=...)` takes about 16 ms instead of about 50 ms in 4.0.
-* `MCRandomNumberGenerator` works out once, at instantiation, which distribution blocks have no bounds, and calls `random_variables` directly for them instead of building bounds masks on every draw. Distributions that override `bounded_random_variables` are always called through it. `bounded_random_variables` itself also returns early when no row has bounds.
+* `bounded_random_variables` returns early when no row has a `minimum` or `maximum`, instead of building bounds masks over all the samples. The check reads the current params on every draw.
 * `generate()` writes each distribution block straight to its final positions, instead of filling a zeroed array and then copying the whole vector through `reverse_ordering`.
 * `DiscreteUniform` draws all rows in one vectorized call with a `Generator`.
 

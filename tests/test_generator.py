@@ -239,26 +239,37 @@ def test_generate_single_type_identity_ordering():
     assert np.allclose(np.log(data), np.arange(5), atol=0.1)
 
 
-def test_unbounded_blocks_skip_bounds_check(params):
-    mc = MCRandomNumberGenerator(params)
-    skip = {t: s for t, _, _, s in mc._blocks}
-    assert skip[NormalUncertainty] is True
-    # One lognormal row has bounds
-    assert skip[LognormalUncertainty] is False
+def test_bounds_set_after_instantiation_are_respected():
+    p = UncertaintyBase.from_dicts(
+        {"loc": 0, "scale": 1, "uncertainty_type": NormalUncertainty.id},
+        {"loc": 0, "scale": 1, "uncertainty_type": LognormalUncertainty.id},
+    )
+    mc = MCRandomNumberGenerator(p, seed=1)
+    mc.generate()
+    mc.params["minimum"][:] = 0.5
+    data = mc.generate(samples=200)
+    assert (data >= 0.5).all()
 
 
-def test_custom_bounded_random_variables_is_still_called(params, monkeypatch):
+@pytest.mark.parametrize("decorator", [classmethod, staticmethod])
+def test_custom_bounded_random_variables_is_called(params, monkeypatch, decorator):
+    """Overrides are used whether they are class methods or static methods, and
+    whether they are set before or after instantiation."""
     calls = []
 
-    @classmethod
-    def custom(cls, params, size, seeded_random=None, maximum_iterations=50):
-        calls.append(cls)
-        return np.zeros((params.shape[0], size))
+    def custom(*args, **kwargs):
+        calls.append(1)
+        params = args[-4]
+        return np.zeros((params.shape[0], args[-3]))
 
-    monkeypatch.setattr(NormalUncertainty, "bounded_random_variables", custom)
-    data = MCRandomNumberGenerator(params).generate()
-    assert calls == [NormalUncertainty]
-    assert data[4] == 0
+    before = MCRandomNumberGenerator(params)
+    monkeypatch.setattr(
+        NormalUncertainty, "bounded_random_variables", decorator(custom)
+    )
+    after = MCRandomNumberGenerator(params)
+    assert before.generate()[4] == 0
+    assert after.generate()[4] == 0
+    assert len(calls) == 2
 
 
 # Other generators

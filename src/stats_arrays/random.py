@@ -3,7 +3,7 @@ from typing import Any, Dict, Iterable, Iterator, Literal, Optional, Type
 import numpy as np
 import numpy.typing as npt
 
-from stats_arrays.distributions.base import BoundedUncertaintyBase, UncertaintyBase
+from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import UnknownUncertaintyType
 from stats_arrays.uncertainty_choices import uncertainty_choices
 from stats_arrays.utils import (
@@ -191,37 +191,16 @@ class MCRandomNumberGenerator(Iterable[npt.NDArray]):
             ]
         )
 
-    def _build_blocks(
-        self,
-    ) -> "list[tuple[Type[UncertaintyBase], int, int, bool]]":
-        """Precompute ``(uncertainty_type, start, stop, skip_bounds)`` for each
-        distribution present in the sorted parameter array.
-
-        ``skip_bounds`` is ``True`` when no row of that block sets ``minimum`` or
-        ``maximum`` and the distribution uses a stock ``bounded_random_variables``,
-        so ``generate`` can call ``random_variables`` directly. Distributions that
-        override ``bounded_random_variables`` always go through it.
-        """
-        stock = {
-            UncertaintyBase.bounded_random_variables.__func__,  # type: ignore[attr-defined]
-            BoundedUncertaintyBase.bounded_random_variables.__func__,  # type: ignore[attr-defined]
-        }
+    def _build_blocks(self) -> "list[tuple[Type[UncertaintyBase], int, int]]":
+        """Precompute ``(uncertainty_type, start, stop)`` for each distribution
+        present in the sorted parameter array."""
         blocks = []
         offset = 0
         for uncertainty_type in self.choices:
             numparams = int(self.positions[uncertainty_type])
             if not numparams:
                 continue
-            block = self.params[offset : offset + numparams]
-            blocks.append(
-                (
-                    uncertainty_type,
-                    offset,
-                    offset + numparams,
-                    uncertainty_type.bounded_random_variables.__func__ in stock  # type: ignore[attr-defined]
-                    and not uncertainty_type.has_bounds(block),
-                )
-            )
+            blocks.append((uncertainty_type, offset, offset + numparams))
             offset += numparams
         return blocks
 
@@ -273,19 +252,16 @@ class MCRandomNumberGenerator(Iterable[npt.NDArray]):
             else None
         )
 
-        for uncertainty_type, start, stop, skip_bounds in self._blocks:
-            params = self.params[start:stop]
-            if skip_bounds:
-                random_data = uncertainty_type.random_variables(
-                    params, samples, self.random
-                )
-            else:
-                random_data = uncertainty_type.bounded_random_variables(
-                    params,
-                    samples,
-                    self.random,
-                    self.maximum_iterations,
-                )
+        for uncertainty_type, start, stop in self._blocks:
+            # Always go through ``bounded_random_variables``: it reads the
+            # current bounds on every draw (and returns early when there are
+            # none), so changes to ``self.params`` after instantiation count.
+            random_data = uncertainty_type.bounded_random_variables(
+                self.params[start:stop],
+                samples,
+                self.random,
+                self.maximum_iterations,
+            )
             if samples == 1 and random_data.ndim == 2:
                 random_data = random_data[:, 0]  # Restore to 1-d
             if destinations is None:
