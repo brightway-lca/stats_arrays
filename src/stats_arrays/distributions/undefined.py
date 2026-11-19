@@ -6,7 +6,7 @@ from numpy import repeat, tile
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import UndefinedDistributionError
-from stats_arrays.utils import ParamsArray
+from stats_arrays.utils import ParamsArray, RandomSource
 
 
 class UndefinedUncertainty(UncertaintyBase):
@@ -20,7 +20,7 @@ class UndefinedUncertainty(UncertaintyBase):
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
     ) -> npt.NDArray:
         return repeat(params["loc"], size).reshape((params.shape[0], size))
 

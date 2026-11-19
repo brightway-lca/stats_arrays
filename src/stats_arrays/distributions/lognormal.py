@@ -5,7 +5,12 @@ import numpy.typing as npt
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import InvalidParamsError
-from stats_arrays.utils import ParamsArray, StatisticsResult, one_row_params_array
+from stats_arrays.utils import (
+    ParamsArray,
+    RandomSource,
+    StatisticsResult,
+    one_row_params_array,
+)
 
 
 class LognormalUncertainty(UncertaintyBase):
@@ -33,21 +38,35 @@ class LognormalUncertainty(UncertaintyBase):
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
     ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random.RandomState()
-        data = seeded_random.lognormal(
-            params["loc"], params["scale"], size=(size, params.shape[0])  # Mu  # Sigma
-        ).T
+            seeded_random = np.random.default_rng()
+        if isinstance(seeded_random, np.random.Generator):
+            # Scale, shift and exponentiate in place: avoids the temporaries
+            # (and slower broadcasting path) of ``Generator.lognormal``.
+            data = seeded_random.standard_normal(size=(size, params.shape[0]))
+            data *= params["scale"]  # Sigma
+            data += params["loc"]  # Mu
+            np.exp(data, out=data)
+            data = data.T
+        else:
+            data = seeded_random.lognormal(
+                params["loc"],
+                params["scale"],
+                size=(size, params.shape[0]),  # Mu  # Sigma
+            ).T
         # Negative is needed because log loses sign information.
         # Error handling not included, as this loop is called many times
-        data[params["negative"], :] = -1 * data[params["negative"], :]
+        negative = params["negative"]
+        if negative.any():
+            data[negative, :] *= -1
         return data
 
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         from scipy import stats
+
         vector[params["negative"]] = -1 * vector[params["negative"]]
         if vector.ndim == 1 or vector.shape[1] == 1:
             # Can do all at once, **much** faster
@@ -68,6 +87,7 @@ class LognormalUncertainty(UncertaintyBase):
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         from scipy import stats
+
         if percentages.ndim == 1 or percentages.shape[1] == 1:
             # Can do all at once, **much** faster
             results = stats.lognorm.ppf(
@@ -114,6 +134,7 @@ class LognormalUncertainty(UncertaintyBase):
     ) -> Tuple[npt.NDArray, npt.NDArray]:
         """Generate probability distribution function for lognormal distribution."""
         from scipy import stats
+
         n = params["negative"]
         if xs is None:
             # Find nice range to graph

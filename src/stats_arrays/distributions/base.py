@@ -11,6 +11,7 @@ from stats_arrays.errors import (
 )
 from stats_arrays.utils import (
     ParamsArray,
+    RandomSource,
     StatisticsResult,
     construct_params_array,
     one_row_params_array,
@@ -213,20 +214,30 @@ class UncertaintyBase:
 
     @staticmethod
     def _check_seeded_random(seeded_random: Any) -> None:
-        """Raise TypeError if seeded_random is not None or a numpy RandomState.
+        """Raise TypeError if seeded_random is not None, a numpy RandomState, or a numpy Generator.
 
         Integers are rejected here because the public API for seeded sampling is
-        numpy.random.RandomState(seed), which is what MCRandomNumberGenerator and
-        the other RNG classes create before calling down to random_variables.
+        numpy.random.default_rng(seed) (or numpy.random.RandomState(seed) for the
+        legacy stream), which is what MCRandomNumberGenerator and the other RNG
+        classes create before calling down to random_variables.
         """
         if seeded_random is not None and not isinstance(
-            seeded_random, np.random.RandomState
+            seeded_random, (np.random.RandomState, np.random.Generator)
         ):
             raise TypeError(
-                f"`seeded_random` must be a `numpy.random.RandomState` instance or "
-                f"None, got {type(seeded_random).__name__}. "
-                f"To seed the generator, pass `numpy.random.RandomState(seed)` instead."
+                f"`seeded_random` must be a `numpy.random.RandomState` or "
+                f"`numpy.random.Generator` instance or None, got "
+                f"{type(seeded_random).__name__}. To seed the generator, pass "
+                f"`numpy.random.default_rng(seed)` or "
+                f"`numpy.random.RandomState(seed)` instead."
             )
+
+    @staticmethod
+    def has_bounds(params: ParamsArray) -> bool:
+        """Return ``True`` if any row in ``params`` has a ``minimum`` or ``maximum`` bound."""
+        return bool(
+            (~np.isnan(params["minimum"])).any() or (~np.isnan(params["maximum"])).any()
+        )
 
     # Used for Monte Carlo ###
     @classmethod
@@ -234,7 +245,7 @@ class UncertaintyBase:
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
         maximum_iterations: int = 50,
     ) -> npt.NDArray:
         """Generate random variables repeatedly until all variables are within the bounds of each distribution. Raise MaximumIterationsError if this takes more that `maximum_iterations`. Uses `random_variables` for random number generation.
@@ -243,7 +254,7 @@ class UncertaintyBase:
 
         * params : A :ref:`params-array`.
         * size : Integer. The number of values to draw from each distribution in `params`.
-        * seeded_random : A ``numpy.random.RandomState`` instance, or ``None`` for an unseeded generator.
+        * seeded_random : A ``numpy.random.RandomState`` or ``numpy.random.Generator`` instance, or ``None`` for an unseeded ``Generator``.
         * maximum_iterations : Integer. Optional. Maximum iterations to try to fit the given bounds before an error is raised.
 
         .. rubric:: Output
@@ -251,6 +262,8 @@ class UncertaintyBase:
         An array of random values, with dimensions `params` rows by `size`."""
         cls._check_seeded_random(seeded_random)
         data = cls.random_variables(params, size, seeded_random)
+        if not cls.has_bounds(params):
+            return data
         min_array = params["minimum"].reshape(params.shape[0], 1)
         max_array = params["maximum"].reshape(params.shape[0], 1)
         # Check bounds => boolean array where True is out of bounds
@@ -267,10 +280,9 @@ class UncertaintyBase:
             # approach increases execution speed linearly as a function of the
             # most restrictive bounds, as all the other bounds are satisfied
             # during iteration for the worst-case scenario. As this approach is
-            # O(n), and the time for random number generation is << time for
-            # solving the linear system, we don't try to find a clever way
-            # around this inefficiency. See stats/tests/uncertainty.py -
-            # UncertaintyTestCase - test_random_timing for a timing test.
+            # O(n), we don't try to find a clever way around this
+            # inefficiency. Unbounded params skip this loop entirely (see
+            # ``has_bounds`` above).
             data[bounds_mask] = cls.random_variables(params, size, seeded_random)[
                 bounds_mask
             ]
@@ -286,7 +298,7 @@ class UncertaintyBase:
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
     ) -> npt.NDArray:
         """Generate random variables for the given uncertainty. Should **not check** to ensure that random samples are with the (minimum, maximum bounds). Bounds checking is provided by the `bounded_random_variables` class method.
 
@@ -294,7 +306,7 @@ class UncertaintyBase:
 
         * params : A :ref:`params-array`.
         * size : Integer. The number of values to draw from each distribution in `params`.
-        * seeded_random : Integer. Optional.
+        * seeded_random : A ``numpy.random.RandomState`` or ``numpy.random.Generator`` instance. Optional.
 
         .. rubric:: Output
 
@@ -403,7 +415,7 @@ class BoundedUncertaintyBase(UncertaintyBase):
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
         maximum_iterations: Optional[int] = None,
     ) -> npt.NDArray:
         """No bounds checking because the bounds do not exclude any of the distribution."""

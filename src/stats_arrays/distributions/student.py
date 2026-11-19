@@ -5,7 +5,7 @@ import numpy.typing as npt
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import InvalidParamsError
-from stats_arrays.utils import ParamsArray
+from stats_arrays.utils import ParamsArray, RandomSource
 
 
 class StudentsTUncertainty(UncertaintyBase):
@@ -46,18 +46,18 @@ class StudentsTUncertainty(UncertaintyBase):
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
         **kwargs: Any,
     ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random.RandomState()
+            seeded_random = np.random.default_rng()
         scale = params["scale"].copy()
         scale[np.isnan(scale)] = 1
         location = params["loc"].copy()
         location[np.isnan(location)] = 0
         data = (
-            location
-            + scale
+            location.reshape((-1, 1))
+            + scale.reshape((-1, 1))
             * seeded_random.standard_t(params["shape"], size=(size, params.shape[0])).T
         )
         return data

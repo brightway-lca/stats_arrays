@@ -7,6 +7,7 @@ from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
 from stats_arrays.utils import (
     ParamsArray,
+    RandomSource,
     StatisticsResult,
     one_row_params_array,
     rescale_vector_to_params,
@@ -72,11 +73,11 @@ class BetaUncertainty(UncertaintyBase):
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
         transform: bool = False,
     ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random.RandomState()
+            seeded_random = np.random.default_rng()
         return rescale_vector_to_params(
             params=params,
             vector=seeded_random.beta(
@@ -87,6 +88,7 @@ class BetaUncertainty(UncertaintyBase):
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         from scipy import stats
+
         vector = cls.check_2d_inputs(params, vector)
         results = np.zeros(vector.shape)
         loc, scale = cls._safe_loc(params), cls._safe_scale(params)
@@ -103,6 +105,7 @@ class BetaUncertainty(UncertaintyBase):
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         from scipy import stats
+
         percentages = cls.check_2d_inputs(params, percentages)
         results = np.zeros(percentages.shape)
         loc, scale = cls._safe_loc(params), cls._safe_scale(params)
@@ -148,6 +151,7 @@ class BetaUncertainty(UncertaintyBase):
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
     ) -> Tuple[npt.NDArray, npt.NDArray]:
         from scipy import stats
+
         loc = float(cls._safe_loc(params)[0][0])
         scale = float(cls._safe_scale(params)[0][0])
 

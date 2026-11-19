@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, Iterator, Optional, Type
+from typing import Any, Dict, Iterable, Iterator, Literal, Optional, Type
 
 import numpy as np
 import numpy.typing as npt
@@ -6,7 +6,13 @@ import numpy.typing as npt
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import UnknownUncertaintyType
 from stats_arrays.uncertainty_choices import uncertainty_choices
-from stats_arrays.utils import ParamsArray
+from stats_arrays.utils import (
+    ParamsArray,
+    RandomSource,
+    SeedLike,
+    make_random_source,
+    random_integers,
+)
 
 
 class RandomNumberGenerator(Iterable[npt.NDArray]):
@@ -16,7 +22,7 @@ class RandomNumberGenerator(Iterable[npt.NDArray]):
         params: ParamsArray,
         size: int = 1,
         maximum_iterations: int = 100,
-        seed: Optional[int] = None,
+        seed: SeedLike = None,
         **kwargs: Any,
     ) -> None:
         """
@@ -54,7 +60,7 @@ class RandomNumberGenerator(Iterable[npt.NDArray]):
             * **params** (array): The :ref:`params-array`
             * *size* (int, optional): The number of samples to draw from each parameter. Default is ``1``.
             * *maximum_iterations* (int, optional): The number of times to draw samples that fit within the given bounds, if any, before raising ``stats_arrays.MaximumIterationsError``. Default is ``100``.
-            * *seed* (int, optional): Seed value for the random number generator. Default is ``None``.
+            * *seed* (optional): Seed for the random number generator. An integer, sequence of integers, ``SeedSequence`` or ``BitGenerator`` is passed to ``numpy.random.default_rng``; a ``numpy.random.Generator`` or ``numpy.random.RandomState`` instance is used as is. Default is ``None`` (unseeded ``Generator``). To reproduce results from stats_arrays < 5, pass ``numpy.random.RandomState(seed)``.
 
         Returns:
             A class instance
@@ -65,7 +71,7 @@ class RandomNumberGenerator(Iterable[npt.NDArray]):
         self.size = size
         self.uncertainty_type = uncertainty_type
         self.maximum_iterations = maximum_iterations
-        self.random = np.random.RandomState(seed)
+        self.random: RandomSource = make_random_source(seed)
         self.verify_uncertainty_type()
         self.verify_params()
 
@@ -143,10 +149,14 @@ class MCRandomNumberGenerator(Iterable[npt.NDArray]):
     Args:
         * **params** (array): The :ref:`hpa`
         * *maximum_iterations* (int, optional): The number of times to draw samples that fit within the given bounds, if any, before raising ``stats_arrays.MaximumIterationsError``. Default is ``100``.
-        * *seed* (int, optional): Seed value for the random number generator. Default is ``None``.
+        * *seed* (optional): Seed for the random number generator. An integer, sequence of integers, ``SeedSequence`` or ``BitGenerator`` is passed to ``numpy.random.default_rng``; a ``numpy.random.Generator`` or ``numpy.random.RandomState`` instance is used as is. Default is ``None`` (unseeded ``Generator``). To reproduce results from stats_arrays < 5, pass ``numpy.random.RandomState(seed)``.
 
     Returns:
         A class instance
+
+    Internally, the parameters are sorted by ``uncertainty_type``; ``ordering`` is the
+    permutation used, so that ``params[ordering]`` is in sorted order. See
+    :meth:`generate` for how to get values in that order directly.
 
     """
 
@@ -154,19 +164,23 @@ class MCRandomNumberGenerator(Iterable[npt.NDArray]):
         self,
         params: ParamsArray,
         maximum_iterations: int = 50,
-        seed: Optional[int] = None,
+        seed: SeedLike = None,
         **kwargs: Any,
     ) -> None:
         self.params = params.copy()
         self.length = self.params.shape[0]
         self.maximum_iterations = maximum_iterations
         self.choices = uncertainty_choices
-        self.random = np.random.RandomState(seed)
+        self.random: RandomSource = make_random_source(seed)
         self.verify_params()
+        # Default (non-stable) sort kept deliberately: with a stable sort,
+        # ``seed=RandomState(n)`` would no longer reproduce stats_arrays < 5.
         self.ordering = np.argsort(self.params["uncertainty_type"])
         self.reverse_ordering = np.argsort(self.ordering)
+        self._identity_ordering = bool((self.ordering == np.arange(self.length)).all())
         self.params = self.params[self.ordering]
         self.positions = self.get_positions()
+        self._blocks = self._build_blocks()
 
     def get_positions(self) -> Dict[Type[UncertaintyBase], int]:
         """Construct dictionary of where each distribution starts and stops in the sorted parameter array"""
@@ -176,6 +190,19 @@ class MCRandomNumberGenerator(Iterable[npt.NDArray]):
                 for choice in self.choices
             ]
         )
+
+    def _build_blocks(self) -> "list[tuple[Type[UncertaintyBase], int, int]]":
+        """Precompute ``(uncertainty_type, start, stop)`` for each distribution
+        present in the sorted parameter array."""
+        blocks = []
+        offset = 0
+        for uncertainty_type in self.choices:
+            numparams = int(self.positions[uncertainty_type])
+            if not numparams:
+                continue
+            blocks.append((uncertainty_type, offset, offset + numparams))
+            offset += numparams
+        return blocks
 
     def verify_params(self) -> None:
         """Verify that all uncertainty types are allowed, and parameter validate using distribution class methods"""
@@ -191,37 +218,68 @@ class MCRandomNumberGenerator(Iterable[npt.NDArray]):
             if mask.sum():
                 uncertainty_type.validate(self.params[mask])
 
-    def generate(self, samples: int = 1) -> npt.NDArray:
+    def generate(
+        self,
+        samples: int = 1,
+        out: Optional[npt.NDArray] = None,
+        order: Literal["original", "sorted"] = "original",
+    ) -> npt.NDArray:
         """Generate random samples.
 
         If ``samples`` is one, return a one-dimensional array. Otherwise returns a ``num_parameters, samples`` array.
-        """
-        if samples == 1:
-            self.random_data = np.zeros(self.length)
-        else:
-            self.random_data = np.zeros((self.length, samples))
 
-        offset = 0
-        for uncertainty_type in self.choices:
-            numparams = self.positions[uncertainty_type]
-            if not numparams:
-                continue
+        Args:
+            * *samples* (int, optional): Number of samples to draw for each parameter. Default is ``1``.
+            * *out* (array, optional): A preallocated float array of shape ``(num_parameters,)`` (when ``samples`` is one) or ``(num_parameters, samples)`` to write the samples into, avoiding an allocation per call. It is returned.
+            * *order* (str, optional): ``"original"`` (default) returns values in the row order of the ``params`` given at instantiation. ``"sorted"`` returns them in the internal order, sorted by ``uncertainty_type``: row ``i`` of the result belongs to row ``ordering[i]`` of the original ``params``. This skips a scatter over the whole vector, so callers who keep their own index arrays can apply ``ordering`` to them once and then use this order on every draw.
+
+        Returns:
+            The array of samples.
+        """
+        if order not in ("original", "sorted"):
+            raise ValueError(f"`order` must be 'original' or 'sorted', got {order!r}")
+        shape = (self.length,) if samples == 1 else (self.length, samples)
+        if out is None:
+            out = np.empty(shape)
+        elif not isinstance(out, np.ndarray) or not np.issubdtype(
+            out.dtype, np.floating
+        ):
+            kind = (
+                f"{out.dtype} array"
+                if isinstance(out, np.ndarray)
+                else type(out).__name__
+            )
+            raise TypeError(f"`out` must be a float NumPy array, got {kind}")
+        elif out.shape != shape:
+            raise ValueError(f"`out` must have shape {shape}, got {out.shape}")
+
+        # In original order, scatter each block straight to its final positions
+        # instead of filling a sorted array and then permuting the whole thing.
+        destinations: Optional[npt.NDArray] = (
+            self.ordering
+            if order == "original" and not self._identity_ordering
+            else None
+        )
+
+        for uncertainty_type, start, stop in self._blocks:
+            # Always go through ``bounded_random_variables``: it reads the
+            # current bounds on every draw (and returns early when there are
+            # none), so changes to ``self.params`` after instantiation count.
             random_data = uncertainty_type.bounded_random_variables(
-                self.params[offset : numparams + offset],
+                self.params[start:stop],
                 samples,
                 self.random,
                 self.maximum_iterations,
             )
-            if samples == 1:
-                if len(random_data.shape) == 2:
-                    random_data = random_data[:, 0]  # Restore to 1-d
-                self.random_data[offset : numparams + offset] = random_data
+            if samples == 1 and random_data.ndim == 2:
+                random_data = random_data[:, 0]  # Restore to 1-d
+            if destinations is None:
+                out[start:stop] = random_data
             else:
-                self.random_data[offset : numparams + offset, :] = random_data
-            offset += numparams
+                out[destinations[start:stop]] = random_data
 
-        self.random_data = self.random_data[self.reverse_ordering]
-        return self.random_data
+        self.random_data = out
+        return out
 
     def next(self) -> npt.NDArray:
         """Generate a new vector of random numbers"""
@@ -241,14 +299,14 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
     .. rubric:: Inputs
 
     * params : A :ref:`params-array` which gives parameters for distributions (one distribution per row).
-    * seed : An integer (or array of integers) to seed the `NumPy random number generator <http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.mtrand.RandomState.html#numpy.random.mtrand.RandomState>`_.
+    * seed : Optional. An integer, sequence of integers, ``SeedSequence`` or ``BitGenerator`` passed to ``numpy.random.default_rng``, or a ``numpy.random.Generator`` or ``numpy.random.RandomState`` instance used as is. To reproduce results from stats_arrays < 5, pass ``numpy.random.RandomState(seed)``.
     * samples : An integer number of samples to construct for each distribution.
     """
 
     def __init__(
         self,
         params: ParamsArray,
-        seed: Optional[int] = None,
+        seed: SeedLike = None,
         samples: int = 10,
         **kwargs: Any,
     ) -> None:
@@ -258,7 +316,7 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
         self.size = 1
         self.samples = samples
         self.choices = uncertainty_choices
-        self.random = np.random.RandomState(seed)
+        self.random = make_random_source(seed)
         self.uncertainty_type = None
 
         self.verify_params()
@@ -337,5 +395,5 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
     def next(self) -> npt.NDArray:
         """Draw directly from pre-computed sample space."""
         return self.hypercube[
-            self.row_index, self.random.randint(self.samples, size=self.length)
+            self.row_index, random_integers(self.random, self.samples, size=self.length)
         ]

@@ -5,7 +5,12 @@ import numpy.typing as npt
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
-from stats_arrays.utils import ParamsArray, StatisticsResult, one_row_params_array
+from stats_arrays.utils import (
+    ParamsArray,
+    RandomSource,
+    StatisticsResult,
+    one_row_params_array,
+)
 
 
 class DiscreteUniform(UncertaintyBase):
@@ -50,11 +55,19 @@ class DiscreteUniform(UncertaintyBase):
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
     ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random.RandomState()
+            seeded_random = np.random.default_rng()
         params = cls.fix_nan_minimum(params)
+        if isinstance(seeded_random, np.random.Generator):
+            # ``Generator.integers`` broadcasts array bounds, and, like
+            # ``randint``, excludes ``high``.
+            return seeded_random.integers(
+                params["minimum"].astype(np.int64),
+                params["maximum"].astype(np.int64),
+                size=(size, params.shape[0]),
+            ).T
         # randint has different behaviour than e.g. uniform. We can't pass in
         # arrays, but have to process them line by line.
         return np.vstack(
@@ -71,6 +84,7 @@ class DiscreteUniform(UncertaintyBase):
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         from scipy import stats
+
         vector = cls.check_2d_inputs(params, vector)
         results = np.zeros(vector.shape)
         params = cls.fix_nan_minimum(params)
