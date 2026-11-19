@@ -787,3 +787,97 @@ def test_bounds_without_probability_mass_rejected(row):
 def test_thin_but_usable_bounds_accepted(row):
     lhc = LatinHypercubeRNG(lhc_bounds_params(row), samples=5)
     assert np.isfinite(lhc.hypercube).all()
+
+
+@pytest.mark.parametrize(
+    "name, row",
+    [
+        (
+            "WeibullUncertainty",
+            {"loc": 0, "scale": 1, "shape": 2, "uncertainty_type": 8},
+        ),
+        ("GammaUncertainty", {"loc": 0, "scale": 1, "shape": 2, "uncertainty_type": 9}),
+        (
+            "GeneralizedExtremeValueUncertainty",
+            {"loc": 0, "scale": 1, "shape": 0, "uncertainty_type": 11},
+        ),
+        (
+            "StudentsTUncertainty",
+            {"loc": 0, "scale": 1, "shape": 3, "uncertainty_type": 12},
+        ),
+    ],
+)
+def test_distribution_without_ppf_rejected_clearly(name, row):
+    """These raised ``NotImplementedError`` with no message."""
+    params = lhc_bounds_params(
+        {"loc": 0, "scale": 1, "uncertainty_type": NormalUncertainty.id}, row
+    )
+    with pytest.raises(NotImplementedError) as excinfo:
+        LatinHypercubeRNG(params)
+    message = str(excinfo.value)
+    assert name in message
+    assert "`ppf`" in message
+    assert "Failing row: [1]" in message
+
+
+def test_unsupported_distributions_all_listed():
+    params = lhc_bounds_params(
+        {"loc": 0, "scale": 1, "shape": 2, "uncertainty_type": 9},
+        {"loc": 0, "scale": 1, "uncertainty_type": NormalUncertainty.id},
+        {"loc": 0, "scale": 1, "shape": 3, "uncertainty_type": 12},
+    )
+    with pytest.raises(NotImplementedError) as excinfo:
+        LatinHypercubeRNG(params)
+    message = str(excinfo.value)
+    assert "GammaUncertainty" in message and "StudentsTUncertainty" in message
+    assert "Failing rows: [0, 2]" in message
+
+
+def _choices_with(monkeypatch, distribution):
+    from stats_arrays.uncertainty_choices import UncertaintyChoices
+
+    choices = UncertaintyChoices()
+    choices.add(distribution)
+    monkeypatch.setattr("stats_arrays.random.uncertainty_choices", choices)
+
+
+def test_distribution_without_cdf_only_rejected_for_bounded_rows(monkeypatch):
+    from stats_arrays import UncertaintyBase
+
+    class PpfOnly(UncertaintyBase):
+        id = 77
+        description = "Has ppf but no cdf"
+
+        @classmethod
+        def ppf(cls, params, percentages):
+            return np.zeros(percentages.shape) + params["loc"].reshape(-1, 1)
+
+    _choices_with(monkeypatch, PpfOnly)
+    unbounded = lhc_bounds_params({"loc": 3, "uncertainty_type": 77})
+    assert (LatinHypercubeRNG(unbounded, samples=4).hypercube == 3).all()
+
+    mixed = lhc_bounds_params(
+        {"loc": 3, "uncertainty_type": 77},
+        {"loc": 3, "minimum": 1, "uncertainty_type": 77},
+    )
+    with pytest.raises(NotImplementedError) as excinfo:
+        LatinHypercubeRNG(mixed, samples=4)
+    message = str(excinfo.value)
+    assert "PpfOnly" in message and "`cdf`" in message and "`ppf`;" not in message
+    assert "Failing row: [1]" in message
+
+
+def test_staticmethod_ppf_counts_as_implemented(monkeypatch):
+    from stats_arrays import UncertaintyBase
+
+    class StaticPpf(UncertaintyBase):
+        id = 78
+        description = "ppf is a staticmethod"
+
+        @staticmethod
+        def ppf(params, percentages):
+            return np.zeros(percentages.shape) + 5
+
+    _choices_with(monkeypatch, StaticPpf)
+    params = lhc_bounds_params({"loc": 3, "uncertainty_type": 78})
+    assert (LatinHypercubeRNG(params, samples=4).hypercube == 5).all()

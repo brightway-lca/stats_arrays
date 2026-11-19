@@ -326,11 +326,12 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
     def build_hypercube(self) -> None:
         """Build an array, of shape `self.length` rows by `self.samples` columns, which contains the sample space to be drawn from when doing Latin Hypercubic sampling.
 
-        Each row represents a different data point and distribution. The final sample space is `self.hypercube`. All distributions from `uncertainty_choices` are usable, and bounded distributions are also fine.
+        Each row represents a different data point and distribution. The final sample space is `self.hypercube`. A distribution is usable if it implements ``ppf``, and, for rows with ``minimum`` or ``maximum`` bounds, ``cdf``; otherwise ``NotImplementedError`` is raised. Of the built-in distributions, Weibull, gamma, generalized extreme value and Student's t implement neither.
 
         .. rubric:: Builds
 
         self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
+        self._check_distributions_supported()
         # The range of percentages to sample from for each row: the whole
         # distribution by default, or the part inside its bounds.
         lower = np.zeros(self.length)
@@ -374,6 +375,44 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
         self.hypercube[self.params["negative"], :] = (
             -1 * self.hypercube[self.params["negative"], :]
         )
+
+    def _check_distributions_supported(self) -> None:
+        """Raise ``NotImplementedError`` naming the distributions in ``params``
+        that lack the ``ppf`` (or, for bounded rows, ``cdf``) needed here."""
+
+        def implemented(uncertainty_type: Type[UncertaintyBase], name: str) -> bool:
+            method = getattr(uncertainty_type, name)
+            base = getattr(UncertaintyBase, name)
+            return getattr(method, "__func__", method) is not base.__func__
+
+        problems = []
+        unsupported = np.zeros(self.length, dtype=bool)
+        for uncertainty_type in self.choices:
+            mask = self.params["uncertainty_type"] == uncertainty_type.id
+            if not mask.any() or issubclass(uncertainty_type, UndefinedUncertainty):
+                continue
+            missing = []
+            if not implemented(uncertainty_type, "ppf"):
+                missing.append("ppf")
+            bounded = mask & ~(
+                np.isnan(self.params["minimum"]) & np.isnan(self.params["maximum"])
+            )
+            if bounded.any() and not implemented(uncertainty_type, "cdf"):
+                missing.append("cdf")
+                if "ppf" not in missing:
+                    mask = bounded
+            if missing:
+                problems.append(
+                    f"{uncertainty_type.__name__} (id {uncertainty_type.id}) "
+                    f"does not implement {' or '.join(f'`{m}`' for m in missing)}"
+                )
+                unsupported |= mask
+        if problems:
+            raise NotImplementedError(
+                "LatinHypercubeRNG needs `ppf` to sample a distribution, and `cdf` "
+                f"to apply bounds: {'; '.join(problems)}. "
+                f"{UncertaintyBase._fmt_bad_rows(unsupported)}"
+            )
 
     @staticmethod
     def _percentage_bounds(
