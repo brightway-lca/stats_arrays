@@ -19,18 +19,17 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
     "Typing :: Typed"
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
     "numpy",
     "scipy",
@@ -116,10 +115,9 @@ ensure_newline_before_comments = true
 
 [tool.mypy]
 files = ["src/stats_arrays"]
-# `python_version` is deliberately unset. Current mypy releases refuse to target
-# anything below 3.10, and pinning it also breaks parsing of NumPy's own stubs.
-# Checks therefore run against the interpreter in use; the annotations here stay
-# 3.9-compatible (`typing.Optional`/`Tuple` rather than `X | None`).
+# The minimum supported version, so that checks run on a newer interpreter still
+# reject syntax and standard library features that 3.11 does not have.
+python_version = "3.11"
 # `stats_arrays` ships a `py.typed` marker, so every public symbol needs an
 # annotation that downstream type checkers can rely on.
 disallow_untyped_defs = true
@@ -134,7 +132,7 @@ warn_unused_configs = true
 warn_return_any = false
 
 [[tool.mypy.overrides]]
-# SciPy ships no type information, and `scipy-stubs` requires Python >= 3.11
-# while this package supports 3.9+.
+# SciPy ships no type information. `scipy-stubs` is not used yet: with it, mypy
+# reports errors in the lognormal, geometric and beta distributions.
 module = ["scipy.*"]
 ignore_missing_imports = true

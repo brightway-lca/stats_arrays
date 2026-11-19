@@ -1,5 +1,11 @@
 # stats_arrays Changelog
 
+# Unreleased
+
+### Breaking changes
+
+* **Python 3.11 is now the minimum supported version.** Python 3.9 and 3.10 have reached end of life, and current NumPy and SciPy releases no longer support them. See [brightway2#92](https://github.com/brightway-lca/brightway2/issues/92). Python 3.15 is now tested in CI.
+
 # 4.0 (2026-10-20)
 
 ### Breaking changes
