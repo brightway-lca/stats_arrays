@@ -28,6 +28,16 @@ class DiscreteUniform(UncertaintyBase):
         bad = params["minimum"] >= params["maximum"]
         if bad.any():
             raise ImproperBoundsError(f"minimum >= maximum. {cls._fmt_bad_rows(bad)}")
+        # The support is a range of integers, and `cdf` and `ppf` return NaN for
+        # fractional bounds. A NaN minimum is allowed, and defaults to zero.
+        bad = (params["maximum"] != np.floor(params["maximum"])) | (
+            ~np.isnan(params["minimum"])
+            & (params["minimum"] != np.floor(params["minimum"]))
+        )
+        if bad.any():
+            raise InvalidParamsError(
+                f"Minimum and maximum values must be integers. {cls._fmt_bad_rows(bad)}"
+            )
 
     @classmethod
     def fix_nan_minimum(cls, params: ParamsArray) -> ParamsArray:
@@ -76,15 +86,12 @@ class DiscreteUniform(UncertaintyBase):
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         from scipy import stats
         percentages = cls.check_2d_inputs(params, percentages)
-        results = np.zeros(percentages.shape)
         params = cls.fix_nan_minimum(params)
-        for row in range(params.shape[0]):
-            results[row, :] = stats.randint.ppf(
-                percentages[row, :],
-                params[row]["minimum"],
-                params[row]["maximum"],
-            )
-        return results
+        return stats.randint.ppf(
+            percentages,
+            params["minimum"].reshape(-1, 1),
+            params["maximum"].reshape(-1, 1),
+        )
 
     @classmethod
     @one_row_params_array

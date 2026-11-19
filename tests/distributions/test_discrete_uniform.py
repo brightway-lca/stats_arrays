@@ -3,6 +3,8 @@ import pytest
 from scipy import stats as scipy_stats
 
 from stats_arrays.distributions import DiscreteUniform
+from stats_arrays.errors import InvalidParamsError
+from stats_arrays.random import LatinHypercubeRNG
 
 
 def test_array_shape_1d(make_params_array):
@@ -93,4 +95,32 @@ def test_ppf_stays_on_support(make_params_array):
     percentages = np.array([[0.01, 0.25, 0.5, 0.99], [0.01, 0.34, 0.67, 0.99]])
     result = DiscreteUniform.ppf(params, percentages)
     assert np.array_equal(result, [[2, 2, 3, 5], [0, 1, 2, 2]])
-    assert np.allclose(DiscreteUniform.cdf(params, result) >= percentages, True)
+    assert (DiscreteUniform.cdf(params, result) >= percentages).all()
+
+
+def test_latin_hypercube_stays_on_support():
+    params = DiscreteUniform.from_dicts(
+        {"minimum": 2, "maximum": 6, "uncertainty_type": DiscreteUniform.id}
+    )
+    hypercube = LatinHypercubeRNG(params, samples=99).hypercube
+    values, counts = np.unique(hypercube, return_counts=True)
+    assert values.tolist() == [2, 3, 4, 5]
+    assert counts.tolist() == [25, 25, 25, 24]
+
+
+@pytest.mark.parametrize(
+    "minimum, maximum", [(0.5, 3), (0, 3.5), (0.5, 3.5), (np.nan, 3.5)]
+)
+def test_validate_rejects_non_integer_bounds(make_params_array, minimum, maximum):
+    params = make_params_array(length=2)
+    params["minimum"] = [0, minimum]
+    params["maximum"] = [3, maximum]
+    with pytest.raises(InvalidParamsError, match=r"Failing row: \[1\]"):
+        DiscreteUniform.validate(params)
+
+
+def test_validate_accepts_nan_minimum(make_params_array):
+    params = make_params_array(length=1)
+    params["minimum"] = np.nan
+    params["maximum"] = 3
+    DiscreteUniform.validate(params)
