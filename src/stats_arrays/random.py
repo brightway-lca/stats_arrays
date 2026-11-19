@@ -5,7 +5,7 @@ import numpy.typing as npt
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.distributions.undefined import UndefinedUncertainty
-from stats_arrays.errors import UnknownUncertaintyType
+from stats_arrays.errors import UnknownUncertaintyType, UnreasonableBoundsError
 from stats_arrays.uncertainty_choices import uncertainty_choices
 from stats_arrays.utils import (
     ParamsArray,
@@ -349,6 +349,19 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
         self.percentages = lower.reshape(-1, 1) + (upper - lower).reshape(
             -1, 1
         ) * fractions.reshape(1, -1)
+        # Bounds that hold none of the distribution, or so little that it is
+        # lost to rounding, leave nothing to sample: every percentage would be
+        # 0 or 1, and ``ppf`` would return infinities or the edge of the support.
+        empty = (
+            ~(upper > lower)
+            | (self.percentages.min(axis=1) <= 0)
+            | (self.percentages.max(axis=1) >= 1)
+        )
+        if empty.any():
+            raise UnreasonableBoundsError(
+                "The `minimum` and `maximum` bounds contain no part of the "
+                f"distribution that can be sampled. {UncertaintyBase._fmt_bad_rows(empty)}"
+            )
         # Transform percentages into a sample space
         self.hypercube = np.zeros((self.length, self.samples))
         for uncertainty_type in self.choices:

@@ -739,3 +739,51 @@ def test_ordered_or_missing_bounds_still_validate(uncertainty_type, bounds):
         {"loc": 0, "scale": 1, "uncertainty_type": uncertainty_type.id, **bounds}
     )
     uncertainty_type.validate(params)
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        {"loc": 0, "scale": 1, "minimum": 9, "uncertainty_type": NormalUncertainty.id},
+        {
+            "loc": 0,
+            "scale": 1,
+            "maximum": -40,
+            "uncertainty_type": NormalUncertainty.id,
+        },
+        {
+            # Positive bounds on a negative lognormal: outside its support
+            "loc": 0,
+            "scale": 0.3,
+            "negative": True,
+            "minimum": 0.5,
+            "maximum": 2,
+            "uncertainty_type": LognormalUncertainty.id,
+        },
+    ],
+    ids=["far-upper-tail", "far-lower-tail", "outside-support"],
+)
+def test_bounds_without_probability_mass_rejected(row):
+    """These gave a hypercube of all ``inf``, ``-inf`` or 0."""
+    from stats_arrays import UnreasonableBoundsError
+
+    params = lhc_bounds_params(
+        {"loc": 0, "scale": 1, "uncertainty_type": NormalUncertainty.id}, row
+    )
+    with pytest.raises(UnreasonableBoundsError, match=r"Failing row: \[1\]"):
+        LatinHypercubeRNG(params, samples=5)
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        {"loc": 0, "scale": 1, "minimum": 5, "uncertainty_type": NormalUncertainty.id},
+        {"loc": 0, "scale": 1, "maximum": -8, "uncertainty_type": NormalUncertainty.id},
+        {"minimum": 4, "maximum": 5, "uncertainty_type": 7},  # DiscreteUniform
+        {"loc": 2, "minimum": 5, "maximum": 6, "uncertainty_type": NoUncertainty.id},
+    ],
+    ids=["upper-tail", "lower-tail", "single-value-support", "no-uncertainty"],
+)
+def test_thin_but_usable_bounds_accepted(row):
+    lhc = LatinHypercubeRNG(lhc_bounds_params(row), samples=5)
+    assert np.isfinite(lhc.hypercube).all()
