@@ -93,7 +93,10 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
                 )
             )
             return
+        # Keep ``choices`` sorted by id: ``MCRandomNumberGenerator`` relies on
+        # it to match each distribution to its rows in the id-sorted params.
         self.choices.append(distribution)
+        self.choices.sort(key=lambda x: x.id)
         self.id_dict[distribution.id] = distribution
 
 
