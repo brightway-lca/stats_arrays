@@ -646,11 +646,9 @@ def test_bounds_mixed_rows():
     assert ((lhc.hypercube[3] >= -1) & (lhc.hypercube[3] <= 1)).all()
 
 
-def test_bounds_negative_lognormal_percentages():
+def test_bounds_negative_lognormal():
     """For a lognormal with ``negative`` set, ``ppf`` decreases, so the signed
-    minimum limits the upper percentage and the signed maximum the lower one.
-    Checked at the ``ppf`` level, as ``build_hypercube`` currently negates these
-    rows a second time."""
+    minimum limits the upper percentage and the signed maximum the lower one."""
     params = lhc_bounds_params(
         {
             "loc": 0,
@@ -662,8 +660,7 @@ def test_bounds_negative_lognormal_percentages():
         }
     )
     lhc = LatinHypercubeRNG(params, samples=10)
-    values = LognormalUncertainty.ppf(params, lhc.percentages.copy())
-    assert ((values >= -2) & (values <= -0.5)).all()
+    assert ((lhc.hypercube >= -2) & (lhc.hypercube <= -0.5)).all()
 
 
 @pytest.mark.parametrize(
@@ -881,3 +878,65 @@ def test_staticmethod_ppf_counts_as_implemented(monkeypatch):
     _choices_with(monkeypatch, StaticPpf)
     params = lhc_bounds_params({"loc": 3, "uncertainty_type": 78})
     assert (LatinHypercubeRNG(params, samples=4).hypercube == 5).all()
+
+
+@pytest.mark.parametrize("samples", [1, 2, 5])
+def test_negative_lognormal_is_negative(samples):
+    """Regression test for #54: negative lognormals came out positive.
+
+    ``samples=1`` takes the single-column branch of
+    ``LognormalUncertainty.ppf``, which negates separately."""
+    params = lhc_bounds_params(
+        {"loc": 0, "scale": 0.3, "uncertainty_type": LognormalUncertainty.id},
+        {
+            "loc": 0,
+            "scale": 0.3,
+            "negative": True,
+            "uncertainty_type": LognormalUncertainty.id,
+        },
+    )
+    lhc = LatinHypercubeRNG(params, samples=samples)
+    assert lhc.hypercube.shape == (2, samples)
+    assert (lhc.hypercube[1] < 0).all()
+    assert np.allclose(lhc.hypercube[1], -lhc.hypercube[0])
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        {"loc": -5, "scale": 1, "uncertainty_type": NormalUncertainty.id},
+        {"minimum": -3, "maximum": -1, "uncertainty_type": UniformUncertainty.id},
+        {
+            "loc": -2,
+            "minimum": -3,
+            "maximum": -1,
+            "uncertainty_type": TriangularUncertainty.id,
+        },
+    ],
+)
+def test_negative_flag_ignored_where_monte_carlo_ignores_it(row):
+    """Regression test for #54: rows with ``negative`` set were flipped, while
+    ``MCRandomNumberGenerator`` leaves them alone."""
+    plain = LatinHypercubeRNG(lhc_bounds_params(row), samples=5).hypercube
+    flagged = LatinHypercubeRNG(
+        lhc_bounds_params({**row, "negative": True}), samples=5
+    ).hypercube
+    assert np.array_equal(plain, flagged)
+    assert (flagged < 0).all()
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        {"loc": 0, "scale": 0.3, "uncertainty_type": LognormalUncertainty.id},
+        {"loc": -5, "scale": 1, "uncertainty_type": NormalUncertainty.id},
+        {"loc": 1, "scale": 0.5, "uncertainty_type": LognormalUncertainty.id},
+    ],
+)
+def test_negative_sign_matches_monte_carlo(row):
+    from stats_arrays import MCRandomNumberGenerator
+
+    params = lhc_bounds_params({**row, "negative": True})
+    lhc = LatinHypercubeRNG(params, samples=20).hypercube
+    mc = MCRandomNumberGenerator(params, seed=1).generate(samples=200)
+    assert np.sign(np.median(lhc)) == np.sign(np.median(mc))
