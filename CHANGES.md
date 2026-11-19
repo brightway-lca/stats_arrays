@@ -19,6 +19,14 @@
 
 * **BernoulliUncertainty.random_variables()** raised `ValueError` for more than one row, because the uniform draws of shape `(rows, size)` were compared against `loc` of shape `(rows,)`.
 * **StudentsTUncertainty.random_variables()** broadcast `loc` and `scale` against the draws incorrectly. With several rows it raised `ValueError` for `size > 1`, and for `size == 1` every row used the `loc` and `scale` of the first row. Seeded results for parameter arrays with several Student's T rows that differ in `loc` or `scale` therefore change.
+* **LatinHypercubeRNG** ignored `minimum` and `maximum` bounds ([#48](https://github.com/brightway-lca/stats_arrays/issues/48)): the adjusted percentages were assigned to a temporary copy, so bounded distributions were sampled over their full range. The hypercube now only covers the part of each distribution inside its bounds. This changes the samples for every row that has a bound and is not one of the distributions where `minimum` and `maximum` are the support (uniform, triangular, discrete uniform, beta and beta-PERT, which are unchanged). Details:
+  * A lower bound starts at P(X < minimum), so discrete distributions can still return `minimum` itself.
+  * For a lognormal with `negative` set, the bounds apply to the signed values.
+  * Undefined and no-uncertainty rows with bounds no longer raise `UndefinedDistributionError`; their bounds are ignored, as their value is always `loc`.
+  * Bounds that contain none of the distribution, or so little that it is lost to rounding, raise `UnreasonableBoundsError` with the failing rows.
+  * Distributions without `ppf` (Weibull, gamma, generalized extreme value and Student's t), or without `cdf` on rows with bounds, raise `NotImplementedError` naming the distribution and the failing rows. Before, the error had no message.
+* **Normal** and **Lognormal** `validate()` accepted `minimum >= maximum` ([#62](https://github.com/brightway-lca/stats_arrays/issues/62)), as they did not run the base-class bounds check. They now raise `ImproperBoundsError` with the failing rows, so `MCRandomNumberGenerator` and `LatinHypercubeRNG` reject such rows at instantiation. Before, Monte Carlo failed at the first draw with a `MaximumIterationsError`.
+* The six bounded-interval tests in `tests/test_lhc.py` had been skipped since 2019, which hid this bug. They run again; the three lognormal ones had expected values for `loc = 0` but used `loc = 1`, and now use `loc = 0`.
 
 ### Performance
 

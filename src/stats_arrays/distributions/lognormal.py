@@ -32,6 +32,8 @@ class LognormalUncertainty(UncertaintyBase):
                 f"Real, positive scale (sigma) values are required for lognormal uncertainties. "
                 f"{cls._fmt_bad_rows(bad)}"
             )
+        # ``minimum`` and ``maximum`` are optional, but must be in order
+        super(LognormalUncertainty, cls).validate(params)
 
     @classmethod
     def random_variables(
