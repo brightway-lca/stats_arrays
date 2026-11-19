@@ -58,7 +58,9 @@ def test_statistics_match_support(make_params_array, minimum, maximum):
     assert stats["mode"] is None
     assert stats["lower"] == minimum
     assert stats["upper"] == maximum
-    assert all(isinstance(stats[k], float) for k in ("mean", "median", "lower", "upper"))
+    assert all(
+        isinstance(stats[k], float) for k in ("mean", "median", "lower", "upper")
+    )
 
 
 def test_statistics_mean_matches_samples(make_params_array):
@@ -109,7 +111,9 @@ def test_latin_hypercube_stays_on_support():
 
 
 @pytest.mark.parametrize(
-    "minimum, maximum", [(0.5, 3), (0, 3.5), (0.5, 3.5), (np.nan, 3.5)]
+    "minimum, maximum",
+    # (0.5, 0.9) is the example from #51: both truncate to 0, so sampling failed
+    [(0.5, 3), (0, 3.5), (0.5, 3.5), (np.nan, 3.5), (0.5, 0.9)],
 )
 def test_validate_rejects_non_integer_bounds(make_params_array, minimum, maximum):
     params = make_params_array(length=2)
@@ -124,3 +128,54 @@ def test_validate_accepts_nan_minimum(make_params_array):
     params["minimum"] = np.nan
     params["maximum"] = 3
     DiscreteUniform.validate(params)
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda p: DiscreteUniform.random_variables(p, 5, np.random.default_rng(1)),
+        lambda p: DiscreteUniform.random_variables(p, 5, np.random.RandomState(1)),
+        lambda p: DiscreteUniform.cdf(p, np.array([1.0, 2.0])),
+        lambda p: DiscreteUniform.ppf(p, np.array([[0.5], [0.5]])),
+    ],
+    ids=["random_variables-Generator", "random_variables-RandomState", "cdf", "ppf"],
+)
+def test_nan_minimum_not_overwritten(make_params_array, call):
+    """Regression test for #52: these methods set a NaN ``minimum`` to 0 in the
+    caller's array."""
+    params = make_params_array(length=2)
+    params["minimum"] = [np.nan, 1]
+    params["maximum"] = [3, 4]
+    call(params)
+    assert np.isnan(params["minimum"][0])
+    assert params["minimum"][1] == 1
+
+
+def test_nan_minimum_not_overwritten_by_statistics(make_params_array):
+    params = make_params_array(length=1)
+    params["minimum"] = np.nan
+    params["maximum"] = 3
+    DiscreteUniform.statistics(params)
+    assert np.isnan(params["minimum"][0])
+
+
+def test_nan_minimum_still_defaults_to_zero(make_params_array):
+    params = make_params_array(length=1)
+    params["minimum"] = np.nan
+    params["maximum"] = 3
+    data = DiscreteUniform.random_variables(params, 300, np.random.default_rng(1))
+    assert set(np.unique(data)) == {0, 1, 2}
+
+
+def test_mc_keeps_nan_minimum():
+    """``MCRandomNumberGenerator`` passes views of its own params, which were
+    changed on the first draw."""
+    from stats_arrays import MCRandomNumberGenerator, UncertaintyBase
+
+    params = UncertaintyBase.from_dicts(
+        {"maximum": 3, "uncertainty_type": DiscreteUniform.id}
+    )
+    mc = MCRandomNumberGenerator(params, seed=1)
+    mc.generate()
+    assert np.isnan(mc.params["minimum"][0])
+    assert np.isnan(params["minimum"][0])
