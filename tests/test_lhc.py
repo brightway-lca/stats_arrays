@@ -940,3 +940,54 @@ def test_negative_sign_matches_monte_carlo(row):
     lhc = LatinHypercubeRNG(params, samples=20).hypercube
     mc = MCRandomNumberGenerator(params, seed=1).generate(samples=200)
     assert np.sign(np.median(lhc)) == np.sign(np.median(mc))
+
+
+@pytest.fixture()
+def lhc_two_rows():
+    return lhc_bounds_params(
+        {"loc": 0, "scale": 1, "uncertainty_type": NormalUncertainty.id},
+        {"minimum": 0, "maximum": 1, "uncertainty_type": UniformUncertainty.id},
+    )
+
+
+def test_generate_single_sample(lhc_two_rows):
+    """Regression test for #50: ``generate()`` raised ``AttributeError``."""
+    lhc = LatinHypercubeRNG(lhc_two_rows, seed=1, samples=5)
+    data = lhc.generate()
+    assert data.shape == (2,)
+    for row in range(2):
+        assert data[row] in lhc.hypercube[row]
+
+
+def test_generate_matches_next(lhc_two_rows):
+    a = LatinHypercubeRNG(lhc_two_rows, seed=3, samples=5)
+    b = LatinHypercubeRNG(lhc_two_rows, seed=3, samples=5)
+    for _ in range(5):
+        assert np.array_equal(a.generate(), next(b))
+
+
+def test_generate_multiple_samples(lhc_two_rows):
+    lhc = LatinHypercubeRNG(lhc_two_rows, seed=1, samples=5)
+    data = lhc.generate(samples=200)
+    assert data.shape == (2, 200)
+    for row in range(2):
+        assert set(data[row]) == set(lhc.hypercube[row])
+
+
+def test_generate_out_and_order(lhc_two_rows):
+    expected = LatinHypercubeRNG(lhc_two_rows, seed=2, samples=5).generate(samples=3)
+    lhc = LatinHypercubeRNG(lhc_two_rows, seed=2, samples=5)
+    out = np.full((2, 3), np.nan)
+    assert lhc.generate(samples=3, out=out, order="sorted") is out
+    assert np.array_equal(out, expected)
+    assert np.array_equal(lhc.ordering, np.arange(2))
+
+
+def test_generate_argument_checks(lhc_two_rows):
+    lhc = LatinHypercubeRNG(lhc_two_rows, samples=5)
+    with pytest.raises(ValueError):
+        lhc.generate(order="random")
+    with pytest.raises(ValueError):
+        lhc.generate(out=np.empty(3))
+    with pytest.raises(TypeError):
+        lhc.generate(out=np.empty(2, dtype=int))
