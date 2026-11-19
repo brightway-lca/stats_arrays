@@ -241,6 +241,15 @@ class MCRandomNumberGenerator(Iterable[npt.NDArray]):
         shape = (self.length,) if samples == 1 else (self.length, samples)
         if out is None:
             out = np.empty(shape)
+        elif not isinstance(out, np.ndarray) or not np.issubdtype(
+            out.dtype, np.floating
+        ):
+            kind = (
+                f"{out.dtype} array"
+                if isinstance(out, np.ndarray)
+                else type(out).__name__
+            )
+            raise TypeError(f"`out` must be a float NumPy array, got {kind}")
         elif out.shape != shape:
             raise ValueError(f"`out` must have shape {shape}, got {out.shape}")
 

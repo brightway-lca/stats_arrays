@@ -215,6 +215,25 @@ def test_generate_out_wrong_shape(params):
         mc.generate(samples=3, out=np.empty(len(ROWS)))
 
 
+@pytest.mark.parametrize(
+    "out",
+    [
+        np.zeros(len(ROWS), dtype=int),
+        np.zeros(len(ROWS), dtype=bool),
+        [0.0] * len(ROWS),
+    ],
+)
+def test_generate_out_must_be_float_array(params, out):
+    with pytest.raises(TypeError, match="float NumPy array"):
+        MCRandomNumberGenerator(params).generate(out=out)
+
+
+def test_generate_out_float32(params):
+    out = np.zeros(len(ROWS), dtype=np.float32)
+    assert MCRandomNumberGenerator(params, seed=1).generate(out=out) is out
+    assert out[0] == 1
+
+
 @pytest.mark.parametrize("seed", SEEDS)
 @pytest.mark.parametrize("samples", [1, 4])
 def test_generate_sorted_order(params, seed, samples):
