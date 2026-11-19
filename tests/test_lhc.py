@@ -703,3 +703,39 @@ def test_bounds_ignored_for_undefined(uncertainty_type):
     )
     lhc = LatinHypercubeRNG(params, samples=4)
     assert (lhc.hypercube == 2).all()
+
+
+@pytest.mark.parametrize("uncertainty_type", [NormalUncertainty, LognormalUncertainty])
+@pytest.mark.parametrize("bounds", [(2, 1), (1, 1)], ids=["reversed", "equal"])
+def test_minimum_not_below_maximum_rejected(uncertainty_type, bounds):
+    """Normal and lognormal ``validate`` skipped the base-class bounds check, so
+    reversed bounds gave a reversed hypercube, and equal bounds a constant one."""
+    from stats_arrays import ImproperBoundsError, MCRandomNumberGenerator
+
+    params = lhc_bounds_params(
+        {"loc": 0, "scale": 1, "uncertainty_type": uncertainty_type.id},
+        {
+            "loc": 0,
+            "scale": 1,
+            "minimum": bounds[0],
+            "maximum": bounds[1],
+            "uncertainty_type": uncertainty_type.id,
+        },
+    )
+    with pytest.raises(ImproperBoundsError, match=r"Failing row: \[1\]"):
+        uncertainty_type.validate(params)
+    with pytest.raises(ImproperBoundsError):
+        LatinHypercubeRNG(params)
+    with pytest.raises(ImproperBoundsError):
+        MCRandomNumberGenerator(params)
+
+
+@pytest.mark.parametrize("uncertainty_type", [NormalUncertainty, LognormalUncertainty])
+@pytest.mark.parametrize(
+    "bounds", [{}, {"minimum": 0.5}, {"maximum": 2}, {"minimum": 0.5, "maximum": 2}]
+)
+def test_ordered_or_missing_bounds_still_validate(uncertainty_type, bounds):
+    params = lhc_bounds_params(
+        {"loc": 0, "scale": 1, "uncertainty_type": uncertainty_type.id, **bounds}
+    )
+    uncertainty_type.validate(params)

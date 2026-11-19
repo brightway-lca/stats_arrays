@@ -31,6 +31,8 @@ class NormalUncertainty(UncertaintyBase):
                 f"Real loc (mu) values are required for normal uncertainties. "
                 f"{cls._fmt_bad_rows(bad)}"
             )
+        # ``minimum`` and ``maximum`` are optional, but must be in order
+        super(NormalUncertainty, cls).validate(params)
 
     @classmethod
     def random_variables(
