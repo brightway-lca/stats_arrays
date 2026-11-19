@@ -5,7 +5,7 @@ import numpy.typing as npt
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import InvalidParamsError
-from stats_arrays.utils import ParamsArray
+from stats_arrays.utils import ParamsArray, RandomSource
 
 
 class GeneralizedExtremeValueUncertainty(UncertaintyBase):
@@ -45,11 +45,11 @@ class GeneralizedExtremeValueUncertainty(UncertaintyBase):
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
         **kwargs: Any,
     ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random.RandomState()
+            seeded_random = np.random.default_rng()
         data = seeded_random.gumbel(
             loc=params["loc"], scale=params["scale"], size=(size, params.shape[0])
         ).T

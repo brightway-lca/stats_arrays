@@ -208,7 +208,7 @@ def test_random_initialization():
     rng = RNG(NormalUncertainty, params, seed=42)
 
     assert rng.random is not None
-    assert isinstance(rng.random, np.random.RandomState)
+    assert isinstance(rng.random, np.random.Generator)
 
 
 def test_params_property():

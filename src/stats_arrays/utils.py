@@ -4,9 +4,11 @@ from typing import (
     Callable,
     List,
     Optional,
+    Sequence,
     Tuple,
     TypedDict,
     TypeVar,
+    Union,
     cast,
     overload,
 )
@@ -49,6 +51,52 @@ class StatisticsResult(TypedDict):
     median: Optional[float]
     lower: Optional[float]
     upper: Optional[float]
+
+
+RandomSource = Union[np.random.RandomState, np.random.Generator]
+"""A NumPy source of random numbers: either the legacy ``numpy.random.RandomState``
+or a ``numpy.random.Generator``."""
+
+SeedLike = Union[
+    None,
+    int,
+    Sequence[int],
+    np.random.SeedSequence,
+    np.random.BitGenerator,
+    np.random.Generator,
+    np.random.RandomState,
+]
+"""Anything accepted as the ``seed`` argument of the random number generator classes."""
+
+
+def make_random_source(seed: SeedLike = None) -> RandomSource:
+    """Turn the ``seed`` argument into a source of random numbers.
+
+    * ``None``: an unseeded ``numpy.random.Generator``.
+    * An integer, sequence of integers, ``SeedSequence`` or ``BitGenerator``:
+      ``numpy.random.default_rng(seed)``.
+    * A ``Generator`` or ``RandomState`` instance: used as is (not copied).
+
+    To get the legacy (stats_arrays < 5) stream for an integer seed, pass
+    ``numpy.random.RandomState(seed)``.
+    """
+    if isinstance(seed, (np.random.RandomState, np.random.Generator)):
+        return seed
+    if isinstance(seed, bool):
+        raise TypeError("`seed` must not be a boolean")
+    return np.random.default_rng(seed)
+
+
+def random_integers(
+    random: RandomSource, low: Any, high: Any = None, size: Any = None
+) -> npt.NDArray:
+    """Draw integers on ``[low, high)`` from either kind of random source.
+
+    ``RandomState.randint`` and ``Generator.integers`` both exclude ``high`` by default.
+    """
+    if isinstance(random, np.random.Generator):
+        return random.integers(low, high, size=size)
+    return random.randint(low, high, size=size)
 
 
 AnyCallable = TypeVar("AnyCallable", bound=Callable[..., Any])

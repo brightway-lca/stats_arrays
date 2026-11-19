@@ -5,7 +5,7 @@ import numpy.typing as npt
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import InvalidParamsError
-from stats_arrays.utils import ParamsArray
+from stats_arrays.utils import ParamsArray, RandomSource
 
 
 class BernoulliUncertainty(UncertaintyBase):
@@ -27,17 +27,17 @@ class BernoulliUncertainty(UncertaintyBase):
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
     ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random.RandomState()
+            seeded_random = np.random.default_rng()
         data = np.zeros((params.shape[0], size))
-        mask = (
-            seeded_random.random_sample(size * params.shape[0]).reshape(
-                (params.shape[0], size)
-            )
-            <= params["loc"]
-        )
+        n = size * params.shape[0]
+        if isinstance(seeded_random, np.random.Generator):
+            uniform = seeded_random.random(n)
+        else:
+            uniform = seeded_random.random_sample(n)
+        mask = uniform.reshape((params.shape[0], size)) <= params["loc"].reshape(-1, 1)
         data[mask] = 1
         return data
 

@@ -39,7 +39,8 @@ def test_known_seed():
     params["minimum"] = 0
     params["loc"] = 0.5
     params["scale"] = np.nan
-    lhc = LatinHypercubeRNG(params, seed=11111, samples=9)
+    # Legacy RandomState stream, as in stats_arrays < 5
+    lhc = LatinHypercubeRNG(params, seed=np.random.RandomState(11111), samples=9)
     assert np.allclose(next(lhc), np.array([[0.5]]))
     assert np.allclose(next(lhc), np.array([[0.7]]))
     assert np.allclose(next(lhc), np.array([[0.5]]))

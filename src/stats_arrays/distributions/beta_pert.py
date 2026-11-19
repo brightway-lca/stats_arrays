@@ -6,7 +6,12 @@ from numpy import isnan, nan
 
 from stats_arrays.distributions.beta import BetaUncertainty
 from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
-from stats_arrays.utils import ParamsArray, StatisticsResult, one_row_params_array
+from stats_arrays.utils import (
+    ParamsArray,
+    RandomSource,
+    StatisticsResult,
+    one_row_params_array,
+)
 
 
 class BetaPERTUncertainty(BetaUncertainty):
@@ -86,7 +91,7 @@ class BetaPERTUncertainty(BetaUncertainty):
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
         transform: bool = False,
         default_lambda: float = 4.0,
     ) -> npt.NDArray:

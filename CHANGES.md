@@ -5,6 +5,27 @@
 ### Breaking changes
 
 * **Python 3.11 is now the minimum supported version.** Python 3.9 and 3.10 have reached end of life, and current NumPy and SciPy releases no longer support them. See [brightway2#92](https://github.com/brightway-lca/brightway2/issues/92). Python 3.15 is now tested in CI.
+* **Random numbers now come from `numpy.random.Generator`** ([#46](https://github.com/brightway-lca/stats_arrays/issues/46)). In `MCRandomNumberGenerator`, `RandomNumberGenerator` and `LatinHypercubeRNG`, an integer `seed` is now passed to `numpy.random.default_rng` instead of `numpy.random.RandomState`, and no seed gives an unseeded `Generator`. The same integer seed therefore gives different numbers than in 4.x. The unseeded fallback in each distribution's `random_variables` is now `default_rng()` too.
+  * **To get the old numbers back**, pass a `RandomState` instead of the integer: `MCRandomNumberGenerator(params, seed=numpy.random.RandomState(42))` gives exactly what `MCRandomNumberGenerator(params, seed=42)` gave in 4.x. The same works for `RandomNumberGenerator` and `LatinHypercubeRNG`.
+  * NumPy keeps `Generator` bit streams stable but may change how individual distributions are sampled between NumPy versions (NEP 19). Record the NumPy version with the seed if you need exact long-term reproducibility.
+
+### New features
+
+* `seed` accepts an integer, a sequence of integers, a `SeedSequence`, a `BitGenerator`, or a `Generator` or `RandomState` instance (used as is). Use `SeedSequence(seed).spawn(n)` for independent streams in parallel workers. `seeded_random` in `bounded_random_variables`/`random_variables` accepts a `Generator` as well as a `RandomState`.
+* **MCRandomNumberGenerator.generate()** takes `out=`, a preallocated array to write into, and `order="sorted"`, which returns values in the internal order (sorted by `uncertainty_type`, row `i` belongs to `ordering[i]` of the input) and skips the permutation back to the input order.
+* New public helpers in `stats_arrays.utils`: `make_random_source(seed)`, `random_integers(random, low, high, size)`, and the `RandomSource` and `SeedLike` type aliases. `UncertaintyBase.has_bounds(params)` reports whether any row sets `minimum` or `maximum`.
+
+### Bug fixes
+
+* **BernoulliUncertainty.random_variables()** raised `ValueError` for more than one row, because the uniform draws of shape `(rows, size)` were compared against `loc` of shape `(rows,)`.
+* **StudentsTUncertainty.random_variables()** broadcast `loc` and `scale` against the draws incorrectly. With several rows it raised `ValueError` for `size > 1`, and for `size == 1` every row used the `loc` and `scale` of the first row. Seeded results for parameter arrays with several Student's T rows that differ in `loc` or `scale` therefore change.
+
+### Performance
+
+* Lognormal and normal samples are drawn with `Generator.standard_normal` and scaled, shifted and exponentiated in place. For 626,306 lognormal parameters (ecoinvent 3.13 scale), `MCRandomNumberGenerator.generate(out=...)` takes about 16 ms instead of about 50 ms in 4.0.
+* `MCRandomNumberGenerator` works out once, at instantiation, which distribution blocks have no bounds, and calls `random_variables` directly for them instead of building bounds masks on every draw. Distributions that override `bounded_random_variables` are always called through it. `bounded_random_variables` itself also returns early when no row has bounds.
+* `generate()` writes each distribution block straight to its final positions, instead of filling a zeroed array and then copying the whole vector through `reverse_ordering`.
+* `DiscreteUniform` draws all rows in one vectorized call with a `Generator`.
 
 # 4.0 (2026-10-20)
 

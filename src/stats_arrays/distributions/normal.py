@@ -5,7 +5,12 @@ import numpy.typing as npt
 
 from stats_arrays.distributions.base import UncertaintyBase
 from stats_arrays.errors import InvalidParamsError
-from stats_arrays.utils import ParamsArray, StatisticsResult, one_row_params_array
+from stats_arrays.utils import (
+    ParamsArray,
+    RandomSource,
+    StatisticsResult,
+    one_row_params_array,
+)
 
 
 class NormalUncertainty(UncertaintyBase):
@@ -32,10 +37,16 @@ class NormalUncertainty(UncertaintyBase):
         cls,
         params: ParamsArray,
         size: int,
-        seeded_random: Optional[np.random.RandomState] = None,
+        seeded_random: Optional[RandomSource] = None,
     ) -> npt.NDArray:
         if seeded_random is None:
-            seeded_random = np.random.RandomState()
+            seeded_random = np.random.default_rng()
+        if isinstance(seeded_random, np.random.Generator):
+            # Scale and shift in place to avoid ``Generator.normal`` temporaries.
+            data = seeded_random.standard_normal(size=(size, params.shape[0]))
+            data *= params["scale"]
+            data += params["loc"]
+            return data.T
         return seeded_random.normal(
             params["loc"], params["scale"], size=(size, params.shape[0])
         ).T
@@ -43,6 +54,7 @@ class NormalUncertainty(UncertaintyBase):
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         from scipy import stats
+
         vector = cls.check_2d_inputs(params, vector)
         results = np.zeros(vector.shape)
         for row in range(params.shape[0]):
@@ -54,6 +66,7 @@ class NormalUncertainty(UncertaintyBase):
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         from scipy import stats
+
         percentages = cls.check_2d_inputs(params, percentages)
         results = np.zeros(percentages.shape)
         for row in range(percentages.shape[0]):
@@ -79,6 +92,7 @@ class NormalUncertainty(UncertaintyBase):
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
     ) -> Tuple[npt.NDArray, npt.NDArray]:
         from scipy import stats
+
         if xs is None:
             if np.isnan(params["minimum"]):
                 lower = (
