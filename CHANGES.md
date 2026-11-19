@@ -19,6 +19,11 @@
 
 * **BernoulliUncertainty.random_variables()** raised `ValueError` for more than one row, because the uniform draws of shape `(rows, size)` were compared against `loc` of shape `(rows,)`.
 * **StudentsTUncertainty.random_variables()** broadcast `loc` and `scale` against the draws incorrectly. With several rows it raised `ValueError` for `size > 1`, and for `size == 1` every row used the `loc` and `scale` of the first row. Seeded results for parameter arrays with several Student's T rows that differ in `loc` or `scale` therefore change.
+* **LatinHypercubeRNG** ignored `minimum` and `maximum` bounds ([#48](https://github.com/brightway-lca/stats_arrays/issues/48)): the adjusted percentages were assigned to a temporary copy, so bounded distributions were sampled over their full range. The hypercube now only covers the part of each distribution inside its bounds. This changes the samples for every row that has a bound and is not one of the distributions where `minimum` and `maximum` are the support (uniform, triangular, discrete uniform, beta and beta-PERT, which are unchanged). Details:
+  * A lower bound starts at P(X < minimum), so discrete distributions can still return `minimum` itself.
+  * For a lognormal with `negative` set, the bounds apply to the signed values.
+  * Undefined and no-uncertainty rows with bounds no longer raise `UndefinedDistributionError`; their bounds are ignored, as their value is always `loc`.
+* The six bounded-interval tests in `tests/test_lhc.py` had been skipped since 2019, which hid this bug. They run again; the three lognormal ones had expected values for `loc = 0` but used `loc = 1`, and now use `loc = 0`.
 
 ### Performance
 

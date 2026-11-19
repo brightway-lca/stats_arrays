@@ -131,13 +131,13 @@ def test_lognormal_intervals_1d():
     assert np.allclose(lhc.hypercube, test_values)
 
 
-@pytest.mark.skip()
 def test_lognormal_intervals_lower():
     # Lower bound check
     params = make_params_array(1)
     params["scale"] = 1
     params["uncertainty_type"] = LognormalUncertainty.id
-    params["loc"] = 1
+    # Expected values are for mu = 0, i.e. a median of exp(0) = 1
+    params["loc"] = 0
     params["minimum"] = 1
     lhc = LatinHypercubeRNG(params)
     test_values = np.array(
@@ -159,13 +159,13 @@ def test_lognormal_intervals_lower():
     assert np.allclose(lhc.hypercube, test_values)
 
 
-@pytest.mark.skip()
 def test_lognormal_intervals_upper():
     # Upper bound check
     params = make_params_array(1)
     params["scale"] = 1
     params["uncertainty_type"] = LognormalUncertainty.id
-    params["loc"] = 1
+    # Expected values are for mu = 0, i.e. a median of exp(0) = 1
+    params["loc"] = 0
     params["maximum"] = 1
     params["minimum"] = np.nan
     lhc = LatinHypercubeRNG(params)
@@ -188,13 +188,13 @@ def test_lognormal_intervals_upper():
     assert np.allclose(lhc.hypercube, test_values)
 
 
-@pytest.mark.skip()
 def test_lognormal_intervals_both():
     # Both bounds check
     params = make_params_array(1)
     params["scale"] = 1
     params["uncertainty_type"] = LognormalUncertainty.id
-    params["loc"] = 1
+    # Expected values are for mu = 0, i.e. a median of exp(0) = 1
+    params["loc"] = 0
     params["minimum"] = 0.5
     params["maximum"] = 1.5
     lhc = LatinHypercubeRNG(params)
@@ -279,7 +279,6 @@ def test_normal_intervals_1d():
     assert np.allclose(lhc.hypercube, test_values)
 
 
-@pytest.mark.skip()
 def test_normal_intervals_lower():
     # Lower bound check
     params = make_params_array(1)
@@ -307,7 +306,6 @@ def test_normal_intervals_lower():
     assert np.allclose(lhc.hypercube, test_values)
 
 
-@pytest.mark.skip()
 def test_normal_intervals_upper():
     # Upper bound check
     params = make_params_array(1)
@@ -335,7 +333,6 @@ def test_normal_intervals_upper():
     assert np.allclose(lhc.hypercube, test_values)
 
 
-@pytest.mark.skip()
 def test_normal_intervals_both():
     # Both bounds check
     params = make_params_array(1)
@@ -597,3 +594,112 @@ def test_lh_all_distributions():
     assert lhc.hypercube.shape == (1, 10)
     assert np.all(lhc.hypercube >= 1.0)
     assert np.all(lhc.hypercube <= 2.0)
+
+
+def lhc_bounds_params(*rows):
+    from stats_arrays import UncertaintyBase
+
+    return UncertaintyBase.from_dicts(*rows)
+
+
+@pytest.mark.parametrize(
+    "bounds",
+    [{"minimum": 0.5}, {"maximum": 0.5}, {"minimum": 0.5, "maximum": 1.5}],
+)
+def test_bounds_respected_in_hypercube(bounds):
+    """Regression test for #48, with the example from the issue."""
+    params = lhc_bounds_params(
+        {"loc": 0, "scale": 1, "uncertainty_type": NormalUncertainty.id, **bounds}
+    )
+    lhc = LatinHypercubeRNG(params, samples=9, seed=1)
+    assert (lhc.hypercube >= bounds.get("minimum", -np.inf)).all()
+    assert (lhc.hypercube <= bounds.get("maximum", np.inf)).all()
+    # Still Latin hypercube: strictly increasing, no repeated values
+    assert (np.diff(lhc.hypercube[0]) > 0).all()
+
+
+def test_bounds_mixed_rows():
+    """Bounded and unbounded rows of the same and different types."""
+    params = lhc_bounds_params(
+        {"loc": 0, "scale": 1, "uncertainty_type": NormalUncertainty.id},
+        {"loc": 0, "scale": 1, "minimum": 0, "uncertainty_type": NormalUncertainty.id},
+        {
+            "loc": 0,
+            "scale": 1,
+            "maximum": 1,
+            "uncertainty_type": LognormalUncertainty.id,
+        },
+        {
+            "loc": 0,
+            "scale": 1,
+            "minimum": -1,
+            "maximum": 1,
+            "uncertainty_type": NormalUncertainty.id,
+        },
+    )
+    lhc = LatinHypercubeRNG(params, samples=20)
+    unbounded = NormalUncertainty.ppf(params[:1], lhc.percentages[:1])
+    assert np.allclose(lhc.hypercube[0], unbounded)
+    assert (lhc.hypercube[0] < 0).any()
+    assert (lhc.hypercube[1] >= 0).all()
+    assert ((lhc.hypercube[2] > 0) & (lhc.hypercube[2] <= 1)).all()
+    assert ((lhc.hypercube[3] >= -1) & (lhc.hypercube[3] <= 1)).all()
+
+
+def test_bounds_negative_lognormal_percentages():
+    """For a lognormal with ``negative`` set, ``ppf`` decreases, so the signed
+    minimum limits the upper percentage and the signed maximum the lower one.
+    Checked at the ``ppf`` level, as ``build_hypercube`` currently negates these
+    rows a second time."""
+    params = lhc_bounds_params(
+        {
+            "loc": 0,
+            "scale": 1,
+            "negative": True,
+            "minimum": -2,
+            "maximum": -0.5,
+            "uncertainty_type": LognormalUncertainty.id,
+        }
+    )
+    lhc = LatinHypercubeRNG(params, samples=10)
+    values = LognormalUncertainty.ppf(params, lhc.percentages.copy())
+    assert ((values >= -2) & (values <= -0.5)).all()
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        {"minimum": 3, "maximum": 6, "uncertainty_type": 7},  # DiscreteUniform
+        {"minimum": 1, "maximum": 2, "uncertainty_type": UniformUncertainty.id},
+        {
+            "loc": 1.5,
+            "minimum": 1,
+            "maximum": 2,
+            "uncertainty_type": TriangularUncertainty.id,
+        },
+    ],
+)
+def test_bounds_that_are_parameters_change_nothing(row):
+    """Where ``minimum`` and ``maximum`` define the support, the hypercube must
+    cover the whole distribution, as it did before the fix."""
+    params = lhc_bounds_params(row)
+    lhc = LatinHypercubeRNG(params, samples=9)
+    assert np.allclose(lhc.percentages, np.arange(1, 10).reshape(1, -1) / 10)
+
+
+def test_bounds_discrete_uniform_samples_minimum():
+    params = lhc_bounds_params({"minimum": 3, "maximum": 6, "uncertainty_type": 7})
+    lhc = LatinHypercubeRNG(params, samples=9)
+    assert set(np.unique(lhc.hypercube)) == {3, 4, 5}
+
+
+@pytest.mark.parametrize(
+    "uncertainty_type", [UndefinedUncertainty.id, NoUncertainty.id]
+)
+def test_bounds_ignored_for_undefined(uncertainty_type):
+    """These used to raise ``UndefinedDistributionError`` when bounds were set."""
+    params = lhc_bounds_params(
+        {"loc": 2, "minimum": 1, "maximum": 3, "uncertainty_type": uncertainty_type}
+    )
+    lhc = LatinHypercubeRNG(params, samples=4)
+    assert (lhc.hypercube == 2).all()

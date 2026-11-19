@@ -1,9 +1,10 @@
-from typing import Any, Dict, Iterable, Iterator, Literal, Optional, Type
+from typing import Any, Dict, Iterable, Iterator, Literal, Optional, Tuple, Type
 
 import numpy as np
 import numpy.typing as npt
 
 from stats_arrays.distributions.base import UncertaintyBase
+from stats_arrays.distributions.undefined import UndefinedUncertainty
 from stats_arrays.errors import UnknownUncertaintyType
 from stats_arrays.uncertainty_choices import uncertainty_choices
 from stats_arrays.utils import (
@@ -330,55 +331,24 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
         .. rubric:: Builds
 
         self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
-        step_size = 1 / (self.samples + 1)
-        # Define the beginning points and step sizes - not all the same because
-        # some distributions are bounded. Make adjustments to generic values
-        # later.
-        inputs = np.tile(np.array((step_size, step_size)), self.length).reshape(
-            self.length, 2
-        )
+        # The range of percentages to sample from for each row: the whole
+        # distribution by default, or the part inside its bounds.
+        lower = np.zeros(self.length)
+        upper = np.ones(self.length)
         for uncertainty_type in self.choices:
             mask = self.params["uncertainty_type"] == uncertainty_type.id
-            if not mask.sum():
+            if not mask.any() or issubclass(uncertainty_type, UndefinedUncertainty):
+                # Undefined distributions return ``loc`` whatever the
+                # percentages, and have no ``cdf``.
                 continue
-            subarray = self.params[mask]
-            # Adjust inputs when bounds are present. Easiest to do in three
-            # discrete steps. First, when only a lower bound is present.
-            only_min_mask = ~np.isnan(subarray["minimum"]) * np.isnan(
-                subarray["maximum"]
+            lower[mask], upper[mask] = self._percentage_bounds(
+                uncertainty_type, self.params[mask]
             )
-            if only_min_mask.sum():
-                mins = uncertainty_type.cdf(
-                    subarray[only_min_mask], subarray[only_min_mask]["minimum"]
-                )
-                steps = (1 - mins) / (self.samples + 1)
-                inputs[mask, :][only_min_mask] = np.hstack((mins + steps, steps))
-            # Next, if only a max bound is present
-            only_max_mask = np.isnan(subarray["minimum"]) * ~np.isnan(
-                subarray["maximum"]
-            )
-            if only_max_mask.sum():
-                maxs = uncertainty_type.cdf(
-                    subarray[only_max_mask], subarray[only_max_mask]["maximum"]
-                )
-                steps = maxs / (self.samples + 1)
-                inputs[mask, :][only_max_mask] = np.hstack((steps, steps))
-            # Finally, if both min and max bounds are present
-            both_mask = ~np.isnan(subarray["minimum"]) * ~np.isnan(subarray["maximum"])
-            if both_mask.sum():
-                mins = uncertainty_type.cdf(
-                    subarray[both_mask], subarray[both_mask]["minimum"]
-                )
-                maxs = uncertainty_type.cdf(
-                    subarray[both_mask], subarray[both_mask]["maximum"]
-                )
-                steps = (maxs - mins) / (self.samples + 1)
-                inputs[mask, :][both_mask] = np.hstack((mins + steps, steps))
-        # Percentages is now a list, samples wide, of the percentages covered
-        # by the bounded or unbounded distributions.
-        self.percentages = inputs[:, 0].reshape(self.length, 1) + np.arange(
-            0, self.samples, 1
-        ) * inputs[:, 1].reshape(self.length, 1)
+        # ``samples`` evenly spaced percentages strictly inside each range.
+        fractions = np.arange(1, self.samples + 1) / (self.samples + 1)
+        self.percentages = lower.reshape(-1, 1) + (upper - lower).reshape(
+            -1, 1
+        ) * fractions.reshape(1, -1)
         # Transform percentages into a sample space
         self.hypercube = np.zeros((self.length, self.samples))
         for uncertainty_type in self.choices:
@@ -391,6 +361,53 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
         self.hypercube[self.params["negative"], :] = (
             -1 * self.hypercube[self.params["negative"], :]
         )
+
+    @staticmethod
+    def _percentage_bounds(
+        uncertainty_type: Type[UncertaintyBase], params: ParamsArray
+    ) -> Tuple[npt.NDArray, npt.NDArray]:
+        """Return the range of percentages, ``(lower, upper)``, that ``ppf`` maps
+        inside the ``minimum`` and ``maximum`` bounds of each row in ``params``.
+
+        Rows without bounds get ``(0, 1)``. A lower bound starts at
+        P(X < minimum) rather than P(X <= minimum), so that a discrete
+        distribution can still return ``minimum`` itself. Distributions whose
+        ``ppf`` decreases (a lognormal with ``negative`` set) have the roles of
+        the two bounds swapped.
+        """
+        length = params.shape[0]
+        lower = np.zeros(length)
+        upper = np.ones(length)
+        has_min = ~np.isnan(params["minimum"])
+        has_max = ~np.isnan(params["maximum"])
+        if not (has_min.any() or has_max.any()):
+            return lower, upper
+
+        def cdf(rows: npt.NDArray, values: npt.NDArray) -> npt.NDArray:
+            # ``cdf`` may change ``values`` in place, so always pass a new array
+            return np.asarray(
+                uncertainty_type.cdf(params[rows], np.array(values, dtype=float))
+            ).reshape(-1)
+
+        bounded = has_min | has_max
+        quartiles = np.asarray(
+            uncertainty_type.ppf(
+                params=params[bounded],
+                percentages=np.tile(np.array([0.25, 0.75]), (int(bounded.sum()), 1)),
+            )
+        )
+        decreasing = np.zeros(length, dtype=bool)
+        decreasing[bounded] = quartiles[:, 0] > quartiles[:, 1]
+
+        if has_min.any():
+            p = cdf(has_min, np.nextafter(params["minimum"][has_min], -np.inf))
+            lower[has_min & ~decreasing] = p[~decreasing[has_min]]
+            upper[has_min & decreasing] = p[decreasing[has_min]]
+        if has_max.any():
+            p = cdf(has_max, params["maximum"][has_max])
+            upper[has_max & ~decreasing] = p[~decreasing[has_max]]
+            lower[has_max & decreasing] = p[decreasing[has_max]]
+        return lower, upper
 
     def next(self) -> npt.NDArray:
         """Draw directly from pre-computed sample space."""
