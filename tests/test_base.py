@@ -271,6 +271,40 @@ def test_from_dicts_overflow_error():
         UncertaintyBase.from_dicts({"loc": 2, "scale": 3, "uncertainty_type": 1000})
 
 
+@pytest.mark.parametrize("bad_type", [-1, -5])
+def test_from_tuples_negative_uncertainty_type(bad_type):
+    """#64: negative ids raised ``OverflowError`` from NumPy."""
+    with pytest.raises(InvalidParamsError, match=rf"not negative, got {bad_type}"):
+        UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, bad_type))
+
+
+@pytest.mark.parametrize("bad_type", [-1, -5])
+def test_from_dicts_negative_uncertainty_type(bad_type):
+    with pytest.raises(InvalidParamsError, match=rf"not negative, got {bad_type}"):
+        UncertaintyBase.from_dicts({"loc": 2, "uncertainty_type": bad_type})
+    with pytest.raises(InvalidParamsError, match=rf"not negative, got {bad_type}"):
+        UncertaintyBase.from_dicts({"loc": 2, "uncertainty type": bad_type})
+
+
+@pytest.mark.parametrize("bad_type", [-0.5, -1e-9])
+def test_negative_fraction_uncertainty_type(bad_type):
+    """These were truncated to 0 by NumPy before the check for negative ids."""
+    with pytest.raises(InvalidParamsError, match="not negative"):
+        UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, bad_type))
+    with pytest.raises(InvalidParamsError, match="not negative"):
+        UncertaintyBase.from_dicts({"loc": 2, "uncertainty_type": bad_type})
+
+
+def test_from_tuples_zero_uncertainty_type():
+    params = UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, 0))
+    assert params["uncertainty_type"][0] == 0
+
+
+def test_from_dicts_zero_uncertainty_type():
+    params = UncertaintyBase.from_dicts({"loc": 2, "uncertainty_type": 0})
+    assert params["uncertainty_type"][0] == 0
+
+
 def test_from_dicts_uncertainty_type_key():
     """Test from_dicts with 'uncertainty type' (space instead of underscore)."""
     # Should accept both 'uncertainty_type' and 'uncertainty type'

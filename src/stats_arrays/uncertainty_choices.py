@@ -58,9 +58,27 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
         self.choices = sorted(DISTRIBUTIONS, key=lambda x: x.id)
         self.check_id_uniqueness()
 
+    @staticmethod
+    def check_id(distribution: Type[UncertaintyBase]) -> None:
+        """Raise ``ValueError`` unless ``distribution.id`` is an integer that
+        the ``uncertainty_type`` field of a params array can hold."""
+        if not isinstance(getattr(distribution, "id", None), int):
+            raise ValueError(
+                "Uncertainty distributions must have integer `id` attribute."
+            )
+        if not 0 <= distribution.id < 256:
+            raise ValueError(
+                "Uncertainty distribution ids must be between 0 and 255, as "
+                "`uncertainty_type` in a params array is an unsigned 8-bit "
+                f"integer. Got id {distribution.id}."
+            )
+
     def check_id_uniqueness(self) -> None:
+        """Rebuild ``id_dict`` from ``choices``, checking that each id is
+        valid (see :meth:`check_id`) and used only once."""
         self.id_dict = {}
         for dist in self.choices:
+            self.check_id(dist)
             if dist.id in self.id_dict:
                 raise ValueError(
                     "Uncertainty id {} is already in use by {}".format(
@@ -82,10 +100,7 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
         return choice in self.choices
 
     def add(self, distribution: Type[UncertaintyBase]) -> None:
-        if not isinstance(getattr(distribution, "id", None), int):
-            raise ValueError(
-                "Uncertainty distributions must have integer `id` attribute."
-            )
+        self.check_id(distribution)
         if distribution.id in self.id_dict:
             warnings.warn(
                 "ERROR: This distribution (id {}) is already present!".format(
