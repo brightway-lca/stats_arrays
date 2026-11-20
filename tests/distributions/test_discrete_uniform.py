@@ -410,3 +410,60 @@ def test_pdf_matches_samples(make_params_array):
     data = DiscreteUniform.random_variables(params, 40_000, np.random.default_rng(1))
     frequencies = np.array([(data == x).mean() for x in xs])
     assert np.allclose(frequencies, ys, atol=0.01)
+
+
+def test_pdf_default_xs_complete_up_to_cap(make_params_array):
+    params = make_params_array(length=1)
+    params["minimum"] = -5
+    params["maximum"] = DiscreteUniform.max_default_points_in_pdf - 5
+    xs, ys = DiscreteUniform.pdf(params)
+    assert np.array_equal(
+        xs, np.arange(-5, DiscreteUniform.max_default_points_in_pdf - 5)
+    )
+    assert np.isclose(ys.sum(), 1)
+
+
+@pytest.mark.parametrize(
+    "minimum, maximum",
+    [
+        (-5, DiscreteUniform.max_default_points_in_pdf - 4),
+        (0, 12_345),
+        (0, 10**9),
+        (2.0**53 - 10**6, 2.0**53),
+        (-(2.0**53), 2.0**53),
+    ],
+)
+def test_pdf_default_xs_capped(make_params_array, minimum, maximum):
+    """#84: one point per integer of the support raised ``MemoryError``."""
+    params = make_params_array(length=1)
+    params["minimum"] = minimum
+    params["maximum"] = maximum
+    xs, ys = DiscreteUniform.pdf(params)
+    assert xs.shape == ys.shape
+    cap = DiscreteUniform.max_default_points_in_pdf
+    assert cap - 1 <= len(xs) <= cap
+    assert xs[0] == minimum and xs[-1] == maximum - 1
+    # Distinct integers from the support, evenly spaced
+    assert (xs == np.floor(xs)).all() and (np.diff(xs) > 0).all()
+    steps = np.diff(xs)
+    assert steps.max() - steps.min() <= max(1, steps.max() * 1e-6)
+    assert np.allclose(ys, 1 / (maximum - minimum))
+
+
+def test_pdf_cap_can_be_changed(make_params_array, monkeypatch):
+    monkeypatch.setattr(DiscreteUniform, "max_default_points_in_pdf", 4)
+    params = make_params_array(length=1)
+    params["minimum"] = 0
+    params["maximum"] = 10
+    xs, ys = DiscreteUniform.pdf(params)
+    assert np.array_equal(xs, [0, 3, 6, 9])
+    assert np.allclose(ys, 0.1)
+
+
+def test_pdf_given_xs_not_capped(make_params_array, monkeypatch):
+    monkeypatch.setattr(DiscreteUniform, "max_default_points_in_pdf", 4)
+    params = make_params_array(length=1)
+    params["minimum"] = 0
+    params["maximum"] = 10
+    xs, ys = DiscreteUniform.pdf(params, np.arange(10))
+    assert len(xs) == 10 and np.isclose(ys.sum(), 1)
