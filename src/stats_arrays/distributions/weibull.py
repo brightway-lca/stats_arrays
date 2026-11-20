@@ -110,5 +110,5 @@ class WeibullUncertainty(UncertaintyBase):
         percentages = cls.check_2d_inputs(params, percentages)
         shape, loc, scale = cls._scipy_params(params)
         results = stats.weibull_min.ppf(percentages, shape, loc=loc, scale=scale)
-        results[params["negative"]] *= -1
+        results[params["negative"].reshape(-1)] *= -1
         return results

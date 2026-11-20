@@ -35,6 +35,7 @@ class UndefinedUncertainty(UncertaintyBase):
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
+        percentages = cls.check_2d_inputs(params, percentages)
         return tile(params["loc"].reshape((params.shape[0], 1)), percentages.shape[1])
 
 

@@ -49,13 +49,20 @@ def test_check_2d_inputs():
     params["minimum"] = 0
     params["loc"] = 1
     params["maximum"] = 2
-    # Params has 2 rows. The input vector can only have shape (2,) or (2, n)
-    with pytest.raises(InvalidParamsError):
-        UncertaintyBase.check_2d_inputs(params, np.array((1,)))
-    with pytest.raises(InvalidParamsError):
-        UncertaintyBase.check_2d_inputs(params, np.array(((1, 2),)))
-    with pytest.raises(InvalidParamsError):
-        UncertaintyBase.check_2d_inputs(params, np.array(((1, 2), (3, 4), (5, 6))))
+    # Params has 2 rows. The input vector can only have shape (2,), (2, n) or (1, n)
+    for vector in [
+        np.array((1,)),
+        np.array((1, 2, 3)),
+        np.array(((1, 2), (3, 4), (5, 6))),
+        np.array(1),
+        np.ones((2, 2, 2)),
+    ]:
+        with pytest.raises(InvalidParamsError, match=r"\(m,\), \(m, n\) or \(1, n\)"):
+            UncertaintyBase.check_2d_inputs(params, vector)
+
+    # One row is repeated for every row of params
+    vector = UncertaintyBase.check_2d_inputs(params, np.array(((1, 2),)))
+    assert np.allclose(vector, np.array(((1, 2), (1, 2))))
 
     # Test 1-d input
     vector = UncertaintyBase.check_2d_inputs(params, np.array((1, 2)))
@@ -63,6 +70,14 @@ def test_check_2d_inputs():
     # Test 1-row 2-d input
     vector = UncertaintyBase.check_2d_inputs(params, np.array(((1, 2, 3), (1, 2, 3))))
     assert np.allclose(vector, np.array(((1, 2, 3), (1, 2, 3))))
+
+
+def test_check_2d_inputs_returns_copy():
+    params = make_params_array(2)
+    for original in [np.array((1.0, 2.0)), np.array(((1.0, 2.0), (3.0, 4.0)))]:
+        vector = UncertaintyBase.check_2d_inputs(params, original)
+        vector[:] = 0
+        assert original.min() == 1
 
 
 def test_check_bounds_reasonableness_no_minimum():
