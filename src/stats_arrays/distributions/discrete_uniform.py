@@ -140,15 +140,27 @@ class DiscreteUniform(UncertaintyBase):
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
-        from scipy import stats
+        """Return the smallest value in the support whose cumulative probability
+        is at least each percentage.
 
+        The result is always in the support, so a percentage of 0 gives
+        ``minimum``. Percentages outside 0 to 1 give NaN.
+        """
         percentages = cls.check_2d_inputs(params, percentages)
         params = cls.fix_nan_minimum(params)
-        return stats.randint.ppf(
-            percentages,
-            params["minimum"].reshape(-1, 1),
-            params["maximum"].reshape(-1, 1),
-        )
+        minimum = params["minimum"].reshape(-1, 1)
+        count = params["maximum"].reshape(-1, 1) - minimum
+        # Work with the offset from ``minimum``: value ``minimum + k`` has
+        # cumulative probability ``(k + 1) / count``. ``scipy.stats.randint.ppf``
+        # computes ``minimum + q * count`` instead, which loses the fraction
+        # when ``minimum`` is large, and gives quantiles that are too low.
+        offset = np.ceil(percentages * count) - 1
+        # The product is rounded, so the offset can be one off in either direction
+        offset = np.where(offset / count >= percentages, offset - 1, offset)
+        offset = np.where((offset + 1) / count < percentages, offset + 1, offset)
+        result = minimum + np.clip(offset, 0, count - 1)
+        result[~((percentages >= 0) & (percentages <= 1))] = np.nan
+        return result
 
     @classmethod
     @one_row_params_array
