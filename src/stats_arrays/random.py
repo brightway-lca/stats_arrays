@@ -237,22 +237,7 @@ class MCRandomNumberGenerator(Iterable[npt.NDArray]):
         Returns:
             The array of samples.
         """
-        if order not in ("original", "sorted"):
-            raise ValueError(f"`order` must be 'original' or 'sorted', got {order!r}")
-        shape = (self.length,) if samples == 1 else (self.length, samples)
-        if out is None:
-            out = np.empty(shape)
-        elif not isinstance(out, np.ndarray) or not np.issubdtype(
-            out.dtype, np.floating
-        ):
-            kind = (
-                f"{out.dtype} array"
-                if isinstance(out, np.ndarray)
-                else type(out).__name__
-            )
-            raise TypeError(f"`out` must be a float NumPy array, got {kind}")
-        elif out.shape != shape:
-            raise ValueError(f"`out` must have shape {shape}, got {out.shape}")
+        out = self._prepare_out(samples, out, order)
 
         # In original order, scatter each block straight to its final positions
         # instead of filling a sorted array and then permuting the whole thing.
@@ -282,6 +267,27 @@ class MCRandomNumberGenerator(Iterable[npt.NDArray]):
         self.random_data = out
         return out
 
+    def _prepare_out(
+        self, samples: int, out: Optional[npt.NDArray], order: str
+    ) -> npt.NDArray:
+        """Check the ``order`` and ``out`` arguments of :meth:`generate`, and
+        return the array to write the samples into."""
+        if order not in ("original", "sorted"):
+            raise ValueError(f"`order` must be 'original' or 'sorted', got {order!r}")
+        shape = (self.length,) if samples == 1 else (self.length, samples)
+        if out is None:
+            return np.empty(shape)
+        if not isinstance(out, np.ndarray) or not np.issubdtype(out.dtype, np.floating):
+            kind = (
+                f"{out.dtype} array"
+                if isinstance(out, np.ndarray)
+                else type(out).__name__
+            )
+            raise TypeError(f"`out` must be a float NumPy array, got {kind}")
+        if out.shape != shape:
+            raise ValueError(f"`out` must have shape {shape}, got {out.shape}")
+        return out
+
     def next(self) -> npt.NDArray:
         """Generate a new vector of random numbers"""
         return self.generate()
@@ -302,6 +308,10 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
     * params : A :ref:`params-array` which gives parameters for distributions (one distribution per row).
     * seed : Optional. An integer, sequence of integers, ``SeedSequence`` or ``BitGenerator`` passed to ``numpy.random.default_rng``, or a ``numpy.random.Generator`` or ``numpy.random.RandomState`` instance used as is. To reproduce results from stats_arrays < 5, pass ``numpy.random.RandomState(seed)``.
     * samples : An integer number of samples to construct for each distribution.
+
+    Draw from the precomputed sample space with :meth:`generate`, ``next()`` or
+    iteration. Rows are never reordered, so ``ordering`` is the identity and
+    ``generate(order="sorted")`` is the same as the default order.
     """
 
     def __init__(
@@ -319,6 +329,8 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
         self.choices = uncertainty_choices
         self.random = make_random_source(seed)
         self.uncertainty_type = None
+        # Rows are never reordered; set for ``generate(order="sorted")``
+        self.ordering = self.reverse_ordering = self.row_index
 
         self.verify_params()
         self.build_hypercube()
@@ -463,8 +475,38 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
             lower[has_max & decreasing] = p[decreasing[has_max]]
         return lower, upper
 
+    def generate(
+        self,
+        samples: int = 1,
+        out: Optional[npt.NDArray] = None,
+        order: Literal["original", "sorted"] = "original",
+    ) -> npt.NDArray:
+        """Draw values for each row from the precomputed sample space.
+
+        Each value is a column of ``hypercube`` picked at random for its row,
+        independently of the other rows and of the other draws, as in ``next()``.
+
+        If ``samples`` is one, return a one-dimensional array. Otherwise returns a ``num_parameters, samples`` array.
+
+        Args:
+            * *samples* (int, optional): Number of values to draw for each parameter. Default is ``1``. Not the ``samples`` given at instantiation, which is the size of the sample space.
+            * *out* (array, optional): A preallocated float array of shape ``(num_parameters,)`` (when ``samples`` is one) or ``(num_parameters, samples)`` to write the values into. It is returned.
+            * *order* (str, optional): ``"original"`` or ``"sorted"``; both give the row order of ``params``, as rows are never reordered.
+
+        Returns:
+            The array of values.
+        """
+        out = self._prepare_out(samples, out, order)
+        # Same draws as ``size=self.length`` when ``samples`` is one, so seeded
+        # results of ``next()`` are unchanged.
+        columns = random_integers(
+            self.random, self.samples, size=(samples, self.length)
+        ).T
+        values = self.hypercube[self.row_index.reshape(-1, 1), columns]
+        out[...] = values[:, 0] if samples == 1 else values
+        self.random_data = out
+        return out
+
     def next(self) -> npt.NDArray:
         """Draw directly from pre-computed sample space."""
-        return self.hypercube[
-            self.row_index, random_integers(self.random, self.samples, size=self.length)
-        ]
+        return self.generate()
