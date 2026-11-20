@@ -1,3 +1,4 @@
+import decimal
 import numbers
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
@@ -74,18 +75,26 @@ class UncertaintyBase:
         """Raise ``InvalidParamsError`` unless ``uncertainty_type`` is an integer
         that fits the unsigned 8-bit ``uncertainty_type`` field of a params array.
 
-        Python and NumPy integers are accepted, and so are integer-valued
-        floats such as ``3.0``. Fractions, which NumPy would truncate, and
+        Python and NumPy integers are accepted, and so are other numbers with
+        an integer value, such as ``3.0`` or ``Decimal("3")``, and 0-dimensional
+        arrays of these. Fractional values, which NumPy would truncate, and
         ``None``, strings and booleans are not."""
-        if isinstance(uncertainty_type, (bool, np.bool_)):
-            valid = False
-        elif isinstance(uncertainty_type, numbers.Integral):
-            valid = 0 <= int(uncertainty_type) < 256
-        elif isinstance(uncertainty_type, numbers.Real):
-            value = float(uncertainty_type)
-            valid = value.is_integer() and 0 <= value < 256
-        else:
-            valid = False
+        value = uncertainty_type
+        if isinstance(value, np.ndarray) and value.ndim == 0:
+            value = value.item()
+        valid = False
+        if isinstance(value, (bool, np.bool_)):
+            pass
+        elif isinstance(value, numbers.Integral):
+            valid = 0 <= int(value) < 256
+        elif isinstance(value, (numbers.Real, decimal.Decimal)):
+            try:
+                as_float = float(value)
+            except (OverflowError, ValueError):
+                # Too large for a float, or a signalling NaN ``Decimal``
+                pass
+            else:
+                valid = as_float.is_integer() and 0 <= as_float < 256
         if not valid:
             raise InvalidParamsError(
                 "`uncertainty_type` must be an integer from 0 to 255, "

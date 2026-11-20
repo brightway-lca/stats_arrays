@@ -1,3 +1,6 @@
+from decimal import Decimal
+from fractions import Fraction
+
 import numpy as np
 import pytest
 
@@ -353,6 +356,20 @@ BAD_TYPES = [
     np.inf,
     [3],
     3 + 0j,
+    np.array(3.7),
+    np.array(True),
+    np.array(256),
+    np.array([3]),
+    np.array("3"),
+    Decimal("3.7"),
+    Decimal("NaN"),
+    Decimal("sNaN"),
+    Decimal("Infinity"),
+    Decimal("1e400"),
+    Fraction(7, 2),
+    # Too large for a float: raised ``OverflowError``
+    Fraction(10**400),
+    10**400,
 ]
 
 
@@ -382,7 +399,22 @@ def test_non_integer_uncertainty_type_message():
 
 @pytest.mark.parametrize(
     "good_type",
-    [3, 3.0, np.float32(3), np.uint8(3), np.int64(3), np.uint64(3), np.int8(3)],
+    [
+        3,
+        3.0,
+        np.float32(3),
+        np.uint8(3),
+        np.int64(3),
+        np.uint64(3),
+        np.int8(3),
+        # 0-dimensional arrays, as from indexing with ``...`` or ``np.array(3)``
+        np.array(3),
+        np.array(3.0),
+        np.array(3, dtype=np.uint8),
+        Decimal("3"),
+        Decimal("3.0"),
+        Fraction(3),
+    ],
 )
 def test_integer_uncertainty_types_accepted(good_type):
     for params in [
