@@ -50,7 +50,7 @@ class BetaUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
-        cls._check_finite(params, "loc", "shape", "minimum", "maximum")
+        cls._check_finite(params, "loc", "shape")
         bad = ~(params["loc"] > 0)
         if bad.any():
             raise InvalidParamsError(
@@ -68,6 +68,9 @@ class BetaUncertainty(UncertaintyBase):
             raise ImproperBoundsError(
                 f"Min/max inconsistency. {cls._fmt_bad_rows(bad)}"
             )
+        # After the order of the bounds, which already rejected some
+        # infinite bounds with ``ImproperBoundsError``
+        cls._check_finite(params, "minimum", "maximum")
 
     @classmethod
     def random_variables(

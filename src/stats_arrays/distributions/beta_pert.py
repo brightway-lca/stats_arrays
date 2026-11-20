@@ -33,7 +33,6 @@ class BetaPERTUncertainty(BetaUncertainty):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
-        cls._check_finite(params, "minimum", "loc", "maximum", "scale")
         bad = isnan(params["minimum"])
         if bad.any():
             raise InvalidParamsError(
@@ -62,6 +61,9 @@ class BetaPERTUncertainty(BetaUncertainty):
             raise ImproperBoundsError(
                 f"`A` and `C` have the same values. {cls._fmt_bad_rows(bad)}"
             )
+        # After the order checks, which already rejected some infinite values
+        # with ``ImproperBoundsError``
+        cls._check_finite(params, "minimum", "loc", "maximum", "scale")
         bad = ~isnan(params["scale"]) & (params["scale"] <= 0)
         if bad.any():
             raise InvalidParamsError(
