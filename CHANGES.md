@@ -30,6 +30,7 @@
 * The six bounded-interval tests in `tests/test_lhc.py` had been skipped since 2019, which hid this bug. They run again; the three lognormal ones had expected values for `loc = 0` but used `loc = 1`, and now use `loc = 0`.
 * **UncertaintyChoices.add()** appended the new distribution instead of keeping `choices` sorted by `id`, as the class documents ([#49](https://github.com/brightway-lca/stats_arrays/issues/49)). `MCRandomNumberGenerator` relies on that order to match each distribution to its rows in the id-sorted params, so after adding a distribution with a lower id than one already present, distributions were sampled with other distributions' parameters. `add()` now keeps `choices` sorted.
 * **LatinHypercubeRNG.generate()** raised `AttributeError`, as it inherited `MCRandomNumberGenerator.generate()` without the attributes it needs ([#50](https://github.com/brightway-lca/stats_arrays/issues/50)). It now draws from the precomputed sample space and takes the same `samples`, `out` and `order` arguments; `next()` calls it and gives the same values as before.
+* **DiscreteUniform** replaced a NaN `minimum` with 0 in the params array passed to `random_variables`, `cdf`, `ppf`, `statistics` and `pdf` ([#52](https://github.com/brightway-lca/stats_arrays/issues/52)), including the params stored in `MCRandomNumberGenerator`. `fix_nan_minimum` now returns a copy when there is a NaN to replace, and never changes its argument.
 
 ### Performance
 

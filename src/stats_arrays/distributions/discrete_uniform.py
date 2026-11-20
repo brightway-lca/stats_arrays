@@ -46,8 +46,15 @@ class DiscreteUniform(UncertaintyBase):
 
     @classmethod
     def fix_nan_minimum(cls, params: ParamsArray) -> ParamsArray:
+        """Return ``params`` with a NaN ``minimum`` replaced by 0.
+
+        Returns a copy when there is a NaN to replace, and ``params`` itself
+        otherwise; the array passed in is never changed.
+        """
         mask = np.isnan(params["minimum"])
-        params["minimum"][mask] = 0
+        if mask.any():
+            params = params.copy()
+            params["minimum"][mask] = 0
         return params
 
     @classmethod
@@ -99,6 +106,7 @@ class DiscreteUniform(UncertaintyBase):
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         from scipy import stats
+
         percentages = cls.check_2d_inputs(params, percentages)
         params = cls.fix_nan_minimum(params)
         return stats.randint.ppf(
