@@ -123,6 +123,30 @@ def test_validate_rejects_non_integer_bounds(make_params_array, minimum, maximum
         DiscreteUniform.validate(params)
 
 
+@pytest.mark.parametrize(
+    "minimum, maximum",
+    [(0, np.inf), (-np.inf, 3), (-np.inf, np.inf), (np.nan, np.inf)],
+)
+def test_validate_rejects_infinite_bounds(make_params_array, minimum, maximum):
+    params = make_params_array(length=2)
+    params["minimum"] = [0, minimum]
+    params["maximum"] = [3, maximum]
+    with pytest.raises(
+        InvalidParamsError, match=r"must be finite\. Failing row: \[1\]"
+    ):
+        DiscreteUniform.validate(params)
+
+
+def test_mc_rejects_infinite_bounds():
+    from stats_arrays import MCRandomNumberGenerator, UncertaintyBase
+
+    params = UncertaintyBase.from_dicts(
+        {"minimum": 0, "maximum": np.inf, "uncertainty_type": 7}
+    )
+    with pytest.raises(InvalidParamsError, match="must be finite"):
+        MCRandomNumberGenerator(params, seed=1)
+
+
 def test_validate_accepts_nan_minimum(make_params_array):
     params = make_params_array(length=1)
     params["minimum"] = np.nan

@@ -32,6 +32,7 @@
 * **LatinHypercubeRNG.generate()** raised `AttributeError`, as it inherited `MCRandomNumberGenerator.generate()` without the attributes it needs ([#50](https://github.com/brightway-lca/stats_arrays/issues/50)). It now draws from the precomputed sample space and takes the same `samples`, `out` and `order` arguments; `next()` calls it and gives the same values as before.
 * **DiscreteUniform** replaced a NaN `minimum` with 0 in the params array passed to `random_variables`, `cdf`, `ppf`, `statistics` and `pdf` ([#52](https://github.com/brightway-lca/stats_arrays/issues/52)), including the params stored in `MCRandomNumberGenerator`. `fix_nan_minimum` now returns a copy when there is a NaN to replace, and never changes its argument.
 * **DiscreteUniform.pdf()** raised `TypeError` for every input on current NumPy ([#60](https://github.com/brightway-lca/stats_arrays/issues/60)). It now returns the probability mass function: `xs` defaults to the support, `minimum, ..., maximum - 1` (previously `[minimum, maximum]`, although `maximum` is excluded), and values outside the support or non-integers have probability 0.
+* **DiscreteUniform.validate()** accepted infinite bounds ([#66](https://github.com/brightway-lca/stats_arrays/issues/66)), as `inf == floor(inf)` passed the integer check. With a `Generator`, sampling then silently returned huge integers. It now raises `InvalidParamsError` with the failing rows for an infinite `minimum` or `maximum`. A NaN `minimum` is still allowed and means 0.
 
 ### Performance
 

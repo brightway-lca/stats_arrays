@@ -33,6 +33,13 @@ class DiscreteUniform(UncertaintyBase):
         bad = params["minimum"] >= params["maximum"]
         if bad.any():
             raise ImproperBoundsError(f"minimum >= maximum. {cls._fmt_bad_rows(bad)}")
+        # The support must be finite. Infinity would pass the integer check
+        # below, as ``inf == floor(inf)``.
+        bad = np.isinf(params["maximum"]) | np.isinf(params["minimum"])
+        if bad.any():
+            raise InvalidParamsError(
+                f"Minimum and maximum values must be finite. {cls._fmt_bad_rows(bad)}"
+            )
         # The support is a range of integers, and `cdf` and `ppf` return NaN for
         # fractional bounds. A NaN minimum is allowed, and defaults to zero.
         bad = (params["maximum"] != np.floor(params["maximum"])) | (
