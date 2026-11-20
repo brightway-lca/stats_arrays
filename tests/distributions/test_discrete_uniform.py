@@ -173,8 +173,29 @@ def test_validate_rejects_nan_minimum_above_maximum(make_params_array, maximum):
     params = make_params_array(length=2)
     params["minimum"] = [0, np.nan]
     params["maximum"] = [3, maximum]
-    with pytest.raises(ImproperBoundsError, match=r"Failing row: \[1\]"):
+    with pytest.raises(
+        ImproperBoundsError,
+        match=r"minimum >= maximum \(a NaN minimum is read as 0\)\. Failing row: \[1\]",
+    ):
         DiscreteUniform.validate(params)
+
+
+def test_validate_explicit_bounds_error_has_no_nan_hint(make_params_array):
+    params = make_params_array(length=2)
+    params["minimum"] = [0, 5]
+    params["maximum"] = [3, 3]
+    with pytest.raises(
+        ImproperBoundsError, match=r"minimum >= maximum\. Failing row: \[1\]"
+    ):
+        DiscreteUniform.validate(params)
+
+
+def test_validate_does_not_change_nan_minimum(make_params_array):
+    params = make_params_array(length=1)
+    params["minimum"] = np.nan
+    params["maximum"] = 3
+    DiscreteUniform.validate(params)
+    assert np.isnan(params["minimum"][0])
 
 
 def test_mc_rejects_nan_minimum_above_maximum():
