@@ -195,18 +195,29 @@ class UncertaintyBase:
 
     @classmethod
     def check_2d_inputs(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
-        """Convert ``vector`` to 2 dimensions if not already, and raise ``stats_arrays.InvalidParamsError`` if ``vector`` and ``params`` dimensions don't match."""
-        if len(vector.shape) == 1:
-            # Slices from structured arrays can't always be resized
-            vector = np.array(vector)
-            # Transform to 2-dimensional
-            vector.resize(vector.shape[0], 1)
-        if params.shape[0] != vector.shape[0]:
-            raise InvalidParamsError(
-                "Vector shape must be either (m,) or (m,n), where params has m rows. Vector has shape %s, and params is %i rows"
-                % (vector.shape, params.shape[0])
-            )
-        return vector
+        """Return ``vector`` as a new 2-dimensional array with one row per row of ``params``.
+
+        For ``params`` with ``m`` rows, ``vector`` may have shape:
+
+        * ``(m,)``: one value per row, returned with shape ``(m, 1)``;
+        * ``(m, n)``: ``n`` values per row;
+        * ``(1, n)``: the same ``n`` values for every row, repeated to ``(m, n)``.
+
+        Raises ``stats_arrays.InvalidParamsError`` for any other shape. The
+        result is always a copy, so callers can change it in place.
+        """
+        rows = params.shape[0]
+        vector = np.array(vector)
+        if vector.ndim == 1 and vector.shape[0] == rows:
+            return vector.reshape(rows, 1)
+        if vector.ndim == 2 and vector.shape[0] == rows:
+            return vector
+        if vector.ndim == 2 and vector.shape[0] == 1:
+            return np.repeat(vector, rows, axis=0)
+        raise InvalidParamsError(
+            "Vector shape must be (m,), (m, n) or (1, n), where params has m "
+            f"rows. Vector has shape {vector.shape}, and params has {rows} rows"
+        )
 
     @classmethod
     @one_row_params_array
@@ -345,7 +356,7 @@ class UncertaintyBase:
         .. rubric:: Inputs
 
         * params : A :ref:`params-array`.
-        * percentages : An array of percentages, bounded on (0,1). Each row in `percentages` corresponds to a row in `params`.
+        * percentages : An array of percentages, bounded on (0,1). Each row in `percentages` corresponds to a row in `params`, or a single row is used for every row of `params`, as for `vector` in :meth:`cdf`.
 
         .. rubric:: Output
 
@@ -360,7 +371,7 @@ class UncertaintyBase:
         .. rubric:: Inputs
 
         * params : A :ref:`params-array`.
-        * vector : A array of values taken from the uncertainty distributions, with **one row** or the **same number** of rows as `params`.
+        * vector : A array of values taken from the uncertainty distributions, with **one row** or the **same number** of rows as `params`. A single row is used for every row of `params`. A 1-dimensional `vector` has one value for each row of `params`. See :meth:`check_2d_inputs`.
 
         .. rubric:: Output
 

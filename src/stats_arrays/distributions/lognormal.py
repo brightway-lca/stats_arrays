@@ -70,42 +70,27 @@ class LognormalUncertainty(UncertaintyBase):
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
         from scipy import stats
 
-        vector[params["negative"]] = -1 * vector[params["negative"]]
-        if vector.ndim == 1 or vector.shape[1] == 1:
-            # Can do all at once, **much** faster
-            results = stats.lognorm.cdf(
-                vector.reshape((-1,)), params["scale"], scale=np.exp(params["loc"])
-            ).reshape((-1, 1))
-        else:
-            vector = cls.check_2d_inputs(params, vector)
-            results = np.zeros(vector.shape)
-            for row in range(params.shape[0]):
-                results[row, :] = stats.lognorm.cdf(
-                    vector[row, :],
-                    params["scale"][row],
-                    scale=np.exp(params["loc"][row]),
-                )
-        return results
+        vector = cls.check_2d_inputs(params, vector)
+        # The bounds of a negative lognormal apply to the signed values
+        negative = params["negative"]
+        vector[negative] *= -1
+        return stats.lognorm.cdf(
+            vector,
+            params["scale"].reshape((-1, 1)),
+            scale=np.exp(params["loc"]).reshape((-1, 1)),
+        )
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
         from scipy import stats
 
-        if percentages.ndim == 1 or percentages.shape[1] == 1:
-            # Can do all at once, **much** faster
-            results = stats.lognorm.ppf(
-                percentages.reshape((-1,)), params["scale"], scale=np.exp(params["loc"])
-            ).reshape((-1, 1))
-        else:
-            percentages = cls.check_2d_inputs(params, percentages)
-            results = np.zeros(percentages.shape)
-            for row in range(percentages.shape[0]):
-                results[row, :] = stats.lognorm.ppf(
-                    percentages[row, :],
-                    params["scale"][row],
-                    scale=np.exp(params["loc"][row]),
-                )
-        results[params["negative"]] = -1 * results[params["negative"]]
+        percentages = cls.check_2d_inputs(params, percentages)
+        results = stats.lognorm.ppf(
+            percentages,
+            params["scale"].reshape((-1, 1)),
+            scale=np.exp(params["loc"]).reshape((-1, 1)),
+        )
+        results[params["negative"]] *= -1
         return results
 
     @classmethod
