@@ -78,6 +78,15 @@ class WeibullUncertainty(UncertaintyBase):
 
     @classmethod
     def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
+        """Return the cumulative probabilities of ``vector``, with ``params``
+        rows and ``vector`` columns.
+
+        .. important:: For rows with ``negative`` set this is the cumulative
+           probability of the *unsigned* distribution at ``-x``, which is
+           P(X >= x) for the signed values X and decreases as x increases. It
+           is the inverse of :meth:`ppf`. ``LognormalUncertainty.cdf`` follows
+           the same convention.
+        """
         from scipy import stats
 
         vector = cls.check_2d_inputs(params, vector)
@@ -87,6 +96,14 @@ class WeibullUncertainty(UncertaintyBase):
 
     @classmethod
     def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
+        """Return the values at ``percentages``, with ``params`` rows and
+        ``percentages`` columns.
+
+        .. important:: For rows with ``negative`` set, the quantile of the
+           unsigned distribution is negated, as ``random_variables`` negates
+           its draws. Percentage ``p`` therefore gives the ``1 - p`` quantile
+           of the signed values, and the row decreases as ``p`` increases.
+        """
         from scipy import stats
 
         percentages = cls.check_2d_inputs(params, percentages)
