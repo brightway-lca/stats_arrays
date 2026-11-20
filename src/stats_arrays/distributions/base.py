@@ -1,3 +1,5 @@
+import decimal
+import numbers
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -70,12 +72,33 @@ class UncertaintyBase:
     # Conversion utilities ###
     @staticmethod
     def _check_uncertainty_type(uncertainty_type: Any) -> None:
-        """Raise ``InvalidParamsError`` unless ``uncertainty_type`` fits the
-        unsigned 8-bit ``uncertainty_type`` field of a params array."""
-        if not 0 <= uncertainty_type < 256:
+        """Raise ``InvalidParamsError`` unless ``uncertainty_type`` is an integer
+        that fits the unsigned 8-bit ``uncertainty_type`` field of a params array.
+
+        Python and NumPy integers are accepted, and so are other numbers with
+        an integer value, such as ``3.0`` or ``Decimal("3")``, and 0-dimensional
+        arrays of these. Fractional values, which NumPy would truncate, and
+        ``None``, strings and booleans are not."""
+        value = uncertainty_type
+        if isinstance(value, np.ndarray) and value.ndim == 0:
+            value = value.item()
+        valid = False
+        if isinstance(value, (bool, np.bool_)):
+            pass
+        elif isinstance(value, numbers.Integral):
+            valid = 0 <= int(value) < 256
+        elif isinstance(value, (numbers.Real, decimal.Decimal)):
+            try:
+                as_float = float(value)
+            except (OverflowError, ValueError):
+                # Too large for a float, or a signalling NaN ``Decimal``
+                pass
+            else:
+                valid = as_float.is_integer() and 0 <= as_float < 256
+        if not valid:
             raise InvalidParamsError(
-                "`uncertainty_type` must be less than 256 and not negative, "
-                f"got {uncertainty_type}"
+                "`uncertainty_type` must be an integer from 0 to 255, "
+                f"got {uncertainty_type!r}"
             )
 
     @classmethod
