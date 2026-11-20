@@ -11,7 +11,7 @@ from stats_arrays.distributions import (
     UniformUncertainty,
 )
 from stats_arrays.distributions.base import UncertaintyBase
-from stats_arrays.errors import MultipleRowParamsArrayError
+from stats_arrays.errors import InvalidParamsError, MultipleRowParamsArrayError
 from stats_arrays.uncertainty_choices import uncertainty_choices
 
 PARAMS = {
@@ -81,22 +81,53 @@ def two_rows(cls):
 @pytest.mark.parametrize("cls", KINDS, ids=lambda cls: cls.__name__)
 def test_one_row_methods_reject_two_rows(cls, method):
     """#65: a 1-D params array of length 2 holds two distributions."""
-    with pytest.raises(MultipleRowParamsArrayError, match=r"got 2 rows"):
+    with pytest.raises(MultipleRowParamsArrayError, match=r"got 2 distributions"):
         getattr(cls, method)(two_rows(cls))
 
 
-@pytest.mark.parametrize("shape", [(2,), (2, 1), (1, 2)])
-def test_one_row_rejects_every_multi_row_shape(shape):
-    params = two_rows(LognormalUncertainty).reshape(shape)
-    message = f"statistics needs a params array with exactly one row, but got 2 rows (shape {shape})"
+@pytest.mark.parametrize(
+    "shape, count", [((2,), 2), ((2, 1), 2), ((1, 2), 2), ((2, 3), 6)]
+)
+def test_one_row_rejects_every_multi_row_shape(shape, count):
+    row = {**PARAMS[LognormalUncertainty.id], "uncertainty_type": 2}
+    params = UncertaintyBase.from_dicts(*[row] * count).reshape(shape)
+    message = (
+        "statistics needs a params array with exactly one row, "
+        f"but got {count} distributions (shape {shape})"
+    )
     with pytest.raises(MultipleRowParamsArrayError, match=re.escape(message)):
         LognormalUncertainty.statistics(params)
 
 
-@pytest.mark.parametrize("shape", [(1,), (1, 1)])
-def test_one_row_accepts_one_row_shapes(shape):
-    params = one_row(LognormalUncertainty)
-    expected = LognormalUncertainty.statistics(params)
-    assert LognormalUncertainty.statistics(params.reshape(shape)) == expected
-    xs, ys = LognormalUncertainty.pdf(params.reshape(shape))
+@pytest.mark.parametrize("shape", [(0,), (0, 1), (1, 0)])
+def test_one_row_rejects_empty_params(shape):
+    """No rows is not "multiple rows", so it gets a different error."""
+    params = one_row(LognormalUncertainty)[:0].reshape(shape)
+    message = f"got an empty array (shape {shape})"
+    with pytest.raises(InvalidParamsError, match=re.escape(message)):
+        LognormalUncertainty.statistics(params)
+
+
+@pytest.mark.parametrize(
+    "reshape",
+    [
+        lambda params: params,
+        lambda params: params.reshape(1, 1),
+        lambda params: params.reshape(()),
+        lambda params: params[0],
+    ],
+    ids=["(1,)", "(1, 1)", "0-d array", "numpy.void scalar"],
+)
+def test_one_row_accepts_one_row_shapes(reshape):
+    params = reshape(
+        UncertaintyBase.from_dicts(
+            {"loc": np.log(2.0), "scale": 0.5, "uncertainty_type": 2}
+        )
+    )
+    stats = LognormalUncertainty.statistics(params)
+    assert stats["median"] == pytest.approx(2.0)
+    assert stats["mean"] == pytest.approx(2.0 * np.exp(0.125))
+    assert stats["lower"] == pytest.approx(2.0 / np.e)
+    assert stats["upper"] == pytest.approx(2.0 * np.e)
+    xs, ys = LognormalUncertainty.pdf(params)
     assert xs.shape == ys.shape == (LognormalUncertainty.default_number_points_in_pdf,)
