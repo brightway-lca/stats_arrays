@@ -204,10 +204,11 @@ class UncertaintyBase:
         * ``(1, n)``: the same ``n`` values for every row, repeated to ``(m, n)``.
 
         Raises ``stats_arrays.InvalidParamsError`` for any other shape. The
-        result is always a copy, so callers can change it in place.
+        result is always a new array of floats, so callers can change it in
+        place, whatever the dtype of ``vector``.
         """
         rows = params.shape[0]
-        vector = np.array(vector)
+        vector = np.array(vector, dtype=float)
         if vector.ndim == 1 and vector.shape[0] == rows:
             return vector.reshape(rows, 1)
         if vector.ndim == 2 and vector.shape[0] == rows:

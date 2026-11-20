@@ -129,3 +129,66 @@ def test_lognormal_cdf_checks_shape_first():
     )
     with pytest.raises(InvalidParamsError):
         LognormalUncertainty.cdf(params, np.ones((3, 2)))
+
+
+@pytest.mark.parametrize("negative", [False, True])
+def test_lognormal_params_with_shape_1_1(negative):
+    """Params for one distribution can be 2-dimensional, as
+    ``one_row_params_array`` passes them."""
+    params = UncertaintyBase.from_dicts(
+        {"loc": 0, "scale": 1, "negative": negative, "uncertainty_type": 2}
+    )
+    sign = -1 if negative else 1
+    for method, vector in [("cdf", sign * VALUES[:, 2:]), ("ppf", PERCENTAGES)]:
+        expected = getattr(LognormalUncertainty, method)(params, vector)
+        result = getattr(LognormalUncertainty, method)(params.reshape(1, 1), vector)
+        assert result.shape == vector.shape
+        assert np.allclose(result, expected)
+    assert (
+        sign * LognormalUncertainty.ppf(params.reshape(1, 1), PERCENTAGES) > 0
+    ).all()
+
+
+@pytest.mark.parametrize("dtype", [np.uint8, np.int64, np.float32])
+def test_lognormal_cdf_integer_vector(dtype):
+    """An unsigned vector raised ``OverflowError`` for rows with ``negative``."""
+    params = UncertaintyBase.from_dicts(
+        {"loc": 0, "scale": 1, "uncertainty_type": 2},
+        {"loc": 0, "scale": 1, "negative": True, "uncertainty_type": 2},
+    )
+    vector = np.array([1, 2], dtype=dtype)
+    result = LognormalUncertainty.cdf(params, vector)
+    assert np.allclose(result[0], LognormalUncertainty.cdf(params[:1], np.array([1.0])))
+    # A negative lognormal has no mass above zero
+    assert result[1, 0] == 0
+    assert vector.dtype == dtype and vector.tolist() == [1, 2]
+
+
+def test_check_2d_inputs_returns_floats():
+    params = UncertaintyBase.from_dicts({"loc": 1}, {"loc": 2})
+    for vector in [np.array([1, 2], dtype=np.uint8), np.array([[1, 2, 3]])]:
+        assert UncertaintyBase.check_2d_inputs(params, vector).dtype == float
+
+
+@pytest.mark.parametrize("uncertainty_type", [0, 1])
+def test_undefined_ppf_checks_rows(uncertainty_type):
+    from stats_arrays.errors import InvalidParamsError
+
+    distribution = uncertainty_choices[uncertainty_type]
+    params = UncertaintyBase.from_dicts({"loc": 1}, {"loc": 2})
+    assert distribution.ppf(params, np.zeros((1, 3))).tolist() == [[1] * 3, [2] * 3]
+    with pytest.raises(InvalidParamsError):
+        distribution.ppf(params, np.zeros((5, 3)))
+
+
+@pytest.mark.parametrize("name", [n for n in ROWS if n != "no_uncertainty"])
+@pytest.mark.parametrize("negative", [False, True])
+def test_params_with_shape_1_1(name, negative):
+    """Gamma and Weibull ``ppf`` raised ``IndexError`` too."""
+    row = {**ROWS[name][0], "negative": negative, "uncertainty_type": TYPES[name]}
+    params = UncertaintyBase.from_dicts(row)
+    distribution = uncertainty_choices[TYPES[name]]
+    for method, vector in [("cdf", VALUES), ("ppf", PERCENTAGES)]:
+        expected = getattr(distribution, method)(params, vector)
+        result = getattr(distribution, method)(params.reshape(1, 1), vector)
+        assert np.allclose(result, expected, equal_nan=True)

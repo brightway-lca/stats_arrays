@@ -72,7 +72,8 @@ class LognormalUncertainty(UncertaintyBase):
 
         vector = cls.check_2d_inputs(params, vector)
         # The bounds of a negative lognormal apply to the signed values
-        negative = params["negative"]
+        # Flattened, as params for one distribution can have shape (1, 1)
+        negative = params["negative"].reshape(-1)
         vector[negative] *= -1
         return stats.lognorm.cdf(
             vector,
@@ -90,7 +91,7 @@ class LognormalUncertainty(UncertaintyBase):
             params["scale"].reshape((-1, 1)),
             scale=np.exp(params["loc"]).reshape((-1, 1)),
         )
-        results[params["negative"]] *= -1
+        results[params["negative"].reshape(-1)] *= -1
         return results
 
     @classmethod
