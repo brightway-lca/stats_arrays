@@ -50,6 +50,7 @@ class BetaUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
+        cls._check_finite(params, "loc", "shape", "minimum", "maximum")
         bad = ~(params["loc"] > 0)
         if bad.any():
             raise InvalidParamsError(

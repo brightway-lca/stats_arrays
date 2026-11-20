@@ -50,6 +50,20 @@ class UncertaintyBase:
         noun = "rows" if len(indices) != 1 else "row"
         return f"Failing {noun}: {indices}"
 
+    @classmethod
+    def _check_finite(cls, params: ParamsArray, *fields: str) -> None:
+        """Raise ``InvalidParamsError`` if any of ``fields`` is infinite.
+
+        NaN passes: whether a missing value is allowed, and what it means,
+        is up to each distribution's ``validate``."""
+        for field in fields:
+            bad = np.isinf(params[field])
+            if bad.any():
+                raise InvalidParamsError(
+                    f"`{field}` values must not be infinite for {cls.__name__}. "
+                    f"{cls._fmt_bad_rows(bad)}"
+                )
+
     # Conversion utilities ###
     @staticmethod
     def _check_uncertainty_type(uncertainty_type: Any) -> None:
@@ -399,6 +413,7 @@ class BoundedUncertaintyBase(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
+        cls._check_finite(params, "minimum", "maximum")
         super(BoundedUncertaintyBase, cls).validate(params)
         bad = np.isnan(params["minimum"]) | np.isnan(params["maximum"])
         if bad.any():

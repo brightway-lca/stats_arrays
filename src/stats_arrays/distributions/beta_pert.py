@@ -33,6 +33,7 @@ class BetaPERTUncertainty(BetaUncertainty):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
+        cls._check_finite(params, "minimum", "loc", "maximum", "scale")
         bad = isnan(params["minimum"])
         if bad.any():
             raise InvalidParamsError(

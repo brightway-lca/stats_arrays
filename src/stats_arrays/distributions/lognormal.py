@@ -20,6 +20,7 @@ class LognormalUncertainty(UncertaintyBase):
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
         """Custom validation because mean gets log-transformed"""
+        cls._check_finite(params, "loc", "scale")
         bad = np.isnan(params["loc"])
         if bad.any():
             raise InvalidParamsError(

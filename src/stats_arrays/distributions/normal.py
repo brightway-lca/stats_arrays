@@ -19,6 +19,7 @@ class NormalUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
+        cls._check_finite(params, "loc", "scale")
         bad = np.isnan(params["scale"]) | (params["scale"] <= 0)
         if bad.any():
             raise InvalidParamsError(
