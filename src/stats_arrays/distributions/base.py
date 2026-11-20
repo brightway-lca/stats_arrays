@@ -1,3 +1,4 @@
+import numbers
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -70,12 +71,25 @@ class UncertaintyBase:
     # Conversion utilities ###
     @staticmethod
     def _check_uncertainty_type(uncertainty_type: Any) -> None:
-        """Raise ``InvalidParamsError`` unless ``uncertainty_type`` fits the
-        unsigned 8-bit ``uncertainty_type`` field of a params array."""
-        if not 0 <= uncertainty_type < 256:
+        """Raise ``InvalidParamsError`` unless ``uncertainty_type`` is an integer
+        that fits the unsigned 8-bit ``uncertainty_type`` field of a params array.
+
+        Python and NumPy integers are accepted, and so are integer-valued
+        floats such as ``3.0``. Fractions, which NumPy would truncate, and
+        ``None``, strings and booleans are not."""
+        if isinstance(uncertainty_type, (bool, np.bool_)):
+            valid = False
+        elif isinstance(uncertainty_type, numbers.Integral):
+            valid = 0 <= int(uncertainty_type) < 256
+        elif isinstance(uncertainty_type, numbers.Real):
+            value = float(uncertainty_type)
+            valid = value.is_integer() and 0 <= value < 256
+        else:
+            valid = False
+        if not valid:
             raise InvalidParamsError(
-                "`uncertainty_type` must be less than 256 and not negative, "
-                f"got {uncertainty_type}"
+                "`uncertainty_type` must be an integer from 0 to 255, "
+                f"got {uncertainty_type!r}"
             )
 
     @classmethod

@@ -287,7 +287,7 @@ def test_validate_error_includes_multiple_row_indices():
 def test_from_tuples_overflow_error():
     """Test that from_tuples raises InvalidParamsError for uncertainty_type >= 256."""
     # Test with uncertainty_type = 256 - should raise error
-    with pytest.raises(InvalidParamsError, match="must be less than 256"):
+    with pytest.raises(InvalidParamsError, match="integer from 0 to 255"):
         UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, 256))
 
     # Test with valid value (255 should work)
@@ -295,14 +295,14 @@ def test_from_tuples_overflow_error():
     assert params["uncertainty_type"][0] == 255
 
     # Test with larger value (1000 should raise error)
-    with pytest.raises(InvalidParamsError, match="must be less than 256"):
+    with pytest.raises(InvalidParamsError, match="integer from 0 to 255"):
         UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, 1000))
 
 
 def test_from_dicts_overflow_error():
     """Test that from_dicts raises InvalidParamsError for uncertainty_type >= 256."""
     # Test with uncertainty_type = 256 - should raise error
-    with pytest.raises(InvalidParamsError, match="must be less than 256"):
+    with pytest.raises(InvalidParamsError, match="integer from 0 to 255"):
         UncertaintyBase.from_dicts({"loc": 2, "scale": 3, "uncertainty_type": 256})
 
     # Test with valid value (255 should work)
@@ -310,32 +310,86 @@ def test_from_dicts_overflow_error():
     assert params["uncertainty_type"][0] == 255
 
     # Test with larger value (1000 should raise error)
-    with pytest.raises(InvalidParamsError, match="must be less than 256"):
+    with pytest.raises(InvalidParamsError, match="integer from 0 to 255"):
         UncertaintyBase.from_dicts({"loc": 2, "scale": 3, "uncertainty_type": 1000})
 
 
 @pytest.mark.parametrize("bad_type", [-1, -5])
 def test_from_tuples_negative_uncertainty_type(bad_type):
     """#64: negative ids raised ``OverflowError`` from NumPy."""
-    with pytest.raises(InvalidParamsError, match=rf"not negative, got {bad_type}"):
+    with pytest.raises(InvalidParamsError, match=rf"0 to 255, got {bad_type}"):
         UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, bad_type))
 
 
 @pytest.mark.parametrize("bad_type", [-1, -5])
 def test_from_dicts_negative_uncertainty_type(bad_type):
-    with pytest.raises(InvalidParamsError, match=rf"not negative, got {bad_type}"):
+    with pytest.raises(InvalidParamsError, match=rf"0 to 255, got {bad_type}"):
         UncertaintyBase.from_dicts({"loc": 2, "uncertainty_type": bad_type})
-    with pytest.raises(InvalidParamsError, match=rf"not negative, got {bad_type}"):
+    with pytest.raises(InvalidParamsError, match=rf"0 to 255, got {bad_type}"):
         UncertaintyBase.from_dicts({"loc": 2, "uncertainty type": bad_type})
 
 
 @pytest.mark.parametrize("bad_type", [-0.5, -1e-9])
 def test_negative_fraction_uncertainty_type(bad_type):
     """These were truncated to 0 by NumPy before the check for negative ids."""
-    with pytest.raises(InvalidParamsError, match="not negative"):
+    with pytest.raises(InvalidParamsError, match="0 to 255"):
         UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, bad_type))
-    with pytest.raises(InvalidParamsError, match="not negative"):
+    with pytest.raises(InvalidParamsError, match="0 to 255"):
         UncertaintyBase.from_dicts({"loc": 2, "uncertainty_type": bad_type})
+
+
+BAD_TYPES = [
+    3.7,
+    255.9,
+    0.5,
+    np.float64(2.5),
+    None,
+    "3",
+    b"3",
+    True,
+    False,
+    np.bool_(True),
+    np.nan,
+    np.inf,
+    [3],
+    3 + 0j,
+]
+
+
+@pytest.mark.parametrize("bad_type", BAD_TYPES)
+def test_from_tuples_non_integer_uncertainty_type(bad_type):
+    """#76: fractions were truncated, None and strings raised ``TypeError``."""
+    with pytest.raises(InvalidParamsError, match="must be an integer from 0 to 255"):
+        UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, bad_type))
+
+
+@pytest.mark.parametrize("bad_type", BAD_TYPES)
+def test_from_dicts_non_integer_uncertainty_type(bad_type):
+    with pytest.raises(InvalidParamsError, match="must be an integer from 0 to 255"):
+        UncertaintyBase.from_dicts({"loc": 2, "uncertainty_type": bad_type})
+    with pytest.raises(InvalidParamsError, match="must be an integer from 0 to 255"):
+        UncertaintyBase.from_dicts({"loc": 2, "uncertainty type": bad_type})
+
+
+def test_non_integer_uncertainty_type_message():
+    with pytest.raises(InvalidParamsError, match=r"got 3\.7$"):
+        UncertaintyBase.from_dicts({"uncertainty_type": 3.7})
+    with pytest.raises(InvalidParamsError, match=r"got None$"):
+        UncertaintyBase.from_dicts({"uncertainty_type": None})
+    with pytest.raises(InvalidParamsError, match=r"got '3'$"):
+        UncertaintyBase.from_dicts({"uncertainty_type": "3"})
+
+
+@pytest.mark.parametrize(
+    "good_type",
+    [3, 3.0, np.float32(3), np.uint8(3), np.int64(3), np.uint64(3), np.int8(3)],
+)
+def test_integer_uncertainty_types_accepted(good_type):
+    for params in [
+        UncertaintyBase.from_dicts({"loc": 2, "uncertainty_type": good_type}),
+        UncertaintyBase.from_tuples((2, 3, np.nan, np.nan, np.nan, False, good_type)),
+    ]:
+        assert params["uncertainty_type"][0] == 3
 
 
 def test_from_tuples_zero_uncertainty_type():
