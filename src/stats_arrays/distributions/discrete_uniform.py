@@ -38,9 +38,19 @@ class DiscreteUniform(UncertaintyBase):
             raise InvalidParamsError(
                 f"Minimum and maximum values must be finite. {cls._fmt_bad_rows(bad)}"
             )
-        bad = params["minimum"] >= params["maximum"]
+        # A NaN minimum means 0, so compare with that: ``NaN >= maximum`` is
+        # always false, and would let an empty support through.
+        bad = cls.fix_nan_minimum(params)["minimum"] >= params["maximum"]
         if bad.any():
-            raise ImproperBoundsError(f"minimum >= maximum. {cls._fmt_bad_rows(bad)}")
+            # Only explain the default if it is why a row failed
+            hint = (
+                " (a NaN minimum is read as 0)"
+                if np.isnan(params["minimum"][bad]).any()
+                else ""
+            )
+            raise ImproperBoundsError(
+                f"minimum >= maximum{hint}. {cls._fmt_bad_rows(bad)}"
+            )
         # The support is a range of integers, and `cdf` and `ppf` return NaN for
         # fractional bounds. A NaN minimum is allowed, and defaults to zero.
         bad = (params["maximum"] != np.floor(params["maximum"])) | (
