@@ -237,3 +237,17 @@ def test_iteration_with_multiple_samples():
 
     result = rng.next()
     assert result.shape == (1, 10)
+
+
+def test_random_integers_is_int64_for_random_state():
+    """``RandomState.randint`` defaults to int32 on Windows."""
+    from stats_arrays.utils import random_integers
+
+    class Int32RandomState(np.random.RandomState):
+        def randint(self, low, high=None, size=None, dtype=np.int32):
+            return super().randint(low, high, size=size, dtype=dtype)
+
+    for random in [Int32RandomState(1), np.random.default_rng(1)]:
+        result = random_integers(random, 2**40, 2**40 + 3, size=10)
+        assert result.dtype == np.int64
+        assert set(result) <= {2**40, 2**40 + 1, 2**40 + 2}

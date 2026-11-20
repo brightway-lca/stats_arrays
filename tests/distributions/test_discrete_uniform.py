@@ -251,6 +251,23 @@ def test_random_variables_at_2_53(make_params_array, seeded_random):
     assert set(sample[1]) == {2**53 - 3, 2**53 - 2, 2**53 - 1}
 
 
+class Int32RandomState(np.random.RandomState):
+    """``RandomState`` as on Windows, where ``randint`` defaults to int32."""
+
+    def randint(self, low, high=None, size=None, dtype=np.int32):
+        return super().randint(low, high, size=size, dtype=dtype)
+
+
+def test_random_variables_large_bounds_with_32_bit_default():
+    """``RandomState.randint`` raised ``ValueError: low is out of bounds for
+    int32`` on Windows for bounds beyond ``2**31``."""
+    params = DiscreteUniform.from_dicts(
+        {"minimum": 2.0**40, "maximum": 2.0**40 + 3, "uncertainty_type": 7}
+    )
+    sample = DiscreteUniform.random_variables(params, 50, Int32RandomState(1))
+    assert set(sample[0]) == {2**40, 2**40 + 1, 2**40 + 2}
+
+
 @pytest.mark.parametrize("rng", ["MCRandomNumberGenerator", "LatinHypercubeRNG"])
 def test_rngs_reject_bounds_beyond_2_53(rng):
     import stats_arrays

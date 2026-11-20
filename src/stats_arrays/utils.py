@@ -93,10 +93,12 @@ def random_integers(
     """Draw integers on ``[low, high)`` from either kind of random source.
 
     ``RandomState.randint`` and ``Generator.integers`` both exclude ``high`` by default.
+    Both return int64. ``randint`` is told so explicitly: its default is a C
+    ``long``, which is 32 bits on Windows, even with NumPy 2.
     """
     if isinstance(random, np.random.Generator):
         return random.integers(low, high, size=size)
-    return random.randint(low, high, size=size)
+    return random.randint(low, high, size=size, dtype=np.int64)
 
 
 AnyCallable = TypeVar("AnyCallable", bound=Callable[..., Any])
