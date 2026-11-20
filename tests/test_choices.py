@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 
@@ -62,7 +64,9 @@ def test_add_rejects_missing_id():
         UncertaintyChoices().add(NoId)
 
 
-@pytest.mark.parametrize("bad_id", [None, "1001", 1001.0])
+@pytest.mark.parametrize(
+    "bad_id", [None, "1001", 1001.0, 3.0, True, False, np.bool_(True), np.float64(3)]
+)
 def test_add_rejects_non_integer_id(bad_id):
     class BadId(UncertaintyBase):
         id = bad_id
@@ -158,3 +162,74 @@ def test_mc_rows_match_distributions_after_add(monkeypatch):
     assert (data[0] == 7).all() and (data[1] == 7).all()
     assert np.abs(data[2] - 1000).max() < 10
     assert np.abs(data[3] - 3).max() < 1
+
+
+@pytest.mark.parametrize("id_", [np.uint8(200), np.int64(200), np.uint64(200)])
+def test_add_accepts_numpy_integer_id(id_):
+    """#77: NumPy integers, including the ``uint8`` of ``uncertainty_type``."""
+
+    class NumpyId(UncertaintyBase):
+        id = id_
+        description = "NumPy id"
+
+    choices = UncertaintyChoices()
+    choices.add(NumpyId)
+    assert NumpyId in choices
+    assert choices[200] is NumpyId
+    assert all(type(key) is int for key in choices.id_dict)
+    ids = [distribution.id for distribution in choices]
+    assert ids == sorted(ids)
+
+
+@pytest.mark.parametrize("bad_id", [np.int64(-1), np.int64(256), np.uint16(300)])
+def test_add_rejects_numpy_id_outside_uint8(bad_id):
+    class OutOfRange(UncertaintyBase):
+        id = bad_id
+        description = "Out of range"
+
+    with pytest.raises(ValueError, match="between 0 and 255"):
+        UncertaintyChoices().add(OutOfRange)
+
+
+def test_add_rejects_bool_id_without_warning():
+    """#77: ``True`` was taken as id 1, and only warned as a duplicate."""
+
+    class BoolId(UncertaintyBase):
+        id = True
+        description = "Boolean id"
+
+    choices = UncertaintyChoices()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        with pytest.raises(ValueError, match=r"not a boolean\)\. Got True\."):
+            choices.add(BoolId)
+    assert choices[1] is not BoolId
+
+
+def test_numpy_integer_id_duplicate_warns():
+    class NumpyNormal(UncertaintyBase):
+        id = np.uint8(NormalUncertainty.id)
+        description = "NumPy id"
+
+    choices = UncertaintyChoices()
+    with pytest.warns(UserWarning, match="already present"):
+        choices.add(NumpyNormal)
+    assert choices[NormalUncertainty.id] is NormalUncertainty
+
+
+def test_mc_with_numpy_integer_id(monkeypatch):
+    from stats_arrays import MCRandomNumberGenerator
+
+    class NumpyNormal(NormalUncertainty):
+        id = np.uint8(200)
+
+    choices = UncertaintyChoices()
+    choices.add(NumpyNormal)
+    monkeypatch.setattr("stats_arrays.random.uncertainty_choices", choices)
+    params = UncertaintyBase.from_dicts(
+        {"loc": 1000, "scale": 1, "uncertainty_type": NumpyNormal.id},
+        {"loc": 3, "scale": 0.1, "uncertainty_type": NormalUncertainty.id},
+    )
+    data = MCRandomNumberGenerator(params, seed=1).generate(samples=50)
+    assert np.abs(data[0] - 1000).max() < 10
+    assert np.abs(data[1] - 3).max() < 1

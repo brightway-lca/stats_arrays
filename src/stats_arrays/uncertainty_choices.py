@@ -1,3 +1,4 @@
+import numbers
 import warnings
 from collections.abc import Iterable as IterableABC
 from typing import Dict, Iterator, List, Type
@@ -61,12 +62,17 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
     @staticmethod
     def check_id(distribution: Type[UncertaintyBase]) -> None:
         """Raise ``ValueError`` unless ``distribution.id`` is an integer that
-        the ``uncertainty_type`` field of a params array can hold."""
-        if not isinstance(getattr(distribution, "id", None), int):
+        the ``uncertainty_type`` field of a params array can hold.
+
+        Python and NumPy integers are accepted; booleans are not, although
+        ``bool`` is a subclass of ``int``."""
+        id_ = getattr(distribution, "id", None)
+        if not isinstance(id_, numbers.Integral) or isinstance(id_, bool):
             raise ValueError(
-                "Uncertainty distributions must have integer `id` attribute."
+                "Uncertainty distributions must have integer `id` attribute "
+                f"(not a boolean). Got {id_!r}."
             )
-        if not 0 <= distribution.id < 256:
+        if not 0 <= int(id_) < 256:
             raise ValueError(
                 "Uncertainty distribution ids must be between 0 and 255, as "
                 "`uncertainty_type` in a params array is an unsigned 8-bit "
@@ -79,13 +85,14 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
         self.id_dict = {}
         for dist in self.choices:
             self.check_id(dist)
-            if dist.id in self.id_dict:
+            id_ = int(dist.id)
+            if id_ in self.id_dict:
                 raise ValueError(
                     "Uncertainty id {} is already in use by {}".format(
-                        dist.id, self.id_dict[dist.id].__name__
+                        id_, self.id_dict[id_].__name__
                     )
                 )
-            self.id_dict[dist.id] = dist
+            self.id_dict[id_] = dist
 
     def __iter__(self) -> Iterator[Type[UncertaintyBase]]:
         return iter(self.choices)
@@ -101,18 +108,17 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
 
     def add(self, distribution: Type[UncertaintyBase]) -> None:
         self.check_id(distribution)
-        if distribution.id in self.id_dict:
+        id_ = int(distribution.id)
+        if id_ in self.id_dict:
             warnings.warn(
-                "ERROR: This distribution (id {}) is already present!".format(
-                    distribution.id
-                )
+                "ERROR: This distribution (id {}) is already present!".format(id_)
             )
             return
         # Keep ``choices`` sorted by id: ``MCRandomNumberGenerator`` relies on
         # it to match each distribution to its rows in the id-sorted params.
         self.choices.append(distribution)
         self.choices.sort(key=lambda x: x.id)
-        self.id_dict[distribution.id] = distribution
+        self.id_dict[id_] = distribution
 
 
 uncertainty_choices = UncertaintyChoices()
