@@ -12,6 +12,10 @@ from stats_arrays.utils import (
     one_row_params_array,
 )
 
+#: Largest magnitude of a ``DiscreteUniform`` bound: float64 represents every
+#: integer from ``-2**53`` to ``2**53`` exactly, but not ``2**53 + 1``.
+MAX_EXACT_INTEGER = 2.0**53
+
 
 class DiscreteUniform(UncertaintyBase):
     """
@@ -37,6 +41,19 @@ class DiscreteUniform(UncertaintyBase):
         if bad.any():
             raise InvalidParamsError(
                 f"Minimum and maximum values must be finite. {cls._fmt_bad_rows(bad)}"
+            )
+        # Samples are float64, which holds every integer exactly only up to
+        # 2**53 in magnitude. Beyond that, draws are rounded, and can land on
+        # the excluded maximum. This limit also keeps the cast of the bounds to
+        # int64 in ``random_variables`` defined. A NaN minimum (meaning 0) passes.
+        bad = (np.abs(params["minimum"]) > MAX_EXACT_INTEGER) | (
+            np.abs(params["maximum"]) > MAX_EXACT_INTEGER
+        )
+        if bad.any():
+            raise InvalidParamsError(
+                "Minimum and maximum values must be between -2**53 and 2**53, "
+                "where float64 represents every integer exactly. "
+                f"{cls._fmt_bad_rows(bad)}"
             )
         # A NaN minimum means 0, so compare with that: ``NaN >= maximum`` is
         # always false, and would let an empty support through.

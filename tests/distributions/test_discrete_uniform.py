@@ -156,6 +156,66 @@ def test_infinite_bounds_reported_before_bounds_order(make_params_array):
         DiscreteUniform.validate(params)
 
 
+@pytest.mark.parametrize(
+    "minimum, maximum",
+    [
+        (0, 2.0**53 + 2),
+        (0, 2.0**63),
+        (0, 1e19),
+        (0, 1e300),
+        (-(2.0**53) - 2, 3),
+        (-1e19, 3),
+        (-1e300, 3),
+        (-1e19, 1e19),
+        (np.nan, 1e19),
+        # These also have minimum >= maximum, but the range is reported
+        (1e19, 3),
+        (0, -1e19),
+    ],
+)
+def test_validate_rejects_bounds_beyond_2_53(make_params_array, minimum, maximum):
+    params = make_params_array(length=2)
+    params["minimum"] = [0, minimum]
+    params["maximum"] = [3, maximum]
+    with pytest.raises(
+        InvalidParamsError, match=r"between -2\*\*53 and 2\*\*53, .* Failing row: \[1\]"
+    ):
+        DiscreteUniform.validate(params)
+
+
+def test_validate_accepts_bounds_at_2_53(make_params_array):
+    params = make_params_array(length=2)
+    params["minimum"] = [-(2.0**53), np.nan]
+    params["maximum"] = [2.0**53, 2.0**53]
+    DiscreteUniform.validate(params)
+
+
+@pytest.mark.parametrize(
+    "seeded_random", [np.random.default_rng(1), np.random.RandomState(1)]
+)
+def test_random_variables_at_2_53(make_params_array, seeded_random):
+    """Draws next to the limits are exact, so stay below the maximum."""
+    params = make_params_array(length=2)
+    params["minimum"] = [-(2.0**53), 2.0**53 - 3]
+    params["maximum"] = [-(2.0**53) + 3, 2.0**53]
+    DiscreteUniform.validate(params)
+    sample = DiscreteUniform.random_variables(params, 100, seeded_random)
+    assert sample.shape == (2, 100)
+    assert set(sample[0]) == {-(2**53), -(2**53) + 1, -(2**53) + 2}
+    assert set(sample[1]) == {2**53 - 3, 2**53 - 2, 2**53 - 1}
+
+
+@pytest.mark.parametrize("rng", ["MCRandomNumberGenerator", "LatinHypercubeRNG"])
+def test_rngs_reject_bounds_beyond_2_53(rng):
+    import stats_arrays
+
+    params = stats_arrays.UncertaintyBase.from_dicts(
+        {"minimum": 0, "maximum": 1e19, "uncertainty_type": 7}
+    )
+    with pytest.raises(InvalidParamsError, match=r"2\*\*53"):
+        getattr(stats_arrays, rng)(params, seed=1)
+
+
 @pytest.mark.parametrize("rng", ["MCRandomNumberGenerator", "LatinHypercubeRNG"])
 def test_rngs_reject_infinite_bounds(rng):
     import stats_arrays
