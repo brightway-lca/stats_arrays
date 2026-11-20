@@ -1,5 +1,9 @@
 # stats_arrays Changelog
 
+# 5.0.1 (2026-11-20)
+
+First 5.x release on PyPI. 5.0 was tagged but never uploaded, as the publishing workflow failed ([#89](https://github.com/brightway-lca/stats_arrays/pull/89)). There are no code changes from 5.0.
+
 # 5.0 (2026-11-20)
 
 ### Breaking changes
