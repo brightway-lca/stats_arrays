@@ -123,6 +123,50 @@ def test_validate_rejects_non_integer_bounds(make_params_array, minimum, maximum
         DiscreteUniform.validate(params)
 
 
+@pytest.mark.parametrize(
+    "minimum, maximum",
+    [
+        (0, np.inf),
+        (-np.inf, 3),
+        (-np.inf, np.inf),
+        (np.nan, np.inf),
+        (np.nan, -np.inf),
+        # These also have minimum >= maximum, but the infinity is reported
+        (np.inf, np.inf),
+        (-np.inf, -np.inf),
+        (np.inf, 3),
+    ],
+)
+def test_validate_rejects_infinite_bounds(make_params_array, minimum, maximum):
+    params = make_params_array(length=2)
+    params["minimum"] = [0, minimum]
+    params["maximum"] = [3, maximum]
+    with pytest.raises(
+        InvalidParamsError, match=r"must be finite\. Failing row: \[1\]"
+    ):
+        DiscreteUniform.validate(params)
+
+
+def test_infinite_bounds_reported_before_bounds_order(make_params_array):
+    """Row 0 has minimum >= maximum, but the infinity in row 1 is reported."""
+    params = make_params_array(length=2)
+    params["minimum"] = [5, 0]
+    params["maximum"] = [3, np.inf]
+    with pytest.raises(InvalidParamsError, match=r"Failing row: \[1\]"):
+        DiscreteUniform.validate(params)
+
+
+@pytest.mark.parametrize("rng", ["MCRandomNumberGenerator", "LatinHypercubeRNG"])
+def test_rngs_reject_infinite_bounds(rng):
+    import stats_arrays
+
+    params = stats_arrays.UncertaintyBase.from_dicts(
+        {"minimum": 0, "maximum": np.inf, "uncertainty_type": 7}
+    )
+    with pytest.raises(InvalidParamsError, match="must be finite"):
+        getattr(stats_arrays, rng)(params, seed=1)
+
+
 def test_validate_accepts_nan_minimum(make_params_array):
     params = make_params_array(length=1)
     params["minimum"] = np.nan
