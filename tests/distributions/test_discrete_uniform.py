@@ -3,7 +3,7 @@ import pytest
 from scipy import stats as scipy_stats
 
 from stats_arrays.distributions import DiscreteUniform
-from stats_arrays.errors import InvalidParamsError
+from stats_arrays.errors import ImproperBoundsError, InvalidParamsError
 from stats_arrays.random import LatinHypercubeRNG
 
 
@@ -165,6 +165,31 @@ def test_rngs_reject_infinite_bounds(rng):
     )
     with pytest.raises(InvalidParamsError, match="must be finite"):
         getattr(stats_arrays, rng)(params, seed=1)
+
+
+@pytest.mark.parametrize("maximum", [0, -2])
+def test_validate_rejects_nan_minimum_above_maximum(make_params_array, maximum):
+    """#71: a NaN minimum means 0, so the support 0..maximum-1 is empty."""
+    params = make_params_array(length=2)
+    params["minimum"] = [0, np.nan]
+    params["maximum"] = [3, maximum]
+    with pytest.raises(ImproperBoundsError, match=r"Failing row: \[1\]"):
+        DiscreteUniform.validate(params)
+
+
+def test_mc_rejects_nan_minimum_above_maximum():
+    from stats_arrays import MCRandomNumberGenerator, UncertaintyBase
+
+    params = UncertaintyBase.from_dicts({"maximum": 0, "uncertainty_type": 7})
+    with pytest.raises(ImproperBoundsError, match="minimum >= maximum"):
+        MCRandomNumberGenerator(params, seed=1)
+
+
+def test_validate_accepts_nan_minimum_with_maximum_one(make_params_array):
+    params = make_params_array(length=1)
+    params["minimum"] = np.nan
+    params["maximum"] = 1
+    DiscreteUniform.validate(params)
 
 
 def test_validate_accepts_nan_minimum(make_params_array):
