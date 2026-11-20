@@ -54,3 +54,28 @@ class GeneralizedExtremeValueUncertainty(UncertaintyBase):
             loc=params["loc"], scale=params["scale"], size=(size, params.shape[0])
         ).T
         return data
+
+    # Only ``shape == 0`` (the Gumbel distribution) is supported, see
+    # ``validate``. ``negative`` is ignored, as in ``random_variables``.
+
+    @classmethod
+    def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
+
+        vector = cls.check_2d_inputs(params, vector)
+        return stats.gumbel_r.cdf(
+            vector,
+            loc=params["loc"].reshape(-1, 1),
+            scale=params["scale"].reshape(-1, 1),
+        )
+
+    @classmethod
+    def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
+
+        percentages = cls.check_2d_inputs(params, percentages)
+        return stats.gumbel_r.ppf(
+            percentages,
+            loc=params["loc"].reshape(-1, 1),
+            scale=params["scale"].reshape(-1, 1),
+        )

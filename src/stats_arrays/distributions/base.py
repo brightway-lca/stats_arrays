@@ -208,9 +208,12 @@ class UncertaintyBase:
         * params : A one-row :ref:`params-array`.
         * threshold : A percentage between 0 and 1. The minimum loc of the distribution covered by the bounds before an error is raised.
         """
-        min_percentage = float((cls.cdf(params, params["minimum"])).flat[0])
-        max_percentage = float((cls.cdf(params, params["maximum"])).flat[0])
-        coverage = max_percentage - min_percentage
+        # Copies, as some ``cdf`` implementations change ``vector`` in place
+        min_percentage = float((cls.cdf(params, params["minimum"].copy())).flat[0])
+        max_percentage = float((cls.cdf(params, params["maximum"].copy())).flat[0])
+        # The ``cdf`` of a lognormal, gamma or Weibull row with ``negative``
+        # set decreases, as it refers to the unsigned distribution.
+        coverage = abs(max_percentage - min_percentage)
         if coverage < threshold:
             raise UnreasonableBoundsError(
                 "The provided bounds cover only %.2f percent of the possible distribution"

@@ -83,6 +83,34 @@ def test_check_bounds_reasonableness():
         NormalUncertainty.check_bounds_reasonableness(params)
 
 
+NEGATIVE_ROWS = {
+    "lognormal": {"loc": 0, "scale": 0.5, "uncertainty_type": 2},
+    "weibull": {"loc": 0, "scale": 2, "shape": 1.5, "uncertainty_type": 8},
+    "gamma": {"loc": 0, "scale": 1, "shape": 2, "uncertainty_type": 9},
+}
+
+
+@pytest.mark.parametrize("row", NEGATIVE_ROWS.values(), ids=NEGATIVE_ROWS.keys())
+def test_check_bounds_reasonableness_negative_rows(row):
+    """The ``cdf`` of these distributions decreases for rows with ``negative``
+    set, which gave a negative coverage."""
+    from stats_arrays import uncertainty_choices
+
+    cls = uncertainty_choices[row["uncertainty_type"]]
+    wide = UncertaintyBase.from_dicts(
+        {**row, "negative": True, "minimum": -5, "maximum": -0.1}
+    )
+    before = wide.copy()
+    cls.check_bounds_reasonableness(wide)
+    assert wide.tobytes() == before.tobytes(), "params were changed in place"
+
+    narrow = UncertaintyBase.from_dicts(
+        {**row, "negative": True, "minimum": -1000, "maximum": -100}
+    )
+    with pytest.raises(UnreasonableBoundsError, match="cover only 0.00 percent"):
+        cls.check_bounds_reasonableness(narrow)
+
+
 def test_bounded_random_variables():
     params = make_params_array(1)
     params["maximum"] = -0.2  # Only ~ 10 percent of distribution
