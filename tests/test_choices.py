@@ -97,6 +97,20 @@ def test_duplicate_id_error_message():
         choices.check_id_uniqueness()
 
 
+def test_check_id_uniqueness_rejects_id_outside_uint8():
+    """The range rule holds for distributions that didn't come through ``add()``."""
+
+    class OutOfRange(UncertaintyBase):
+        id = 1000
+        description = "Out of range"
+
+    choices = UncertaintyChoices()
+    choices.choices.append(OutOfRange)
+    with pytest.raises(ValueError, match=r"between 0 and 255.*Got id 1000\."):
+        choices.check_id_uniqueness()
+    assert 1000 not in choices.id_dict
+
+
 def test_add_keeps_choices_sorted_by_id():
     class Low(UncertaintyBase):
         id = 20
