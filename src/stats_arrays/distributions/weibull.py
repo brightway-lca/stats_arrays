@@ -24,6 +24,7 @@ class WeibullUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
+        cls._check_finite(params, "loc", "scale", "shape")
         bad = np.isnan(params["shape"]) | (params["shape"] <= 0)
         if bad.any():
             raise InvalidParamsError(

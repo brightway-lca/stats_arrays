@@ -10,7 +10,10 @@ from stats_arrays.utils import ParamsArray, RandomSource
 
 
 class UndefinedUncertainty(UncertaintyBase):
-    """Undefined or unknown uncertainty"""
+    """Undefined or unknown uncertainty.
+
+    Every sample is ``loc``. ``validate`` does not check ``loc``, so an
+    infinite or NaN ``loc`` is returned as it is."""
 
     id = 0
     description = "Undefined or unknown uncertainty"
@@ -36,5 +39,8 @@ class UndefinedUncertainty(UncertaintyBase):
 
 
 class NoUncertainty(UndefinedUncertainty):
+    """No uncertainty: every sample is ``loc``, which is not validated, as for
+    :class:`UndefinedUncertainty`."""
+
     id = 1
     description = "No uncertainty"

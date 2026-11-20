@@ -21,6 +21,7 @@ class GeneralizedExtremeValueUncertainty(UncertaintyBase):
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
+        cls._check_finite(params, "loc", "scale", "shape")
         bad = np.isnan(params["loc"])
         if bad.any():
             raise InvalidParamsError(
