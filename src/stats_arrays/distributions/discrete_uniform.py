@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import ClassVar, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -26,6 +26,9 @@ class DiscreteUniform(UncertaintyBase):
 
     id = 7
     description = "Discrete uniform uncertainty"
+    #: The largest support that ``pdf`` lists in full when ``xs`` is not given.
+    #: A larger support is sampled at this many evenly spaced integers.
+    max_default_points_in_pdf: ClassVar[int] = 10_000
 
     @classmethod
     def validate(cls, params: ParamsArray) -> None:
@@ -193,6 +196,12 @@ class DiscreteUniform(UncertaintyBase):
         ``xs`` defaults to the support, ``minimum, ..., maximum - 1``. Each
         value in the support has probability ``1 / (maximum - minimum)``, and
         any other value, including non-integers, has probability 0.
+
+        A support with more than ``max_default_points_in_pdf`` values (10 000
+        unless changed) is too large to list, so the default ``xs`` is then
+        that many evenly spaced integers from the support, starting with
+        ``minimum`` and ending with ``maximum - 1``. Their probabilities are
+        still ``1 / (maximum - minimum)`` each, and so do not sum to 1.
         """
         from scipy import stats
 
@@ -200,6 +209,16 @@ class DiscreteUniform(UncertaintyBase):
         minimum = float(params["minimum"].flat[0])
         maximum = float(params["maximum"].flat[0])
         if xs is None:
-            xs = np.arange(minimum, maximum)
+            count = maximum - minimum
+            if count <= cls.max_default_points_in_pdf:
+                xs = np.arange(minimum, maximum)
+            else:
+                # Evenly spaced offsets from ``minimum``, rounded down to
+                # integers. Above 2**53, ``count - 1`` is rounded up to
+                # ``count``, so keep the last value in the support. ``unique``
+                # in case rounding makes two values the same.
+                offsets = np.linspace(0, count - 1, cls.max_default_points_in_pdf)
+                xs = np.minimum(minimum + np.floor(offsets), maximum - 1)
+                xs = np.unique(xs)
         xs = np.asarray(xs, dtype=float).reshape(-1)
         return xs, stats.randint.pmf(xs, minimum, maximum)
