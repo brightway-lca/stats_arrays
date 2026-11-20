@@ -16,7 +16,7 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from stats_arrays.errors import MultipleRowParamsArrayError
+from stats_arrays.errors import InvalidParamsError, MultipleRowParamsArrayError
 
 BASE_DTYPE_FIELDS: List[Tuple[str, type]] = [
     ("loc", np.float64),
@@ -117,19 +117,29 @@ def flatten_numpy_array(obj: Any) -> Any:
 
 
 def one_row_params_array(function: AnyCallable) -> AnyCallable:
-    """Reshape ``params`` to a single row, and flatten any other array arguments.
+    """Reshape ``params`` to shape ``(1, 1)``, and flatten any other array arguments.
 
-    Raises ``stats_arrays.MultipleRowParamsArrayError`` if ``params`` has more than one
-    row. The wrapped callable keeps the signature of ``function``.
+    Raises ``stats_arrays.MultipleRowParamsArrayError`` if ``params`` holds more than
+    one distribution, whatever its shape, and ``stats_arrays.InvalidParamsError`` if it
+    is empty. The wrapped callable keeps the signature of ``function``.
     """
 
     @wraps(function)
     def wrapper(cls: Any, params: ParamsArray, *args: Any, **kwargs: Any) -> Any:
-        if len(params.shape) == 1:
-            params = params.reshape(params.shape[0], 1)
-        else:
-            if params.shape[0] != 1:
-                raise MultipleRowParamsArrayError
+        # Each element of a params array is one distribution, so check the size:
+        # a 1-D array of length n, or a (1, n) array, also holds n of them.
+        name = getattr(function, "__name__", "This method")
+        if params.size == 0:
+            raise InvalidParamsError(
+                f"{name} needs a params array with exactly one row, but got an "
+                f"empty array (shape {params.shape})."
+            )
+        if params.size != 1:
+            raise MultipleRowParamsArrayError(
+                f"{name} needs a params array with exactly one row, but got "
+                f"{params.size} distributions (shape {params.shape})."
+            )
+        params = params.reshape(1, 1)
         # Flatten any additional inputs to one dimension
         # Needed for PDF optional xs input
         flattened_args = [flatten_numpy_array(x) for x in args]
