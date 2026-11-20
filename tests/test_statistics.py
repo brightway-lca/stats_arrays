@@ -1,5 +1,7 @@
 """Every distribution's `statistics` returns scalars, as the base class documents."""
 
+import re
+
 import numpy as np
 import pytest
 
@@ -8,8 +10,9 @@ from stats_arrays.distributions import (
     LognormalUncertainty,
     UniformUncertainty,
 )
-from stats_arrays.uncertainty_choices import uncertainty_choices
 from stats_arrays.distributions.base import UncertaintyBase
+from stats_arrays.errors import MultipleRowParamsArrayError
+from stats_arrays.uncertainty_choices import uncertainty_choices
 
 PARAMS = {
     0: {"loc": 1.0},
@@ -60,8 +63,40 @@ def test_a_lognormal_reports_its_median():
 
 def test_a_uniform_is_centred_between_its_bounds():
     stats = UniformUncertainty.statistics(
-        UncertaintyBase.from_dicts({"minimum": 1.0, "maximum": 4.0, "uncertainty_type": 4})
+        UncertaintyBase.from_dicts(
+            {"minimum": 1.0, "maximum": 4.0, "uncertainty_type": 4}
+        )
     )
     assert stats["mean"] == 2.5
     assert stats["lower"] == 1.0
     assert stats["upper"] == 4.0
+
+
+def two_rows(cls):
+    row = {**PARAMS[cls.id], "uncertainty_type": cls.id}
+    return UncertaintyBase.from_dicts(row, row)
+
+
+@pytest.mark.parametrize("method", ["statistics", "pdf", "check_bounds_reasonableness"])
+@pytest.mark.parametrize("cls", KINDS, ids=lambda cls: cls.__name__)
+def test_one_row_methods_reject_two_rows(cls, method):
+    """#65: a 1-D params array of length 2 holds two distributions."""
+    with pytest.raises(MultipleRowParamsArrayError, match=r"got 2 rows"):
+        getattr(cls, method)(two_rows(cls))
+
+
+@pytest.mark.parametrize("shape", [(2,), (2, 1), (1, 2)])
+def test_one_row_rejects_every_multi_row_shape(shape):
+    params = two_rows(LognormalUncertainty).reshape(shape)
+    message = f"statistics needs a params array with exactly one row, but got 2 rows (shape {shape})"
+    with pytest.raises(MultipleRowParamsArrayError, match=re.escape(message)):
+        LognormalUncertainty.statistics(params)
+
+
+@pytest.mark.parametrize("shape", [(1,), (1, 1)])
+def test_one_row_accepts_one_row_shapes(shape):
+    params = one_row(LognormalUncertainty)
+    expected = LognormalUncertainty.statistics(params)
+    assert LognormalUncertainty.statistics(params.reshape(shape)) == expected
+    xs, ys = LognormalUncertainty.pdf(params.reshape(shape))
+    assert xs.shape == ys.shape == (LognormalUncertainty.default_number_points_in_pdf,)
