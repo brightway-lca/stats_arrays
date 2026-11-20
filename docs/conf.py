@@ -17,16 +17,23 @@
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-# The short X.Y version.
-version = '0.4'
-# The full version, including alpha/beta/rc tags.
-release = '0.4.1'
-
+import re
 import sys
-from os.path import abspath, dirname
+from os.path import abspath, dirname, join
 
-# Make sure we use this copy of Brightway2
-sys.path.insert(1, abspath(dirname(dirname(__file__))))
+SRC = join(dirname(dirname(abspath(__file__))), "src")
+# Make sure autodoc uses this copy of stats_arrays, from the ``src`` layout
+sys.path.insert(0, SRC)
+
+# Read the version from the source rather than importing it: an editable
+# install of another checkout would take precedence over ``sys.path``.
+with open(join(SRC, "stats_arrays", "__init__.py")) as f:
+    __version__ = re.search(r'^__version__ = "(.+)"$', f.read(), re.M).group(1)
+
+# The short X.Y version.
+version = __version__
+# The full version, including alpha/beta/rc tags.
+release = __version__
 
 # Load mathjax through https so it works on RTD/Chrome. See: # http://sphinx-doc.org/ext/math.html
 # http://docs.mathjax.org/en/latest/start.html#secure-access-to-the-cdn

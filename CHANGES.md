@@ -1,6 +1,6 @@
 # stats_arrays Changelog
 
-# Unreleased
+# 5.0 (2026-11-20)
 
 ### Breaking changes
 
@@ -10,6 +10,12 @@
   * **To get the old numbers back**, pass a `RandomState` instead of the integer: `MCRandomNumberGenerator(params, seed=numpy.random.RandomState(42))` gives exactly what `MCRandomNumberGenerator(params, seed=42)` gave in 4.x. The same works for `RandomNumberGenerator` and `LatinHypercubeRNG`.
   * NumPy keeps `Generator` bit streams stable but may change how individual distributions are sampled between NumPy versions (NEP 19). Record the NumPy version with the seed if you need exact long-term reproducibility.
 * **statistics()**, **pdf()** and **check_bounds_reasonableness()** now raise `MultipleRowParamsArrayError` for a params array with more than one row ([#65](https://github.com/brightway-lca/stats_arrays/issues/65)), as documented. Calls that passed a whole array used to get an answer: `statistics` described the first row only, and `check_bounds_reasonableness` did nothing for the distributions whose bounds are their support (uniform, triangular, discrete uniform, beta and beta-PERT). Pass one row at a time, for example `params[i : i + 1]`. See Bug fixes.
+* **Stricter input checks.** Some input that 4.0 accepted now raises; most of it gave wrong or meaningless results. See Bug fixes for details.
+  * `validate()`, and so `MCRandomNumberGenerator` and `LatinHypercubeRNG`, rejects infinite distribution parameters ([#74](https://github.com/brightway-lca/stats_arrays/issues/74)), `minimum >= maximum` for normal and lognormal rows ([#62](https://github.com/brightway-lca/stats_arrays/issues/62)), and `DiscreteUniform` bounds that are infinite ([#66](https://github.com/brightway-lca/stats_arrays/issues/66)), beyond `2**53` in magnitude ([#73](https://github.com/brightway-lca/stats_arrays/issues/73)), or a NaN `minimum` with `maximum <= 0` ([#71](https://github.com/brightway-lca/stats_arrays/issues/71)).
+  * `from_dicts` and `from_tuples` reject an `uncertainty_type` that is not an integer from 0 to 255, including fractions and booleans ([#64](https://github.com/brightway-lca/stats_arrays/issues/64), [#76](https://github.com/brightway-lca/stats_arrays/issues/76)).
+  * `UncertaintyChoices.add()` rejects ids outside 0 to 255 and boolean ids ([#64](https://github.com/brightway-lca/stats_arrays/issues/64), [#77](https://github.com/brightway-lca/stats_arrays/issues/77)).
+  * `UndefinedUncertainty.ppf` and `NoUncertainty.ppf` reject percentages with a different number of rows than params ([#75](https://github.com/brightway-lca/stats_arrays/issues/75)).
+* **Latin hypercube samples change** for rows with `minimum` or `maximum` bounds ([#48](https://github.com/brightway-lca/stats_arrays/issues/48)), for rows with `negative` set ([#54](https://github.com/brightway-lca/stats_arrays/issues/54)), and for `DiscreteUniform` rows with large bounds ([#73](https://github.com/brightway-lca/stats_arrays/issues/73)), as 4.0 sampled all of these incorrectly. See Bug fixes.
 
 ### New features
 
