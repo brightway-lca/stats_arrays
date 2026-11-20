@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from stats_arrays.distributions import NormalUncertainty, UncertaintyBase
@@ -66,3 +67,52 @@ def test_duplicate_id_error_message():
         ),
     ):
         choices.check_id_uniqueness()
+
+
+def test_add_keeps_choices_sorted_by_id():
+    class Low(UncertaintyBase):
+        id = -5
+        description = "Low"
+
+    class Middle(UncertaintyBase):
+        id = 50
+        description = "Middle"
+
+    class High(UncertaintyBase):
+        id = 99
+        description = "High"
+
+    choices = UncertaintyChoices()
+    for distribution in (High, Middle, Low):
+        choices.add(distribution)
+    ids = [distribution.id for distribution in choices]
+    assert ids == sorted(ids)
+    assert ids[0] == -5 and ids[-2:] == [50, 99]
+
+
+def test_mc_rows_match_distributions_after_add(monkeypatch):
+    """Regression test for #49: adding a distribution with a lower id than an
+    existing one made ``MCRandomNumberGenerator`` sample the wrong rows."""
+    from stats_arrays import MCRandomNumberGenerator
+
+    class Middle(UndefinedUncertainty):
+        id = 99
+
+    class Low(NormalUncertainty):
+        id = 50
+
+    choices = UncertaintyChoices()
+    choices.add(Middle)
+    choices.add(Low)
+    monkeypatch.setattr("stats_arrays.random.uncertainty_choices", choices)
+
+    params = UncertaintyBase.from_dicts(
+        {"loc": 7, "uncertainty_type": 99},
+        {"loc": 7, "uncertainty_type": 99},
+        {"loc": 1000, "scale": 1, "uncertainty_type": 50},
+        {"loc": 3, "scale": 0.1, "uncertainty_type": NormalUncertainty.id},
+    )
+    data = MCRandomNumberGenerator(params, seed=1).generate(samples=50)
+    assert (data[0] == 7).all() and (data[1] == 7).all()
+    assert np.abs(data[2] - 1000).max() < 10
+    assert np.abs(data[3] - 3).max() < 1
