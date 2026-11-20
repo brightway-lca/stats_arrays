@@ -151,11 +151,12 @@ def test_nan_minimum_not_overwritten(make_params_array, call):
     assert params["minimum"][1] == 1
 
 
-def test_nan_minimum_not_overwritten_by_statistics(make_params_array):
+@pytest.mark.parametrize("method", ["statistics", "pdf"])
+def test_nan_minimum_not_overwritten_one_row(make_params_array, method):
     params = make_params_array(length=1)
     params["minimum"] = np.nan
     params["maximum"] = 3
-    DiscreteUniform.statistics(params)
+    getattr(DiscreteUniform, method)(params)
     assert np.isnan(params["minimum"][0])
 
 
@@ -179,3 +180,37 @@ def test_mc_keeps_nan_minimum():
     mc.generate()
     assert np.isnan(mc.params["minimum"][0])
     assert np.isnan(params["minimum"][0])
+
+
+@pytest.mark.parametrize("minimum, maximum", [(0, 3), (-2, 5), (4, 5), (np.nan, 4)])
+def test_pdf_default_xs_is_support(make_params_array, minimum, maximum):
+    """Regression test for #60: ``pdf`` raised ``TypeError`` for every input."""
+    params = make_params_array(length=1)
+    params["minimum"] = minimum
+    params["maximum"] = maximum
+    low = 0 if np.isnan(minimum) else minimum
+    xs, ys = DiscreteUniform.pdf(params)
+    assert np.array_equal(xs, np.arange(low, maximum))
+    assert np.allclose(ys, 1 / (maximum - low))
+    assert np.isclose(ys.sum(), 1)
+
+
+def test_pdf_given_xs(make_params_array):
+    params = make_params_array(length=1)
+    params["minimum"] = 0
+    params["maximum"] = 3
+    xs = np.array([-1, 0, 1.5, 2, 3, 4])
+    out_xs, ys = DiscreteUniform.pdf(params, xs)
+    assert np.array_equal(out_xs, xs)
+    # Outside the support, the excluded maximum, and non-integers: 0
+    assert np.allclose(ys, [0, 1 / 3, 0, 1 / 3, 0, 0])
+
+
+def test_pdf_matches_samples(make_params_array):
+    params = make_params_array(length=1)
+    params["minimum"] = 2
+    params["maximum"] = 6
+    xs, ys = DiscreteUniform.pdf(params)
+    data = DiscreteUniform.random_variables(params, 40_000, np.random.default_rng(1))
+    frequencies = np.array([(data == x).mean() for x in xs])
+    assert np.allclose(frequencies, ys, atol=0.01)

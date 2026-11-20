@@ -141,9 +141,18 @@ class DiscreteUniform(UncertaintyBase):
     def pdf(
         cls, params: ParamsArray, xs: Optional[npt.NDArray] = None
     ) -> Tuple[npt.NDArray, npt.NDArray]:
+        """Return the probability mass function.
+
+        ``xs`` defaults to the support, ``minimum, ..., maximum - 1``. Each
+        value in the support has probability ``1 / (maximum - minimum)``, and
+        any other value, including non-integers, has probability 0.
+        """
+        from scipy import stats
+
         params = cls.fix_nan_minimum(params)
+        minimum = float(params["minimum"].flat[0])
+        maximum = float(params["maximum"].flat[0])
         if xs is None:
-            xs = np.array([params["minimum"], params["maximum"]])
-        percentage = 1 / (params["maximum"] - params["minimum"])
-        ys = np.array([float(percentage) for x in xs])
-        return np.array([float(x) for x in xs]), ys
+            xs = np.arange(minimum, maximum)
+        xs = np.asarray(xs, dtype=float).reshape(-1)
+        return xs, stats.randint.pmf(xs, minimum, maximum)
