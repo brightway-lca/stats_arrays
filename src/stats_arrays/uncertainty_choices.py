@@ -86,6 +86,12 @@ class UncertaintyChoices(IterableABC[Type[UncertaintyBase]]):
             raise ValueError(
                 "Uncertainty distributions must have integer `id` attribute."
             )
+        if not 0 <= distribution.id < 256:
+            raise ValueError(
+                "Uncertainty distribution ids must be between 0 and 255, as "
+                "`uncertainty_type` in a params array is an unsigned 8-bit "
+                f"integer. Got id {distribution.id}."
+            )
         if distribution.id in self.id_dict:
             warnings.warn(
                 "ERROR: This distribution (id {}) is already present!".format(

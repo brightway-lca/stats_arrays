@@ -17,13 +17,41 @@ def test_contains():
 
 def test_add_new_distribution():
     class Custom(UncertaintyBase):
-        id = 1000
+        id = 200
         description = "Custom"
 
     choices = UncertaintyChoices()
     choices.add(Custom)
     assert Custom in choices
-    assert choices[1000] is Custom
+    assert choices[200] is Custom
+
+
+@pytest.mark.parametrize("bad_id", [-5, -1, 256, 1000])
+def test_add_rejects_id_outside_uint8(bad_id):
+    """#64: ``uncertainty_type`` is an unsigned 8-bit field."""
+
+    class OutOfRange(UncertaintyBase):
+        id = bad_id
+        description = "Out of range"
+
+    choices = UncertaintyChoices()
+    with pytest.raises(ValueError, match=rf"between 0 and 255.*Got id {bad_id}\."):
+        choices.add(OutOfRange)
+    assert OutOfRange not in choices
+    assert bad_id not in choices.id_dict
+
+
+@pytest.mark.parametrize("good_id", [0, 255])
+def test_add_accepts_uint8_limits(good_id):
+    class Limit(UncertaintyBase):
+        id = good_id
+        description = "Limit"
+
+    choices = UncertaintyChoices()
+    choices.id_dict.pop(good_id, None)
+    choices.choices = [d for d in choices.choices if d.id != good_id]
+    choices.add(Limit)
+    assert choices[good_id] is Limit
 
 
 def test_add_rejects_missing_id():
@@ -71,7 +99,7 @@ def test_duplicate_id_error_message():
 
 def test_add_keeps_choices_sorted_by_id():
     class Low(UncertaintyBase):
-        id = -5
+        id = 20
         description = "Low"
 
     class Middle(UncertaintyBase):
@@ -87,7 +115,7 @@ def test_add_keeps_choices_sorted_by_id():
         choices.add(distribution)
     ids = [distribution.id for distribution in choices]
     assert ids == sorted(ids)
-    assert ids[0] == -5 and ids[-2:] == [50, 99]
+    assert ids[-3:] == [20, 50, 99]
 
 
 def test_mc_rows_match_distributions_after_add(monkeypatch):
