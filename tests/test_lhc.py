@@ -786,48 +786,138 @@ def test_thin_but_usable_bounds_accepted(row):
     assert np.isfinite(lhc.hypercube).all()
 
 
-@pytest.mark.parametrize(
-    "name, row",
-    [
-        (
-            "WeibullUncertainty",
-            {"loc": 0, "scale": 1, "shape": 2, "uncertainty_type": 8},
-        ),
-        ("GammaUncertainty", {"loc": 0, "scale": 1, "shape": 2, "uncertainty_type": 9}),
-        (
-            "GeneralizedExtremeValueUncertainty",
-            {"loc": 0, "scale": 1, "shape": 0, "uncertainty_type": 11},
-        ),
-        (
-            "StudentsTUncertainty",
-            {"loc": 0, "scale": 1, "shape": 3, "uncertainty_type": 12},
-        ),
-    ],
-)
-def test_distribution_without_ppf_rejected_clearly(name, row):
+def _no_ppf(distribution_id, name):
+    from stats_arrays import UncertaintyBase
+
+    return type(name, (UncertaintyBase,), {"id": distribution_id, "description": name})
+
+
+def test_distribution_without_ppf_rejected_clearly(monkeypatch):
     """These raised ``NotImplementedError`` with no message."""
+    from stats_arrays.uncertainty_choices import UncertaintyChoices
+
+    choices = UncertaintyChoices()
+    choices.add(_no_ppf(80, "NoPpf"))
+    monkeypatch.setattr("stats_arrays.random.uncertainty_choices", choices)
     params = lhc_bounds_params(
-        {"loc": 0, "scale": 1, "uncertainty_type": NormalUncertainty.id}, row
+        {"loc": 0, "scale": 1, "uncertainty_type": NormalUncertainty.id},
+        {"loc": 0, "uncertainty_type": 80},
     )
     with pytest.raises(NotImplementedError) as excinfo:
         LatinHypercubeRNG(params)
     message = str(excinfo.value)
-    assert name in message
+    assert "NoPpf (id 80)" in message
     assert "`ppf`" in message
     assert "Failing row: [1]" in message
 
 
-def test_unsupported_distributions_all_listed():
+def test_unsupported_distributions_all_listed(monkeypatch):
+    from stats_arrays.uncertainty_choices import UncertaintyChoices
+
+    choices = UncertaintyChoices()
+    choices.add(_no_ppf(80, "NoPpfA"))
+    choices.add(_no_ppf(81, "NoPpfB"))
+    monkeypatch.setattr("stats_arrays.random.uncertainty_choices", choices)
     params = lhc_bounds_params(
-        {"loc": 0, "scale": 1, "shape": 2, "uncertainty_type": 9},
+        {"loc": 0, "uncertainty_type": 80},
         {"loc": 0, "scale": 1, "uncertainty_type": NormalUncertainty.id},
-        {"loc": 0, "scale": 1, "shape": 3, "uncertainty_type": 12},
+        {"loc": 0, "uncertainty_type": 81},
     )
     with pytest.raises(NotImplementedError) as excinfo:
         LatinHypercubeRNG(params)
     message = str(excinfo.value)
-    assert "GammaUncertainty" in message and "StudentsTUncertainty" in message
+    assert "NoPpfA" in message and "NoPpfB" in message
     assert "Failing rows: [0, 2]" in message
+
+
+def test_every_built_in_distribution_supported():
+    """#63: Weibull, gamma, GEV and Student's t had no ``ppf`` or ``cdf``."""
+    from stats_arrays.distributions import UncertaintyBase as Base
+    from stats_arrays.uncertainty_choices import uncertainty_choices
+
+    for distribution in uncertainty_choices:
+        if issubclass(distribution, UndefinedUncertainty):
+            continue
+        for name in ("ppf", "cdf"):
+            method = getattr(distribution, name)
+            assert method.__func__ is not getattr(Base, name).__func__, (
+                distribution.__name__,
+                name,
+            )
+
+
+# Rows for the four distributions that gained ``ppf`` and ``cdf`` in #63
+NEW_ROWS = {
+    "weibull": {"loc": 1, "scale": 2, "shape": 1.5, "uncertainty_type": 8},
+    "gamma": {"loc": 0.5, "scale": 1, "shape": 2, "uncertainty_type": 9},
+    "gev": {"loc": 0, "scale": 1, "shape": 0, "uncertainty_type": 11},
+    "student": {"shape": 3, "uncertainty_type": 12},
+    "student-loc-scale": {"loc": 2, "scale": 0.5, "shape": 4, "uncertainty_type": 12},
+    "weibull-negative": {
+        "loc": 1,
+        "scale": 2,
+        "shape": 1.5,
+        "negative": True,
+        "uncertainty_type": 8,
+    },
+    "gamma-negative": {
+        "loc": 0.5,
+        "scale": 1,
+        "shape": 2,
+        "negative": True,
+        "uncertainty_type": 9,
+    },
+}
+
+
+@pytest.mark.parametrize("row", NEW_ROWS.values(), ids=NEW_ROWS.keys())
+def test_new_distributions_match_monte_carlo(row):
+    """The hypercube has the same mean and quartiles as Monte Carlo draws."""
+    from stats_arrays import MCRandomNumberGenerator
+
+    params = lhc_bounds_params(row)
+    lhc = LatinHypercubeRNG(params, samples=2000, seed=1)
+    mc = MCRandomNumberGenerator(params, seed=1).generate(samples=100_000)
+    spread = np.subtract(*np.percentile(mc[0], [75, 25]))
+    for q in (25, 50, 75):
+        assert np.percentile(lhc.hypercube[0], q) == pytest.approx(
+            np.percentile(mc[0], q), abs=0.03 * spread
+        )
+
+
+@pytest.mark.parametrize(
+    "key", ["weibull-negative", "gamma-negative"], ids=["weibull", "gamma"]
+)
+def test_new_distributions_negative_rows_are_negative(key):
+    """Gamma and Weibull apply ``negative`` in Monte Carlo, so ``ppf`` does too."""
+    negative = LatinHypercubeRNG(lhc_bounds_params(NEW_ROWS[key]), samples=50)
+    positive_row = {k: v for k, v in NEW_ROWS[key].items() if k != "negative"}
+    positive = LatinHypercubeRNG(lhc_bounds_params(positive_row), samples=50)
+    assert (negative.hypercube < 0).all()
+    assert np.allclose(negative.hypercube, -positive.hypercube)
+
+
+@pytest.mark.parametrize(
+    "row, minimum, maximum",
+    [
+        (NEW_ROWS["weibull"], 2, 4),
+        (NEW_ROWS["gamma"], 1, 3),
+        (NEW_ROWS["gev"], -1, 1),
+        (NEW_ROWS["student"], -2, 0.5),
+        (NEW_ROWS["weibull-negative"], -4, -2),
+        (NEW_ROWS["gamma-negative"], -3, -1),
+    ],
+    ids=["weibull", "gamma", "gev", "student", "weibull-negative", "gamma-negative"],
+)
+def test_new_distributions_respect_bounds(row, minimum, maximum):
+    from stats_arrays import MCRandomNumberGenerator
+
+    params = lhc_bounds_params({**row, "minimum": minimum, "maximum": maximum})
+    hypercube = LatinHypercubeRNG(params, samples=500).hypercube[0]
+    assert minimum <= hypercube.min() < minimum + 0.1 * (maximum - minimum)
+    assert maximum - 0.1 * (maximum - minimum) < hypercube.max() <= maximum
+    mc = MCRandomNumberGenerator(params, seed=1).generate(samples=50_000)
+    assert hypercube.mean() == pytest.approx(mc.mean(), abs=0.02 * (maximum - minimum))
 
 
 def _choices_with(monkeypatch, distribution):

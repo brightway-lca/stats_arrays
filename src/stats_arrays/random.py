@@ -338,11 +338,11 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
     def build_hypercube(self) -> None:
         """Build an array, of shape `self.length` rows by `self.samples` columns, which contains the sample space to be drawn from when doing Latin Hypercubic sampling.
 
-        Each row represents a different data point and distribution. The final sample space is `self.hypercube`. A distribution is usable if it implements ``ppf``, and, for rows with ``minimum`` or ``maximum`` bounds, ``cdf``; otherwise ``NotImplementedError`` is raised. Of the built-in distributions, Weibull, gamma, generalized extreme value and Student's t implement neither.
+        Each row represents a different data point and distribution. The final sample space is `self.hypercube`. A distribution is usable if it implements ``ppf``, and, for rows with ``minimum`` or ``maximum`` bounds, ``cdf``; otherwise ``NotImplementedError`` is raised. All built-in distributions implement both.
 
         .. rubric:: Builds
 
-        self.percentages : Numpy array with dimensions `self.length` by `self.samples`. The percentages passed to each distribution's ``ppf``. They refer to the unsigned distribution: for a lognormal with ``negative`` set, ``ppf`` negates its result, so percentage ``p`` gives the ``1 - p`` quantile of the signed values and the row of ``self.hypercube`` descends.
+        self.percentages : Numpy array with dimensions `self.length` by `self.samples`. The percentages passed to each distribution's ``ppf``. They refer to the unsigned distribution: for a lognormal, gamma or Weibull row with ``negative`` set, ``ppf`` negates its result, so percentage ``p`` gives the ``1 - p`` quantile of the signed values and the row of ``self.hypercube`` descends.
 
         self.hypercube : Numpy array with dimensions `self.length` by `self.samples`."""
         self._check_distributions_supported()
@@ -387,8 +387,8 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
                 params=self.params[mask], percentages=self.percentages[mask, :]
             )
         # The sign of rows with ``negative`` set is left to each distribution's
-        # ``ppf``, as Monte Carlo leaves it to ``random_variables``. Of the
-        # distributions with a ``ppf``, only the lognormal applies it.
+        # ``ppf``, as Monte Carlo leaves it to ``random_variables``. The
+        # lognormal, gamma and Weibull apply it.
 
     def _check_distributions_supported(self) -> None:
         """Raise ``NotImplementedError`` naming the distributions in ``params``
@@ -438,7 +438,7 @@ class LatinHypercubeRNG(MCRandomNumberGenerator):
         Rows without bounds get ``(0, 1)``. A lower bound starts at
         P(X < minimum) rather than P(X <= minimum), so that a discrete
         distribution can still return ``minimum`` itself. Distributions whose
-        ``ppf`` decreases (a lognormal with ``negative`` set) have the roles of
+        ``ppf`` decreases (a lognormal, gamma or Weibull with ``negative`` set) have the roles of
         the two bounds swapped.
         """
         length = params.shape[0]

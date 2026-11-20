@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -56,3 +56,41 @@ class WeibullUncertainty(UncertaintyBase):
         )
         data[params["negative"], :] = -1 * data[params["negative"], :]
         return data
+
+    # ``loc``, ``scale`` and ``shape`` describe the unsigned values, and
+    # ``random_variables`` negates rows with ``negative`` set. As in
+    # ``LognormalUncertainty``, ``ppf`` negates those rows too, and ``cdf``
+    # evaluates the unsigned distribution at ``-x`` for them, so that it
+    # inverts ``ppf``.
+
+    @classmethod
+    def _scipy_params(
+        cls, params: ParamsArray
+    ) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
+        """Return ``(shape, loc, scale)`` as columns, with a NaN ``loc`` as 0."""
+        loc = params["loc"].copy()
+        loc[np.isnan(loc)] = 0
+        return (
+            params["shape"].reshape(-1, 1),
+            loc.reshape(-1, 1),
+            params["scale"].reshape(-1, 1),
+        )
+
+    @classmethod
+    def cdf(cls, params: ParamsArray, vector: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
+
+        vector = cls.check_2d_inputs(params, vector)
+        unsigned = np.where(params["negative"].reshape(-1, 1), -vector, vector)
+        shape, loc, scale = cls._scipy_params(params)
+        return stats.weibull_min.cdf(unsigned, shape, loc=loc, scale=scale)
+
+    @classmethod
+    def ppf(cls, params: ParamsArray, percentages: npt.NDArray) -> npt.NDArray:
+        from scipy import stats
+
+        percentages = cls.check_2d_inputs(params, percentages)
+        shape, loc, scale = cls._scipy_params(params)
+        results = stats.weibull_min.ppf(percentages, shape, loc=loc, scale=scale)
+        results[params["negative"]] *= -1
+        return results
