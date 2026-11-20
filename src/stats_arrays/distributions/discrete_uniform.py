@@ -114,13 +114,15 @@ class DiscreteUniform(UncertaintyBase):
                 size=(size, params.shape[0]),
             ).T
         # randint has different behaviour than e.g. uniform. We can't pass in
-        # arrays, but have to process them line by line.
+        # arrays, but have to process them line by line. Its default dtype is
+        # a C ``long``, which is 32 bits on Windows, even with NumPy 2.
         return np.vstack(
             [
                 seeded_random.randint(
                     params["minimum"][i],  # Minimum (low)
                     params["maximum"][i],  # Maximum (high)
                     size=size,
+                    dtype=np.int64,
                 )
                 for i in range(params.shape[0])
             ]
